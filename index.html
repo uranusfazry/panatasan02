@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Administrasi Panatasan RT/RW 02/19</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#065f46', // Emerald 800
+                        secondary: '#1f2937', // Gray 800
+                        accent: '#10b981', // Emerald 500
+                        bgLight: '#f3f4f6', // Gray 100
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        
+        /* Sticky Column */
+        .sticky-col {
+            position: sticky;
+            left: 0;
+            background-color: white;
+            z-index: 10;
+            border-right: 2px solid #e5e7eb;
+        }
+        thead th.sticky-col {
+            z-index: 20;
+            background-color: #f9fafb;
+        }
+
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar { height: 8px; width: 8px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Print Logic */
+        @media print {
+            .no-print { display: none !important; }
+            body { background-color: white; }
+            .print-border { border: 1px solid #000; }
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            table { font-size: 10px; }
+            .sticky-col { position: static; border: none; }
+            th, td { padding: 2px 4px; border: 1px solid #ccc; }
+        }
+    </style>
+</head>
+<body class="text-gray-700 flex flex-col min-h-screen">
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="bg-primary text-white shadow-lg sticky top-0 z-50 no-print">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <!-- Logo & Title -->
+                <div class="flex items-center space-x-3 mb-3 md:mb-0">
+                    <div class="bg-white text-primary p-2 rounded-full w-10 h-10 flex items-center justify-center font-bold text-xl shadow-md">
+                        <i class="fas fa-landmark"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold leading-tight">LINGKUNGAN PANATASAN</h1>
+                        <p class="text-xs text-emerald-100 tracking-wider">RT/RW 02/19 - ADMINISTRASI DIGITAL</p>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <nav class="flex space-x-1 md:space-x-2 text-sm font-medium overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
+                    <button onclick="switchPage('beranda')" class="nav-btn hover:bg-emerald-700 px-3 py-2 rounded transition whitespace-nowrap" id="nav-beranda">Beranda</button>
+                    <!-- MENU KAS HARIAN -->
+                    <button onclick="switchPage('kas')" class="nav-btn hover:bg-emerald-700 px-3 py-2 rounded transition whitespace-nowrap" id="nav-kas">Kas Harian</button>
+                    <!-- MENU TABUNGAN HARIAN -->
+                    <button onclick="switchPage('tabungan')" class="nav-btn hover:bg-emerald-700 px-3 py-2 rounded transition whitespace-nowrap" id="nav-tabungan">Tabungan Harian</button>
+                    
+                    <button onclick="switchPage('warga')" class="nav-btn hover:bg-emerald-700 px-3 py-2 rounded transition whitespace-nowrap" id="nav-warga">Data Warga</button>
+                    <button onclick="switchPage('laporan')" class="nav-btn hover:bg-emerald-700 px-3 py-2 rounded transition whitespace-nowrap" id="nav-laporan">Laporan</button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow container mx-auto px-4 py-6">
+
+        <!-- 1. HALAMAN BERANDA -->
+        <section id="page-beranda" class="page-section animate-fade-in">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-gradient-to-r from-primary to-emerald-600 p-8 text-white text-center">
+                    <h2 class="text-3xl font-bold mb-2">Selamat Datang Admin RT 02</h2>
+                    <p class="opacity-90">Sistem siap digunakan. Silakan pilih menu Kas atau Tabungan untuk input data.</p>
+                </div>
+                <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                    <div class="p-4 border rounded-lg hover:shadow-md transition bg-emerald-50">
+                        <i class="fas fa-users text-4xl text-primary mb-3"></i>
+                        <h3 class="font-bold text-lg">47 Warga</h3>
+                        <p class="text-sm text-gray-600">Total warga terdaftar dalam Kas Harian.</p>
+                    </div>
+                    <div class="p-4 border rounded-lg hover:shadow-md transition bg-blue-50">
+                        <i class="fas fa-edit text-4xl text-blue-800 mb-3"></i>
+                        <h3 class="font-bold text-lg">Mode Edit Aktif</h3>
+                        <p class="text-sm text-gray-600">Anda dapat langsung mengklik tabel untuk input data.</p>
+                    </div>
+                    <div class="p-4 border rounded-lg hover:shadow-md transition bg-yellow-50">
+                        <i class="fas fa-info-circle text-4xl text-yellow-600 mb-3"></i>
+                        <h3 class="font-bold text-lg">Info Validasi</h3>
+                        <p class="text-sm text-gray-600">Tabungan hanya untuk Warga No. 1-37.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. HALAMAN KAS HARIAN (ALL WARGA 1-47) -->
+        <section id="page-kas" class="page-section hidden">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-secondary">Kas Harian</h2>
+                    <p class="text-sm text-gray-500">Berlaku untuk <span class="font-bold text-primary">SELURUH WARGA (No 1-47)</span></p>
+                </div>
+                <div class="space-x-2 no-print">
+                    <button onclick="window.print()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded text-sm transition font-medium">
+                        <i class="fas fa-print mr-1"></i> Cetak
+                    </button>
+                    <button onclick="alert('Export Excel Kas Harian (Simulasi)')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm transition font-medium">
+                        <i class="fas fa-file-excel mr-1"></i> Excel
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+                <div class="overflow-x-auto custom-scroll pb-2">
+                    <table class="w-full text-xs md:text-sm text-left whitespace-nowrap">
+                        <thead class="bg-blue-50 text-gray-700 uppercase font-medium">
+                            <tr class="border-b">
+                                <th class="px-4 py-3 sticky-col min-w-[50px] bg-blue-50">No</th>
+                                <th class="px-4 py-3 sticky-col left-[50px] min-w-[180px] shadow-sm bg-blue-50">Nama Warga</th>
+                                <!-- Loop dates JS -->
+                                <script>
+                                    for(let i=1; i<=31; i++) {
+                                        document.write(`<th class="px-2 py-3 text-center min-w-[40px] border-l border-blue-100">${i}</th>`);
+                                    }
+                                </script>
+                                <th class="px-4 py-3 bg-yellow-50 text-yellow-900 border-l border-yellow-200 min-w-[100px] text-right font-bold">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="kas-table-body" class="divide-y divide-gray-100">
+                            <!-- JS Generated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="mt-2 text-xs text-gray-500 italic bg-blue-50 p-2 rounded">
+                <i class="fas fa-pen mr-1"></i> Klik pada kotak tanggal untuk input/edit jumlah Kas & Keterangan.
+            </div>
+        </section>
+
+        <!-- 3. HALAMAN TABUNGAN HARIAN (ONLY 1-37) -->
+        <section id="page-tabungan" class="page-section hidden">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-secondary">Tabungan Harian</h2>
+                    <p class="text-sm text-gray-500">Khusus <span class="font-bold text-primary">WARGA No 1 - 37</span></p>
+                </div>
+                <div class="space-x-2 no-print">
+                    <button onclick="window.print()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded text-sm transition font-medium">
+                        <i class="fas fa-print mr-1"></i> Cetak
+                    </button>
+                    <button onclick="alert('Export Excel Tabungan (Simulasi)')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm transition font-medium">
+                        <i class="fas fa-file-excel mr-1"></i> Excel
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+                <div class="overflow-x-auto custom-scroll pb-2">
+                    <table class="w-full text-xs md:text-sm text-left whitespace-nowrap">
+                        <thead class="bg-emerald-50 text-gray-700 uppercase font-medium">
+                            <tr class="border-b">
+                                <th class="px-4 py-3 sticky-col min-w-[50px] bg-emerald-50">No</th>
+                                <th class="px-4 py-3 sticky-col left-[50px] min-w-[180px] shadow-sm bg-emerald-50">Nama Warga</th>
+                                <!-- Loop dates JS -->
+                                <script>
+                                    for(let i=1; i<=31; i++) {
+                                        document.write(`<th class="px-2 py-3 text-center min-w-[40px] border-l border-emerald-100">${i}</th>`);
+                                    }
+                                </script>
+                                <th class="px-4 py-3 bg-yellow-50 text-yellow-900 border-l border-yellow-200 min-w-[100px] text-right font-bold">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="savings-table-body" class="divide-y divide-gray-100">
+                            <!-- JS Generated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="mt-2 text-xs text-gray-500 italic bg-emerald-50 p-2 rounded">
+                <i class="fas fa-pen mr-1"></i> Klik pada kotak tanggal untuk input/edit Tabungan. (Warga No. 38 s/d 47 tidak ditampilkan).
+            </div>
+        </section>
+
+        <!-- 4. HALAMAN DATA WARGA -->
+        <section id="page-warga" class="page-section hidden">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex flex-col md:flex-row justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-secondary mb-4 md:mb-0">Daftar Warga (47)</h2>
+                    <div class="relative">
+                        <input type="text" id="search-warga" onkeyup="renderResidents()" placeholder="Cari nama..." class="border rounded-full pl-10 pr-4 py-2 text-sm w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-primary">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400 text-xs"></i>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-50 text-gray-600 border-b">
+                            <tr>
+                                <th class="px-4 py-3 w-10">No</th>
+                                <th class="px-4 py-3">Nama Lengkap</th>
+                                <th class="px-4 py-3">Status Program</th>
+                                <th class="px-4 py-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="residents-table-body" class="divide-y">
+                            <!-- Data generated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. HALAMAN LAPORAN -->
+        <section id="page-laporan" class="page-section hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-primary">
+                    <h3 class="text-lg font-bold mb-4 text-gray-800">Rekapitulasi Tabungan</h3>
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-gray-600">Total Saldo Tabungan</span>
+                        <span class="text-xl font-bold text-primary" id="report-total-savings">Rp 0</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Hanya mencakup warga No 1-37</div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-blue-600">
+                    <h3 class="text-lg font-bold mb-4 text-gray-800">Rekapitulasi Kas</h3>
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-gray-600">Total Saldo Kas</span>
+                        <span class="text-xl font-bold text-blue-600" id="report-total-kas">Rp 0</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Mencakup seluruh warga (No 1-47)</div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-secondary text-gray-300 py-6 mt-auto no-print">
+        <div class="container mx-auto px-4 text-center md:text-left">
+            <h4 class="font-bold text-white">Lingkungan Panatasan RT 02 / RW 19</h4>
+            <p class="text-xs mt-1">&copy; 2024 Sistem Administrasi Digital.</p>
+        </div>
+    </footer>
+
+    <!-- MODAL INPUT (SINGLE MODAL FOR BOTH) -->
+    <div id="modal-edit" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-11/12 md:w-96 p-6 transform transition-all">
+            <h3 class="text-lg font-bold mb-2" id="modal-title">Input Data</h3>
+            <p class="text-sm text-gray-500 mb-4" id="modal-info">Warga: - | Tanggal: -</p>
+            
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nominal (Rp)</label>
+            <input type="number" id="input-nominal" class="w-full border rounded px-3 py-2 mb-3 focus:ring-2 focus:ring-primary focus:outline-none" placeholder="0">
+            
+            <label class="block text-sm font-medium text-gray-700 mb-1">Keterangan (Opsional)</label>
+            <input type="text" id="input-ket" class="w-full border rounded px-3 py-2 mb-4 focus:ring-2 focus:ring-primary focus:outline-none" placeholder="Catatan...">
+            
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeModal()" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">Batal</button>
+                <button onclick="saveTransaction()" class="px-4 py-2 text-sm bg-primary text-white rounded hover:bg-emerald-700">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- 1. DATA REAL WARGA (47 Nama) - URUTAN TETAP ---
+        const rawNames = [
+            "WAWAN R", "SAKRI", "YAYAT H", "EDENG K", "SATIA P", "SAHIDI", "ADE JENI",
+            "DANIL/REKA", "DODI/ANOY", "KUNDANG", "IDA DIANA", "TISNA", "JONIH", "AMUNG",
+            "ENCUS", "SANA", "NURDIN", "M. AZIS", "PERMANA", "UHO", "DEDE R DANIEL",
+            "DINDIN", "TUTI W", "ERO S", "ACO Y", "DEDI", "ROHANA", "YEYET", "DIAH",
+            "MAMAH", "DODI DWI P", "TETI M", "KUSNADI", "YANA S", "ENOK S", "HERI P",
+            "NANDANG", // No 37 (Batas Akhir Tabungan)
+            "ENDANG D", "IRAWAN", "KARTI", "ANAH", "EMONG S", "GUGUM Y",
+            "KUSWANTO", "ENCU/INA", "MAMAN S", "WARUNG IBU IIS"
+        ];
+
+        // Generate Main Data Object
+        const residentsData = rawNames.map((name, index) => ({
+            id: index + 1,
+            name: name,
+            // Logic: 1-37 Ikut Tabungan & Kas, 38-47 Hanya Kas
+            programs: (index < 37) ? "Kas & Tabungan" : "Hanya Kas"
+        }));
+
+        // Database Sementara (In-Memory)
+        let dbTabungan = {}; 
+        let dbKas = {};
+
+        // State Global (ALWAYS ADMIN / EDITABLE)
+        let isAdmin = true; // Langsung true
+        let currentEditType = ''; // 'kas' or 'tabungan'
+        let selectedCell = { id: null, date: null };
+
+        // --- 2. UTILITY FUNCTIONS ---
+        function formatRupiah(val) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
+        }
+
+        function formatRibuan(val) {
+            if(!val) return '';
+            return (val / 1000) + 'k'; // E.g. 5000 -> 5k
+        }
+
+        // --- 3. RENDERING TABLES ---
+
+        // Render TABUNGAN (Only 1-37)
+        function renderTabunganTable() {
+            const tbody = document.getElementById('savings-table-body');
+            tbody.innerHTML = '';
+            let grandTotal = 0;
+
+            // Filter Warga No 1-37
+            const tabunganResidents = residentsData.slice(0, 37);
+
+            tabunganResidents.forEach((r) => {
+                let residentTotal = 0;
+                let cellsHtml = '';
+
+                for(let d=1; d<=31; d++) {
+                    const data = dbTabungan[r.id]?.[d];
+                    const amount = data ? data.amount : 0;
+                    residentTotal += amount;
+                    
+                    const bgClass = amount > 0 ? 'bg-emerald-100 text-emerald-800 font-bold' : '';
+                    // Cursor pointer selalu aktif
+                    const cursor = 'cursor-pointer hover:bg-emerald-200';
+
+                    cellsHtml += `
+                        <td onclick="handleCellClick(${r.id}, ${d}, 'tabungan')" 
+                            class="px-1 py-2 text-center border-l border-emerald-100 text-xs ${bgClass} ${cursor}"
+                            title="Tgl ${d}: ${amount > 0 ? formatRupiah(amount) : '-'}">
+                            ${formatRibuan(amount)}
+                        </td>
+                    `;
+                }
+                grandTotal += residentTotal;
+
+                const tr = document.createElement('tr');
+                tr.className = r.id % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                tr.innerHTML = `
+                    <td class="px-4 py-2 sticky-col border-r border-gray-200 text-center font-medium text-gray-500">${r.id}</td>
+                    <td class="px-4 py-2 sticky-col left-[50px] border-r border-gray-200 font-bold text-gray-800 truncate max-w-[180px]">${r.name}</td>
+                    ${cellsHtml}
+                    <td class="px-4 py-2 border-l border-yellow-200 bg-yellow-50 text-right font-bold text-gray-800">${formatRupiah(residentTotal)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('report-total-savings').innerText = formatRupiah(grandTotal);
+        }
+
+        // Render KAS (All 1-47)
+        function renderKasTable() {
+            const tbody = document.getElementById('kas-table-body');
+            tbody.innerHTML = '';
+            let grandTotal = 0;
+
+            // Semua Warga
+            residentsData.forEach((r) => {
+                let residentTotal = 0;
+                let cellsHtml = '';
+
+                for(let d=1; d<=31; d++) {
+                    const data = dbKas[r.id]?.[d];
+                    const amount = data ? data.amount : 0;
+                    const ket = data ? data.ket : '';
+                    residentTotal += amount;
+                    
+                    const bgClass = amount > 0 ? 'bg-blue-100 text-blue-800 font-bold' : '';
+                    // Cursor pointer selalu aktif
+                    const cursor = 'cursor-pointer hover:bg-blue-200';
+                    const title = amount > 0 ? `Rp${amount} (${ket || 'OK'})` : 'Klik untuk input';
+
+                    cellsHtml += `
+                        <td onclick="handleCellClick(${r.id}, ${d}, 'kas')" 
+                            class="px-1 py-2 text-center border-l border-blue-100 text-xs ${bgClass} ${cursor}"
+                            title="${title}">
+                            ${formatRibuan(amount)}
+                        </td>
+                    `;
+                }
+                grandTotal += residentTotal;
+
+                const tr = document.createElement('tr');
+                tr.className = r.id % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                tr.innerHTML = `
+                    <td class="px-4 py-2 sticky-col border-r border-gray-200 text-center font-medium text-gray-500">${r.id}</td>
+                    <td class="px-4 py-2 sticky-col left-[50px] border-r border-gray-200 font-bold text-gray-800 truncate max-w-[180px]">${r.name}</td>
+                    ${cellsHtml}
+                    <td class="px-4 py-2 border-l border-yellow-200 bg-yellow-50 text-right font-bold text-gray-800">${formatRupiah(residentTotal)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('report-total-kas').innerText = formatRupiah(grandTotal);
+        }
+
+        // Render Data Warga List
+        function renderResidents() {
+            const tbody = document.getElementById('residents-table-body');
+            const keyword = document.getElementById('search-warga').value.toLowerCase();
+            tbody.innerHTML = '';
+
+            const filtered = residentsData.filter(r => r.name.toLowerCase().includes(keyword));
+
+            filtered.forEach((r) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition";
+                tr.innerHTML = `
+                    <td class="px-4 py-3 font-medium text-gray-500 text-center">${r.id}</td>
+                    <td class="px-4 py-3 font-bold text-gray-800">${r.name}</td>
+                    <td class="px-4 py-3"><span class="bg-gray-100 text-xs px-2 py-1 rounded border">${r.programs}</span></td>
+                    <td class="px-4 py-3 text-center text-xs">
+                        <span class="text-blue-600">Terdaftar</span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- 4. INTERACTION LOGIC ---
+
+        function switchPage(pageName) {
+            document.querySelectorAll('.page-section').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('bg-emerald-800', 'shadow-inner'));
+
+            const target = document.getElementById(`page-${pageName}`);
+            target.classList.remove('hidden');
+            target.classList.add('animate-fade-in');
+
+            document.getElementById(`nav-${pageName}`).classList.add('bg-emerald-800', 'shadow-inner');
+
+            if(pageName === 'kas') renderKasTable();
+            if(pageName === 'tabungan') renderTabunganTable();
+            if(pageName === 'warga') renderResidents();
+        }
+
+        // --- 5. MODAL LOGIC (Unified for Kas & Tabungan) ---
+
+        function handleCellClick(id, date, type) {
+            // Langsung buka modal tanpa cek isAdmin (karena selalu admin)
+            
+            currentEditType = type;
+            selectedCell = { id, date };
+            
+            const r = residentsData.find(x => x.id === id);
+            
+            let currentData = null;
+            if(type === 'kas') currentData = dbKas[id]?.[date];
+            else currentData = dbTabungan[id]?.[date];
+
+            const amt = currentData ? currentData.amount : '';
+            const ket = currentData ? currentData.ket : '';
+
+            // Update Modal UI
+            document.getElementById('modal-title').innerText = type === 'kas' ? 'Input Kas Harian' : 'Input Tabungan';
+            document.getElementById('modal-info').innerText = `${r.name} | Tanggal ${date}`;
+            document.getElementById('input-nominal').value = amt;
+            document.getElementById('input-ket').value = ket;
+            
+            document.getElementById('modal-edit').classList.remove('hidden');
+            document.getElementById('modal-edit').classList.add('flex');
+            document.getElementById('input-nominal').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('modal-edit').classList.add('hidden');
+            document.getElementById('modal-edit').classList.remove('flex');
+        }
+
+        function saveTransaction() {
+            const amtVal = document.getElementById('input-nominal').value;
+            const ketVal = document.getElementById('input-ket').value;
+            const amount = parseInt(amtVal);
+
+            const { id, date } = selectedCell;
+
+            if (currentEditType === 'tabungan') {
+                if (!dbTabungan[id]) dbTabungan[id] = {};
+                
+                if (isNaN(amount) || amount <= 0) {
+                    delete dbTabungan[id][date];
+                } else {
+                    dbTabungan[id][date] = { amount: amount, ket: ketVal };
+                }
+                renderTabunganTable();
+            } 
+            else if (currentEditType === 'kas') {
+                if (!dbKas[id]) dbKas[id] = {};
+
+                if (isNaN(amount) || amount <= 0) {
+                    delete dbKas[id][date];
+                } else {
+                    dbKas[id][date] = { amount: amount, ket: ketVal };
+                }
+                renderKasTable();
+            }
+
+            closeModal();
+        }
+
+        // --- 6. INIT DUMMY DATA ---
+        function initDummy() {
+            // Init Data Dummy untuk Kas
+            residentsData.forEach(r => {
+                dbKas[r.id] = {};
+                if(Math.random() > 0.5) { 
+                    dbKas[r.id][1] = { amount: 2000, ket: "Lunas" };
+                    if(Math.random() > 0.5) dbKas[r.id][10] = { amount: 2000, ket: "Lunas" };
+                }
+            });
+
+            // Init Data Dummy untuk Tabungan (1-37)
+            residentsData.slice(0,37).forEach(r => {
+                dbTabungan[r.id] = {};
+                if(Math.random() > 0.6) {
+                    dbTabungan[r.id][5] = { amount: 10000, ket: "" };
+                    dbTabungan[r.id][20] = { amount: 50000, ket: "" };
+                }
+            });
+        }
+
+        window.onload = function() {
+            initDummy();
+            switchPage('beranda');
+        };
+
+    </script>
+</body>
+</html>
