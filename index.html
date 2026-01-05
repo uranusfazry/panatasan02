@@ -3,29 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Tabungan & Kas RT 02/19 - Administratif 2026</title>
+    <title>DATA KEUANGAN RT/RW 02/19</title>
+    
+    <!-- Google Fonts: Poppins for Modern Look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
+    <!-- Tailwind Config for Custom Colors -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        primary: '#065f46', // Emerald 800
-                        secondary: '#1f2937', // Gray 800
-                        accent: '#10b981', // Emerald 500
-                        bgLight: '#f3f4f6', // Gray 100
-                    },
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+                        sans: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        'genz-green': '#10B981', // Tabungan
+                        'genz-blue': '#3B82F6',  // Kas
+                        'genz-red': '#EF4444',   // Pengeluaran
+                        'genz-yellow': '#F59E0B', // Laporan
+                        'genz-dark': '#1F2937',
+                        'genz-bg': '#F3F4F6'
                     }
                 }
             }
@@ -33,639 +35,862 @@
     </script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        
-        /* Sticky Column Logic */
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+
+        /* Sticky Columns & Headers */
         .sticky-col {
             position: sticky;
             left: 0;
             background-color: white;
-            z-index: 10;
-            border-right: 2px solid #e5e7eb;
-        }
-        thead th.sticky-col {
             z-index: 20;
-            background-color: #f9fafb;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
         }
-        /* Fix overlapping borders in sticky */
-        .sticky-col.left-[40px] { left: 40px; }
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+        }
 
-        /* Custom Scrollbar */
-        .custom-scroll::-webkit-scrollbar { height: 8px; width: 8px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* Form Elements Style */
+        .select-modern {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+            -webkit-appearance: none;
+            appearance: none;
+        }
 
-        /* Print Logic - WAJIB CETAK WARNA */
+        /* Print Styles */
         @media print {
             .no-print { display: none !important; }
-            body { background-color: white; }
-            table { font-size: 7px !important; } /* Font diperkecil agar muat kertas */
-            .sticky-col { position: static; border: none; }
-            th, td { padding: 2px; border: 1px solid #000; }
-            
-            /* Paksa cetak background color */
-            -webkit-print-color-adjust: exact !important;   
-            print-color-adjust: exact !important; 
+            .print-only { display: block !important; }
+            body { background: white; -webkit-print-color-adjust: exact; }
+            .card { box-shadow: none; border: 1px solid #ddd; }
+            .overflow-x-auto { overflow: visible !important; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #000 !important; padding: 4px; font-size: 10px; }
+            .sticky-col, .sticky-header { position: static !important; }
+        }
 
-            #page-laporan, #page-kas { display: block; break-before: page; }
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Style Tabel Administratif */
-        .cell-nominal {
-            font-family: 'Courier New', monospace; /* Monospace agar angka sejajar */
-            font-weight: 600;
-            font-size: 10px; /* Ukuran pas untuk format Rp.X.XXX */
-            letter-spacing: -0.5px;
+        .tab-active {
+            background-color: white;
+            color: #1F2937;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-bottom: 3px solid;
         }
     </style>
 </head>
-<body class="text-gray-700 flex flex-col min-h-screen">
+<body class="bg-genz-bg text-genz-dark font-sans min-h-screen flex flex-col md:flex-row overflow-hidden">
 
-    <!-- HEADER -->
-    <header class="bg-primary text-white shadow-lg sticky top-0 z-50 no-print transition-colors duration-300" id="main-header">
-        <div class="container mx-auto px-4 py-3">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="flex items-center space-x-3 mb-3 md:mb-0">
-                    <div class="bg-white text-primary p-2 rounded-full w-10 h-10 flex items-center justify-center font-bold text-xl shadow-md" id="header-icon">
-                        <i class="fas fa-wallet"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-lg font-bold leading-tight">LINGKUNGAN PANATASAN</h1>
-                        <p class="text-xs text-white/80 tracking-wider">RT/RW 02/19 - ADMINISTRASI 2026</p>
-                    </div>
-                </div>
-
-                <nav class="flex space-x-2 text-sm font-medium">
-                    <button onclick="switchPage('tabungan')" class="nav-btn bg-white/20 shadow-inner px-3 py-2 rounded transition border border-transparent hover:border-white/50" id="nav-tabungan">
-                        <i class="fas fa-table mr-1"></i> Tabungan
-                    </button>
-                    <button onclick="switchPage('kas')" class="nav-btn hover:bg-white/10 px-3 py-2 rounded transition border border-transparent hover:border-white/50" id="nav-kas">
-                        <i class="fas fa-coins mr-1"></i> Kas Harian
-                    </button>
-                    <button onclick="switchPage('laporan')" class="nav-btn hover:bg-white/10 px-3 py-2 rounded transition border border-transparent hover:border-white/50" id="nav-laporan">
-                        <i class="fas fa-chart-line mr-1"></i> Laporan
-                    </button>
-                </nav>
-            </div>
-        </div>
-    </header>
-
-    <!-- MAIN CONTENT -->
-    <main class="flex-grow container mx-auto px-4 py-6">
-
-        <!-- GLOBAL CONTROL: BULAN -->
-        <div id="global-controls" class="bg-white rounded-lg shadow-sm p-3 mb-4 flex justify-between items-center sticky top-[70px] z-40 border-b border-gray-200">
-            <div class="flex items-center space-x-2">
-                <span class="text-sm font-bold text-gray-500 uppercase">Bulan:</span>
-                <select id="month-selector" onchange="changeMonth()" class="bg-gray-50 border border-gray-300 text-gray-800 text-sm rounded focus:ring-primary focus:border-primary block p-1.5 font-semibold">
-                    <option value="0">Januari</option>
-                    <option value="1">Februari</option>
-                    <option value="2">Maret</option>
-                    <option value="3">April</option>
-                    <option value="4">Mei</option>
-                    <option value="5">Juni</option>
-                    <option value="6">Juli</option>
-                    <option value="7">Agustus</option>
-                    <option value="8">September</option>
-                    <option value="9">Oktober</option>
-                    <option value="10">November</option>
-                    <option value="11">Desember</option>
-                </select>
-                <span class="text-sm font-bold text-gray-800">2026</span>
-            </div>
-            <div class="no-print">
-                 <button onclick="window.print()" class="bg-gray-800 text-white px-3 py-1.5 rounded hover:bg-gray-700 text-sm font-medium shadow">
-                    <i class="fas fa-print mr-1"></i> Cetak Dokumen
-                </button>
-            </div>
-        </div>
-
-        <!-- 1. HALAMAN TABUNGAN HARIAN -->
-        <section id="page-tabungan" class="page-section animate-fade-in">
-            <div class="bg-emerald-50 border-l-4 border-emerald-600 p-3 mb-3 rounded-r shadow-sm">
-                <h2 class="text-lg font-bold text-emerald-800 uppercase tracking-wide">
-                    <i class="fas fa-book mr-2"></i>Tabel Tabungan Harian
-                </h2>
-            </div>
-
-            <!-- TABEL TABUNGAN -->
-            <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden relative">
-                <div class="overflow-x-auto custom-scroll pb-2">
-                    <table class="w-full text-left whitespace-nowrap">
-                        <thead class="bg-gray-100 text-gray-700 uppercase font-bold text-xs">
-                            <tr class="border-b border-gray-300" id="savings-header-row">
-                                <!-- Headers generated by JS -->
-                            </tr>
-                        </thead>
-                        <tbody id="savings-table-body" class="divide-y divide-gray-200 bg-white">
-                            <!-- Rows generated by JS -->
-                        </tbody>
-                    </table>
-                </div>
+    <!-- SIDEBAR NAV (Desktop) / TOPBAR (Mobile) -->
+    <nav class="bg-white w-full md:w-72 md:h-screen shadow-xl z-50 flex flex-col justify-between shrink-0 no-print">
+        <div>
+            <!-- Header Brand -->
+            <div class="p-6 border-b border-gray-100 bg-gradient-to-br from-indigo-600 to-purple-600 text-white">
+                <h1 class="text-xl font-bold tracking-wider">RT/RW 02/19</h1>
+                <p class="text-xs opacity-80 mt-1">Sistem Keuangan Multi-Tahun</p>
             </div>
             
-            <!-- SUMMARY CARDS TABUNGAN -->
-            <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 no-print">
-                <div class="bg-white p-4 rounded shadow border-l-4 border-emerald-500">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase">Total Bulan Ini</h4>
-                    <p class="text-xl font-bold text-emerald-700" id="display-total-month">Rp 0</p>
-                </div>
-                <div class="bg-white p-4 rounded shadow border-l-4 border-emerald-500">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase">Total Akumulasi 2026</h4>
-                    <p class="text-xl font-bold text-emerald-700" id="display-total-year">Rp 0</p>
-                </div>
-                <div class="bg-white p-4 rounded shadow border-l-4 border-gray-400">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase">Jumlah Transaksi</h4>
-                    <p class="text-xl font-bold text-gray-600" id="display-active-transactions">0</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- 2. HALAMAN KAS HARIAN -->
-        <section id="page-kas" class="page-section hidden animate-fade-in">
-            <div class="bg-blue-50 border-l-4 border-blue-600 p-3 mb-3 rounded-r shadow-sm flex flex-col md:flex-row justify-between items-center">
-                <div>
-                    <h2 class="text-lg font-bold text-blue-800 uppercase tracking-wide">
-                        <i class="fas fa-donate mr-2"></i>Tabel Kas Harian
-                    </h2>
-                    <p class="text-xs text-blue-600 mt-1 font-semibold">Tarif Tetap: Rp.500 per transaksi tabungan</p>
+            <!-- PERIOD SELECTOR (NEW) -->
+            <div class="p-4 bg-indigo-50 border-b border-indigo-100">
+                <label class="text-[10px] uppercase font-bold text-indigo-500 tracking-wider mb-2 block">Pilih Periode Aktif</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="sel-month" onchange="changePeriod()" class="select-modern w-full bg-white border border-indigo-200 text-gray-700 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2">
+                        <!-- JS Generated -->
+                    </select>
+                    <select id="sel-year" onchange="changePeriod()" class="select-modern w-full bg-white border border-indigo-200 text-gray-700 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2">
+                        <!-- JS Generated -->
+                    </select>
                 </div>
             </div>
 
-            <!-- TABEL KAS -->
-            <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden relative">
-                <div class="overflow-x-auto custom-scroll pb-2">
-                    <table class="w-full text-left whitespace-nowrap">
-                        <thead class="bg-blue-50 text-gray-700 uppercase font-bold text-xs">
-                            <tr class="border-b border-blue-200" id="kas-header-row">
-                                <!-- Headers generated by JS -->
+            <!-- Navigation Tabs -->
+            <div class="flex flex-row md:flex-col overflow-x-auto md:overflow-visible p-2 md:p-4 gap-2">
+                <button onclick="switchTab('tabungan')" id="btn-tabungan" class="tab-btn flex items-center p-3 rounded-xl transition-all hover:bg-emerald-50 text-gray-500 hover:text-emerald-600 w-full text-left group">
+                    <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">💰</span>
+                    <span class="font-medium">Tabungan</span>
+                </button>
+                
+                <button onclick="switchTab('kas')" id="btn-kas" class="tab-btn flex items-center p-3 rounded-xl transition-all hover:bg-blue-50 text-gray-500 hover:text-blue-600 w-full text-left group">
+                    <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">💎</span>
+                    <span class="font-medium">Kas Harian</span>
+                </button>
+                
+                <button onclick="switchTab('transaksi')" id="btn-transaksi" class="tab-btn flex items-center p-3 rounded-xl transition-all hover:bg-rose-50 text-gray-500 hover:text-rose-600 w-full text-left group">
+                    <span class="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">📉</span>
+                    <span class="font-medium">In & Out</span>
+                </button>
+                
+                <button onclick="switchTab('laporan')" id="btn-laporan" class="tab-btn flex items-center p-3 rounded-xl transition-all hover:bg-amber-50 text-gray-500 hover:text-amber-600 w-full text-left group">
+                    <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">📊</span>
+                    <span class="font-medium">Laporan</span>
+                </button>
+                
+                <div class="mt-4 px-4 pt-4 border-t border-gray-100">
+                    <button onclick="resetData()" class="text-[10px] text-red-400 hover:text-red-600 underline w-full text-left">
+                        Hard Reset (Hapus Semua Data)
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-4 text-xs text-center text-gray-400 border-t">
+            &copy; 2026-2030 RT 02/19
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 relative">
+        
+        <!-- Header Mobile/Print -->
+        <div class="mb-8 flex justify-between items-center">
+            <div>
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800" id="page-title">DATA KEUANGAN</h2>
+                <p class="text-sm text-gray-500 flex items-center mt-1">
+                    <span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-xs font-bold mr-2" id="header-period-badge">JAN 2026</span>
+                    Update Real-time
+                </p>
+            </div>
+            <button onclick="window.print()" class="no-print bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-lg transition-all transform hover:-translate-y-1">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                Cetak
+            </button>
+        </div>
+
+        <!-- VIEW: TABUNGAN -->
+        <div id="view-tabungan" class="view-section fade-in hidden">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-4 border-b border-gray-100 bg-emerald-50/50 flex justify-between items-center">
+                    <h3 class="font-bold text-emerald-700 flex items-center">Tabungan Harian</h3>
+                    <div class="text-xs text-gray-500 italic" id="tabungan-status-text">Data Periode Aktif</div>
+                </div>
+                <div class="overflow-x-auto max-h-[70vh]">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 sticky-header shadow-sm">
+                            <tr>
+                                <th class="px-4 py-3 sticky-col bg-gray-50 border-r w-12 text-center">No</th>
+                                <th class="px-4 py-3 sticky-col bg-gray-50 border-r w-48 left-12">Nama Warga</th>
+                                <!-- Generated by JS: 1-31 -->
+                                <script>
+                                    for(let i=1; i<=31; i++) {
+                                        // Highlight 1-5 only relevant for old CSV, but new months might be full.
+                                        // keeping simple
+                                        document.write(`<th class="px-2 py-3 text-center min-w-[60px] border-r hover:bg-gray-200 cursor-default">${i}</th>`);
+                                    }
+                                </script>
+                                <th class="px-4 py-3 font-bold text-emerald-600 bg-emerald-50 text-right min-w-[120px]">Total</th>
                             </tr>
                         </thead>
-                        <tbody id="kas-table-body" class="divide-y divide-gray-200 bg-white">
-                            <!-- Rows generated by JS -->
+                        <tbody id="table-tabungan-body">
+                            <!-- Populated by JS -->
                         </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- SUMMARY CARDS KAS -->
-            <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 no-print">
-                <div class="bg-white p-4 rounded shadow border-l-4 border-blue-500">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase">Total Kas (Bulan)</h4>
-                    <p class="text-xl font-bold text-blue-700" id="kas-total-month">Rp 0</p>
-                </div>
-                <div class="bg-white p-4 rounded shadow border-l-4 border-blue-500">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase">Total Kas (Tahun)</h4>
-                    <p class="text-xl font-bold text-blue-700" id="kas-total-year">Rp 0</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- 3. HALAMAN LAPORAN -->
-        <section id="page-laporan" class="page-section hidden animate-fade-in">
-             <div class="bg-white p-8 rounded shadow border-t-4 border-yellow-500">
-                <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">REKAPITULASI TAHUNAN 2026</h2>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left border border-gray-300">
-                        <thead class="bg-gray-200 text-gray-700 uppercase">
+                        <tfoot class="bg-gray-100 font-bold text-gray-800 sticky bottom-0">
                             <tr>
-                                <th class="p-3 border border-gray-300">Bulan</th>
-                                <th class="p-3 border border-gray-300 text-right">Total Tabungan</th>
-                                <th class="p-3 border border-gray-300 text-right">Total Kas</th>
-                            </tr>
-                        </thead>
-                        <tbody id="report-body">
-                            <!-- Generated by JS -->
-                        </tbody>
-                        <tfoot class="bg-gray-100 font-bold text-gray-800">
-                            <tr>
-                                <td class="p-3 border border-gray-300">TOTAL AKHIR TAHUN 2026</td>
-                                <td class="p-3 border border-gray-300 text-right text-emerald-700 text-lg" id="report-grand-total">Rp 0</td>
-                                <td class="p-3 border border-gray-300 text-right text-blue-700 text-lg" id="report-grand-kas">Rp 0</td>
+                                <td colspan="2" class="px-4 py-3 text-right sticky-col bg-gray-100 border-r shadow-sm">TOTAL TANGGAL</td>
+                                <script>
+                                    for(let i=1; i<=31; i++) {
+                                        document.write(`<td id="tf-tab-${i}" class="px-2 py-3 text-center border-r text-xs text-gray-500">-</td>`);
+                                    }
+                                </script>
+                                <td id="tf-tab-total" class="px-4 py-3 text-right text-emerald-700 bg-emerald-100">0</td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
             </div>
-        </section>
+        </div>
+
+        <!-- VIEW: KAS HARIAN -->
+        <div id="view-kas" class="view-section fade-in hidden">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-4 border-b border-gray-100 bg-blue-50/50 flex justify-between items-center">
+                    <h3 class="font-bold text-blue-700 flex items-center">Kas Harian (Rp.500)</h3>
+                    <div class="text-xs text-gray-500 italic" id="kas-status-text">*Klik sel untuk ubah manual</div>
+                </div>
+                <div class="overflow-x-auto max-h-[70vh]">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 sticky-header shadow-sm">
+                            <tr>
+                                <th class="px-4 py-3 sticky-col bg-gray-50 border-r w-12 text-center">No</th>
+                                <th class="px-4 py-3 sticky-col bg-gray-50 border-r w-48 left-12">Nama Warga</th>
+                                <script>
+                                    for(let i=1; i<=31; i++) {
+                                        document.write(`<th class="px-2 py-3 text-center min-w-[60px] border-r hover:bg-gray-200 cursor-default">${i}</th>`);
+                                    }
+                                </script>
+                                <th class="px-4 py-3 font-bold text-blue-600 bg-blue-50 text-right min-w-[120px]">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-kas-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                        <tfoot class="bg-gray-100 font-bold text-gray-800 sticky bottom-0">
+                            <tr>
+                                <td colspan="2" class="px-4 py-3 text-right sticky-col bg-gray-100 border-r shadow-sm">TOTAL TANGGAL</td>
+                                <script>
+                                    for(let i=1; i<=31; i++) {
+                                        document.write(`<td id="tf-kas-${i}" class="px-2 py-3 text-center border-r text-xs text-gray-500">-</td>`);
+                                    }
+                                </script>
+                                <td id="tf-kas-total" class="px-4 py-3 text-right text-blue-700 bg-blue-100">0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: TRANSAKSI -->
+        <div id="view-transaksi" class="view-section fade-in hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Form Input -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 sticky top-4">
+                        <h3 class="font-bold text-lg mb-4 text-gray-800">Input Transaksi</h3>
+                        <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
+                            Transaksi akan dicatat untuk periode: <br>
+                            <span class="font-bold text-sm" id="trx-period-label">JANUARI 2026</span>
+                        </div>
+                        <form id="form-transaksi" onsubmit="handleTransactionSubmit(event)">
+                            <div class="mb-4">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tanggal</label>
+                                <input type="date" id="t-date" required class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Jenis</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="t-type" value="in" class="peer sr-only" required>
+                                        <div class="text-center py-2 rounded-lg border border-gray-200 peer-checked:bg-emerald-100 peer-checked:text-emerald-700 peer-checked:border-emerald-500 hover:bg-gray-50 transition">
+                                            Masuk 🟢
+                                        </div>
+                                    </label>
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="t-type" value="out" class="peer sr-only">
+                                        <div class="text-center py-2 rounded-lg border border-gray-200 peer-checked:bg-rose-100 peer-checked:text-rose-700 peer-checked:border-rose-500 hover:bg-gray-50 transition">
+                                            Keluar 🔴
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Keterangan</label>
+                                <input type="text" id="t-desc" placeholder="Cth: Uang Kebersihan" required class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div class="mb-6">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nominal (Rp)</label>
+                                <input type="number" id="t-amount" placeholder="0" min="500" step="500" required class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <button type="submit" class="w-full bg-gray-900 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">Simpan Transaksi</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Table History -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                            <h3 class="font-bold text-gray-700">Riwayat Transaksi Bulan Ini</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-gray-50 text-xs uppercase text-gray-500">
+                                    <tr>
+                                        <th class="px-4 py-3">Tanggal</th>
+                                        <th class="px-4 py-3">Ket</th>
+                                        <th class="px-4 py-3">Masuk</th>
+                                        <th class="px-4 py-3">Keluar</th>
+                                        <th class="px-4 py-3 text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-transaksi-body">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="empty-transaksi" class="hidden p-8 text-center text-gray-400">
+                            Belum ada data transaksi di periode ini.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: LAPORAN -->
+        <div id="view-laporan" class="view-section fade-in hidden">
+            <!-- Header Print Only -->
+            <div class="hidden print-only text-center mb-8 border-b-2 border-black pb-4">
+                <h1 class="text-2xl font-bold uppercase">Laporan Keuangan RT/RW 02/19</h1>
+                <p class="text-sm font-bold" id="rpt-print-period">Periode: -</p>
+            </div>
+
+            <!-- Grand Total Big Card (ACTIVE MONTH) -->
+            <div class="mb-4 flex items-center justify-between">
+                <h3 class="font-bold text-gray-800 text-lg border-l-4 border-indigo-500 pl-3">Laporan Bulan Aktif</h3>
+                <span class="text-sm text-gray-500" id="rpt-month-label">Januari</span>
+            </div>
+
+            <div class="bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl shadow-lg p-6 text-white mb-6 relative overflow-hidden">
+                <div class="relative z-10 flex flex-col md:flex-row justify-between items-center">
+                    <div>
+                        <p class="text-amber-100 text-sm font-medium uppercase tracking-widest mb-1">Saldo Akhir (Bulan Ini)</p>
+                        <h2 class="text-4xl md:text-5xl font-bold" id="rpt-saldo">Rp.0</h2>
+                    </div>
+                    <div class="mt-4 md:mt-0 text-right opacity-90 text-sm">
+                        <p>Tabungan: <span id="rpt-tabungan" class="font-bold">0</span></p>
+                        <p>Kas: <span id="rpt-kas" class="font-bold">0</span></p>
+                        <p>In/Out: <span id="rpt-inout" class="font-bold">0</span></p>
+                    </div>
+                </div>
+                <div class="absolute -right-10 -bottom-20 w-64 h-64 bg-white opacity-10 rounded-full"></div>
+            </div>
+
+            <!-- Yearly Summary (REKAP TAHUNAN) -->
+            <div class="mb-4 mt-8 flex items-center justify-between">
+                <h3 class="font-bold text-gray-800 text-lg border-l-4 border-emerald-500 pl-3">Rekapitulasi Tahun <span id="rpt-year-val">2026</span></h3>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-gray-100 text-xs uppercase text-gray-600">
+                        <tr>
+                            <th class="px-4 py-3">Bulan</th>
+                            <th class="px-4 py-3 text-right text-emerald-600">Tabungan</th>
+                            <th class="px-4 py-3 text-right text-blue-600">Kas</th>
+                            <th class="px-4 py-3 text-right text-gray-600">Pemasukan</th>
+                            <th class="px-4 py-3 text-right text-rose-600">Pengeluaran</th>
+                            <th class="px-4 py-3 text-right font-bold">Saldo Bersih</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-rekap-body">
+                        <!-- Populated by JS -->
+                    </tbody>
+                    <tfoot class="bg-gray-800 text-white font-bold">
+                        <tr id="table-rekap-footer">
+                            <!-- Footer Totals -->
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Signature Section (Print Only) -->
+            <div class="hidden print-only mt-16 grid grid-cols-2 gap-8 text-center">
+                <div>
+                    <p class="mb-16">Mengetahui,<br>Ketua RT 02</p>
+                    <p class="font-bold border-t border-black inline-block px-8 pt-1">Bpk. Ketua</p>
+                </div>
+                <div>
+                    <p class="mb-16">Dibuat Oleh,<br>Bendahara</p>
+                    <p class="font-bold border-t border-black inline-block px-8 pt-1">Ibu Bendahara</p>
+                </div>
+            </div>
+        </div>
 
     </main>
 
-    <!-- FOOTER -->
-    <footer class="bg-secondary text-gray-300 py-6 mt-auto no-print">
-        <div class="container mx-auto px-4 text-center">
-            <p class="text-xs">&copy; 2026 Sistem Administrasi Lingkungan Panatasan RT 02/19.</p>
-        </div>
-    </footer>
-
-    <!-- MODAL INPUT -->
-    <div id="modal-edit" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-xl w-11/12 md:w-96 p-6 transform transition-all">
-            <h3 class="text-lg font-bold mb-2 text-emerald-700">Input Data</h3>
-            <p class="text-sm text-gray-500 mb-4" id="modal-info">Warga: - | Tanggal: -</p>
-            
-            <label class="block text-sm font-medium text-gray-700 mb-1">Nominal (Rp)</label>
-            <input type="number" id="input-nominal" class="w-full border rounded px-3 py-2 mb-3 text-lg font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="Contoh: 5000">
-            
-            <div class="flex justify-end space-x-2">
-                <button onclick="closeModal()" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">Batal</button>
-                <button onclick="saveTransaction()" class="px-4 py-2 text-sm bg-emerald-600 text-white rounded hover:bg-emerald-700 shadow">Simpan</button>
-            </div>
-        </div>
-    </div>
-
     <!-- JAVASCRIPT LOGIC -->
     <script>
-        // --- 1. CONFIGURATION ---
-        const activeYear = 2026;
-        let currentMonth = 0; // Januari
-        let selectedCell = { id: null, date: null };
-        const months = [
-            "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+        // --- KONSTANTA & CONFIG ---
+        const AVAILABLE_YEARS = [2026, 2027, 2028, 2029, 2030];
+        const MONTH_NAMES = [
+            "Januari", "Februari", "Maret", "April", "Mei", "Juni", 
             "Juli", "Agustus", "September", "Oktober", "November", "Desember"
         ];
+        const STORAGE_KEY = 'rtDataV4'; // New Key for Multi-Year structure
 
-        // --- 2. DATA WARGA ---
-        const residentsConfig = [
-            { no: 1, name: "WAWAN R", show: true },
-            { no: 2, name: "SAKRI", show: true },
-            { no: 3, name: "YAYAT H", show: true },
-            { no: 4, name: "EDENG K", show: false }, 
-            { no: 5, name: "SATIA P", show: false }, 
-            { no: 6, name: "SAHIDI", show: true },
-            { no: 7, name: "ADE JENI", show: true },
-            { no: 8, name: "DANIL/REKA", show: true },
-            { no: 9, name: "DODI/ANOY", show: true },
-            { no: 10, name: "KUNDANG", show: true },
-            { no: 11, name: "IDA DIANA", show: true },
-            { no: 12, name: "TISNA", show: true },
-            { no: 13, name: "JONIH", show: true },
-            { no: 14, name: "AMUNG", show: true },
-            { no: 15, name: "ENCU S", show: true },
-            { no: 16, name: "SANA", show: true },
-            { no: 17, name: "NURDIN", show: true },
-            { no: 18, name: "A. AZIS", show: true },
-            { no: 19, name: "PERMANA", show: true },
-            { no: 20, name: "UHO", show: true },
-            { no: 21, name: "DEDE R DANIEL", show: true },
-            { no: 22, name: "DINDIN", show: true },
-            { no: 23, name: "ALDILA", show: true },
-            { no: 24, name: "TUTI W", show: true },
-            { no: 25, name: "ERO S", show: true },
-            { no: 26, name: "ACO Y", show: false },
-            { no: 27, name: "DEDI", show: true },
-            { no: 28, name: "ROHANA", show: true },
-            { no: 29, name: "YEYET", show: true },
-            { no: 30, name: "DIAH", show: false },
-            { no: 31, name: "MAMAH", show: true },
-            { no: 32, name: "DODI DWI P", show: true },
-            { no: 33, name: "TETI M", show: true },
-            { no: 34, name: "KUSNADI", show: false },
-            { no: 35, name: "YANA S", show: true },
-            { no: 36, name: "ENOK S", show: true },
-            { no: 37, name: "HERI P", show: false },
-            { no: 38, name: "NANDANG", show: true }, 
+        // --- MASTER DATA (Untuk Template) ---
+        // Digunakan saat membuat bulan baru yang belum ada datanya
+        // Berdasarkan data Absolut Kas (50 Warga)
+        const MASTER_CITIZENS = [
+            { id: 1, name: "WAWAN R" }, { id: 2, name: "SAKRI" }, { id: 3, name: "YAYAT H" }, { id: 4, name: "EDENG K" }, { id: 5, name: "SATIA P" },
+            { id: 6, name: "SAHIDI" }, { id: 7, name: "ADE JENI" }, { id: 8, name: "DANIL/REKA" }, { id: 9, name: "DODI/ANOY" }, { id: 10, name: "KUNDANG" },
+            { id: 11, name: "IDA DIANA" }, { id: 12, name: "TISNA" }, { id: 13, name: "JONIH" }, { id: 14, name: "AMUNG" }, { id: 15, name: "ENCU S" },
+            { id: 16, name: "SANA" }, { id: 17, name: "NURDIN" }, { id: 18, name: "A.AZIS" }, { id: 19, name: "PERMANA" }, { id: 20, name: "UHO" },
+            { id: 21, name: "DEDE R DANIEL" }, { id: 22, name: "DINDIN" }, { id: 23, name: "TUTI W" }, { id: 24, name: "ERO S" }, { id: 25, name: "ACO Y" },
+            { id: 26, name: "DEDI" }, { id: 27, name: "ROHANA" }, { id: 28, name: "YEYET" }, { id: 29, name: "DIAH" }, { id: 30, name: "MAMAH" },
+            { id: 31, name: "DODI DWI P" }, { id: 32, name: "TETI M" }, { id: 33, name: "KUSNADI" }, { id: 34, name: "YANA S" }, { id: 35, name: "ENOK S" },
+            { id: 36, name: "HERI P" }, { id: 37, name: "NANDANG" }, { id: 38, name: "ENDANG D" }, { id: 39, name: "IRAWAN" }, { id: 40, name: "KARTI" },
+            { id: 41, name: "ANAH" }, { id: 42, name: "EMONG S" }, { id: 43, name: "GUGUM Y" }, { id: 44, name: "KUSWANTO" }, { id: 45, name: "ENCU /INA" },
+            { id: 46, name: "MAMAN S" }, { id: 47, name: "WARUNG IBU IIS" }, { id: 48, name: "(Kosong)" }, { id: 49, name: "(Kosong)" }, { id: 50, name: "(Kosong)" }
         ];
 
-        const activeResidents = residentsConfig.filter(r => r.show === true);
-        let dbTabungan = {}; 
+        // --- DATA ABSOLUT (HANYA UNTUK JANUARI 2026) ---
+        // Jika data V4 kosong, init dengan data ini.
+        const CSV_JAN_2026_TABUNGAN = [
+            { no: 1, s: {1: 1500, 2: 2000, 3: 3000, 4: 5000, 5: 3000} }, { no: 2, s: {1: 2000, 2: 2000, 3: 10000, 4: 10000, 5: 10000} }, { no: 3, s: {1: 4500, 2: 4500, 3: 4500, 4: 5000, 5: 5000} },
+            { no: 6, s: {1: 2000, 2: 2000, 3: 2000, 4: 2000, 5: 2000} }, { no: 7, s: {1: 2000, 2: 2000, 3: 2000, 4: 2000, 5: 2000} }, { no: 8, s: {1: 5000, 3: 10000} },
+            { no: 9, s: {1: 1500, 2: 4500, 3: 2000, 4: 3500, 5: 2000} }, { no: 10, s: {1: 1500, 2: 1500, 3: 1500, 5: 5500} }, { no: 11, s: {1: 1500, 2: 1500, 3: 1500, 4: 1500, 5: 1500} },
+            { no: 13, s: {1: 5500, 2: 4500, 3: 5500, 5: 9500} }, { no: 14, s: {1: 1500, 2: 5000, 3: 2000, 4: 1500, 5: 1500} }, { no: 15, s: {1: 1500, 2: 1500, 3: 1500, 4: 4500, 5: 1500} },
+            { no: 16, s: {1: 1500, 2: 2000, 3: 2000, 4: 5000, 5: 2000} }, { no: 17, s: {1: 500, 2: 2500, 3: 500, 4: 500, 5: 1500} }, { no: 18, s: {4: 1000, 5: 2000} },
+            { no: 19, s: {3: 2000, 4: 2000, 5: 4500} }, { no: 20, s: {1: 2000, 2: 1500, 3: 2000, 4: 1500, 5: 1500} }, { no: 21, s: {1: 1000, 2: 1000, 3: 1000, 4: 1000, 5: 1500} },
+            { no: 22, s: {1: 1500, 2: 1000, 3: 2000, 4: 1000, 5: 1500} }, { no: 23, s: {1: 1500, 2: 500, 3: 1500, 4: 1500, 5: 1500} }, { no: 24, s: {1: 2000, 2: 2500, 3: 500, 4: 5000, 5: 2000} },
+            { no: 26, s: {1: 500, 2: 1000, 3: 3000, 4: 3500, 5: 5000} }, { no: 27, s: {1: 2000, 2: 2000, 3: 5000, 4: 5000, 5: 5000} }, { no: 28, s: {1: 2000, 2: 2000, 3: 2000, 4: 2500, 5: 2000} },
+            { no: 29, s: {3: 1000, 4: 1000, 5: 5000} }, { no: 30, s: {1: 1500, 2: 500, 3: 1500, 4: 1500, 5: 1500} }, { no: 31, s: {1: 500, 2: 500, 3: 1000, 4: 1000, 5: 1000} },
+            { no: 32, s: {1: 500, 2: 500, 3: 1000, 4: 1000, 5: 1000} }, { no: 34, s: {1: 1500, 2: 1500, 3: 1500, 4: 1500, 5: 1500} }, { no: 36, s: {5: 10000} },
+            { no: 37, s: {1: 1500, 2: 4500, 3: 4500, 4: 4500, 5: 4500} }
+        ];
 
-        // --- 3. DATA HARIAN JANUARI 2026 ---
-        const initialDataJan2026 = {
-            1: { // TANGGAL 1
-                1: 1500, 2: 2000, 3: 4500, 6: 2000, 7: 2000, 8: 5000, 9: 1500, 10: 1500, 
-                11: 1500, 13: 5500, 14: 1500, 15: 1500, 16: 1500, 17: 500, 20: 2000, 
-                21: 1000, 22: 1500, 24: 1500, 25: 2000, 27: 500, 28: 2000, 29: 2000, 
-                31: 1500, 32: 500, 33: 500, 35: 1500, 38: 1500
-            },
-            2: { // TANGGAL 2
-                1: 2000, 2: 2000, 3: 4500, 6: 2000, 7: 2000, 9: 4500, 10: 1500, 11: 1500, 
-                13: 4500, 14: 5000, 15: 1500, 16: 2000, 17: 2500, 20: 1500, 21: 1000, 
-                22: 1000, 24: 500, 25: 2500, 27: 1000, 28: 2000, 29: 2000, 31: 500, 
-                32: 500, 33: 500, 35: 1500, 38: 4500
-            },
-            3: { // TANGGAL 3
-                1: 3000, 2: 10000, 3: 4500, 6: 2000, 7: 2000, 8: 10000, 9: 2000, 
-                10: 1500, 11: 1500, 13: 5500, 14: 2000, 15: 1500, 16: 2000, 17: 500, 
-                19: 2000, 20: 2000, 21: 1000, 22: 2000, 24: 1500, 25: 500, 27: 3000, 
-                28: 5000, 29: 2000, 31: 1500, 32: 1000, 33: 1000, 35: 1500, 38: 4500, 
-                23: 1000
-            },
-            4: { // TANGGAL 4
-                1: 5000, 2: 10000, 3: 5000, 6: 2000, 7: 2000, 9: 3500, 11: 1500, 
-                14: 1500, 15: 4500, 16: 5000, 17: 500, 18: 1000, 19: 2000, 20: 1500, 
-                21: 1000, 22: 1000, 24: 1500, 25: 5000, 27: 3500, 28: 5000, 29: 2500, 
-                31: 1500, 32: 1000, 33: 1000, 35: 1500, 38: 4500, 23: 1000
-            }
-        };
+        const CSV_JAN_2026_KAS = [
+            { no: 1, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 2, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 3, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+            { no: 4, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 6, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 7, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+            { no: 8, k: {1:500, 2:500, 3:500, 5:500} }, { no: 9, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 10, k: {1:500, 2:500, 3:500, 5:500} },
+            { no: 11, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 13, k: {1:500, 2:500, 3:500, 5:500} }, { no: 14, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+            { no: 15, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 16, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 17, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+            { no: 18, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 19, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 20, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+            { no: 21, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 22, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 23, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+            { no: 24, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 26, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 27, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+            { no: 28, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 30, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 31, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+            { no: 32, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 33, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 34, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+            { no: 35, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 36, k: {5:500} }, { no: 37, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+            { no: 38, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 39, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 40, k: {2:500, 3:500, 4:500, 5:500} },
+            { no: 42, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 43, k: {1:500, 2:500, 3:500, 4:500} }, { no: 46, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+            { no: 47, k: {1:500, 2:500, 3:500, 4:500, 5:500} }
+        ];
 
-        function loadInitialData() {
-            const m = 0; 
-            for (const [date, records] of Object.entries(initialDataJan2026)) {
-                for (const [id, amount] of Object.entries(records)) {
-                    if(!dbTabungan[id]) dbTabungan[id] = {};
-                    if(!dbTabungan[id][m]) dbTabungan[id][m] = {};
-                    dbTabungan[id][m][date] = amount;
-                }
-            }
-        }
 
-        // --- 4. FORMATTING FUNCTIONS (UPDATED - STRICT RUPIAH) ---
-        
-        // Format Cell: Rp.500, Rp.1.500 (No decimals, No abbreviations)
-        function formatCell(val) {
-            if (!val || val === 0) return '';
-            return 'Rp.' + val.toLocaleString('id-ID');
-        }
+        // --- STATE MANAGEMENT ---
+        let db = {}; // Struktur: db[tahun][bulan] = { citizens: [], transactions: [] }
+        let currentYear = 2026;
+        let currentMonth = 0; // 0 = Jan
+        let currentState = { citizens: [], transactions: [] }; // Pointer ke data aktif
 
-        // Format Total: Rp.1.500.000 (Consistent)
-        function formatTotal(val) {
-            return 'Rp.' + val.toLocaleString('id-ID');
-        }
+        // --- CORE FUNCTIONS ---
 
-        function getDaysInMonth(month) {
-            return new Date(activeYear, month + 1, 0).getDate();
-        }
-
-        // --- 5. CORE RENDER LOGIC ---
-
-        function changeMonth() {
-            const selector = document.getElementById('month-selector');
-            currentMonth = parseInt(selector.value);
-            renderTable(); 
-            renderKasTable();
-        }
-
-        // --- RENDER TABUNGAN TABLE ---
-        function renderTable() {
-            const tbody = document.getElementById('savings-table-body');
-            const theadRow = document.getElementById('savings-header-row');
-            tbody.innerHTML = '';
-            theadRow.innerHTML = '';
-
-            const daysInMonth = getDaysInMonth(currentMonth);
-
-            // Headers
-            theadRow.innerHTML += `<th class="px-3 py-2 sticky-col min-w-[30px] bg-gray-100 text-center border-r border-gray-300">No</th>`;
-            theadRow.innerHTML += `<th class="px-3 py-2 sticky-col left-[40px] min-w-[140px] shadow-sm bg-gray-100 border-r border-gray-300">Nama Warga</th>`;
-
-            for(let i=1; i<=daysInMonth; i++) {
-                theadRow.innerHTML += `<th class="px-1 py-2 text-center min-w-[45px] border-r border-gray-300 text-[9px] bg-gray-50 text-gray-500">${i}</th>`;
-            }
-            theadRow.innerHTML += `<th class="px-2 py-2 bg-yellow-50 text-gray-800 border-l border-gray-300 min-w-[90px] text-right font-bold">Total</th>`;
-
-            let totalMonthAccumulated = 0;
-            let transactionCount = 0;
-
-            activeResidents.forEach((r) => {
-                let residentMonthTotal = 0;
-                let cellsHtml = '';
-
-                if(!dbTabungan[r.no]) dbTabungan[r.no] = {};
-                if(!dbTabungan[r.no][currentMonth]) dbTabungan[r.no][currentMonth] = {};
-
-                for(let d=1; d<=daysInMonth; d++) {
-                    const amount = dbTabungan[r.no][currentMonth][d] || 0;
-                    residentMonthTotal += amount;
-                    if(amount > 0) transactionCount++;
-
-                    const bgClass = amount > 0 ? 'bg-emerald-100 text-emerald-900' : 'bg-white';
-                    
-                    // FIXED: Menggunakan formatCell (Rp.500) bukan formatRibuan (0.5)
-                    cellsHtml += `
-                        <td onclick="handleCellClick(${r.no}, ${d})" 
-                            class="px-1 py-1 text-center border-r border-gray-200 cursor-pointer hover:bg-emerald-200 transition-colors ${bgClass} cell-nominal">
-                            ${formatCell(amount)}
-                        </td>
-                    `;
-                }
-
-                totalMonthAccumulated += residentMonthTotal;
-
-                const tr = document.createElement('tr');
-                tr.className = r.no % 2 === 0 ? 'bg-white hover:bg-gray-50' : 'bg-gray-50 hover:bg-gray-100';
-                tr.innerHTML = `
-                    <td class="px-3 py-1 sticky-col border-r border-gray-300 text-center font-bold text-gray-600 text-xs">${r.no}</td>
-                    <td class="px-3 py-1 sticky-col left-[40px] border-r border-gray-300 font-bold text-gray-800 text-xs truncate max-w-[140px]">${r.name}</td>
-                    ${cellsHtml}
-                    <td class="px-2 py-1 border-l border-gray-300 bg-yellow-50 text-right font-bold text-gray-900 text-xs">${formatTotal(residentMonthTotal)}</td>
-                `;
-                tbody.appendChild(tr);
+        function init() {
+            // 1. Populate Dropdowns
+            const yearSel = document.getElementById('sel-year');
+            AVAILABLE_YEARS.forEach(y => {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.innerText = y;
+                yearSel.appendChild(opt);
             });
 
-            document.getElementById('display-total-month').innerText = formatTotal(totalMonthAccumulated);
-            document.getElementById('display-active-transactions').innerText = `${transactionCount}`;
-            
-            calculateYearlyTotal(); 
-            renderReport();
-        }
-
-        // --- RENDER KAS TABLE (GRID - STRICT FORMAT) ---
-        function renderKasTable() {
-            const tbody = document.getElementById('kas-table-body');
-            const theadRow = document.getElementById('kas-header-row');
-            tbody.innerHTML = '';
-            theadRow.innerHTML = '';
-
-            const daysInMonth = getDaysInMonth(currentMonth);
-
-            // Headers
-            theadRow.innerHTML += `<th class="px-3 py-2 sticky-col min-w-[30px] bg-blue-50 text-center border-r border-blue-200">No</th>`;
-            theadRow.innerHTML += `<th class="px-3 py-2 sticky-col left-[40px] min-w-[140px] shadow-sm bg-blue-50 border-r border-blue-200">Nama Warga</th>`;
-
-            for(let i=1; i<=daysInMonth; i++) {
-                theadRow.innerHTML += `<th class="px-1 py-2 text-center min-w-[45px] border-r border-blue-200 text-[9px] bg-blue-50 text-blue-800">${i}</th>`;
-            }
-            theadRow.innerHTML += `<th class="px-2 py-2 bg-yellow-50 text-gray-800 border-l border-blue-200 min-w-[90px] text-right font-bold">Total</th>`;
-
-            let totalMonthKas = 0;
-
-            activeResidents.forEach((r) => {
-                let residentKasTotal = 0;
-                let cellsHtml = '';
-
-                // Loop hari
-                for(let d=1; d<=daysInMonth; d++) {
-                    const hasSaving = dbTabungan[r.no]?.[currentMonth]?.[d] > 0;
-                    const kasVal = hasSaving ? 500 : 0;
-                    residentKasTotal += kasVal;
-
-                    const bgClass = hasSaving ? 'bg-blue-100 text-blue-900' : 'bg-white';
-                    
-                    // FIXED: Tampilkan Rp.500, bukan 0.5
-                    const displayVal = hasSaving ? formatCell(500) : '';
-
-                    cellsHtml += `
-                        <td class="px-1 py-1 text-center border-r border-blue-100 ${bgClass} cell-nominal">
-                            ${displayVal}
-                        </td>
-                    `;
-                }
-                
-                totalMonthKas += residentKasTotal;
-
-                const tr = document.createElement('tr');
-                tr.className = r.no % 2 === 0 ? 'bg-white hover:bg-gray-50' : 'bg-gray-50 hover:bg-gray-100';
-                tr.innerHTML = `
-                    <td class="px-3 py-1 sticky-col border-r border-gray-300 text-center font-bold text-gray-600 text-xs">${r.no}</td>
-                    <td class="px-3 py-1 sticky-col left-[40px] border-r border-gray-300 font-bold text-gray-800 text-xs truncate max-w-[140px]">${r.name}</td>
-                    ${cellsHtml}
-                    <td class="px-2 py-1 border-l border-blue-200 bg-yellow-50 text-right font-bold text-gray-900 text-xs">${formatTotal(residentKasTotal)}</td>
-                `;
-                tbody.appendChild(tr);
+            const monthSel = document.getElementById('sel-month');
+            MONTH_NAMES.forEach((m, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.innerText = m;
+                monthSel.appendChild(opt);
             });
 
-            document.getElementById('kas-total-month').innerText = formatTotal(totalMonthKas);
-            calculateYearlyKas();
-        }
-
-        // --- CALCULATIONS ---
-        function calculateYearlyTotal() {
-            let totalYear = 0;
-            activeResidents.forEach(r => {
-                if(dbTabungan[r.no]) {
-                    for(let m=0; m<12; m++) {
-                        if(dbTabungan[r.no][m]) {
-                            Object.values(dbTabungan[r.no][m]).forEach(val => totalYear += val);
-                        }
-                    }
-                }
-            });
-            document.getElementById('display-total-year').innerText = formatTotal(totalYear);
-        }
-
-        function calculateYearlyKas() {
-            let totalYearKas = 0;
-            activeResidents.forEach(r => {
-                if(dbTabungan[r.no]) {
-                    for(let m=0; m<12; m++) {
-                        if(dbTabungan[r.no][m]) {
-                            Object.values(dbTabungan[r.no][m]).forEach(val => {
-                                if(val > 0) totalYearKas += 500;
-                            });
-                        }
-                    }
-                }
-            });
-            document.getElementById('kas-total-year').innerText = formatTotal(totalYearKas);
-        }
-
-        // --- MODAL ---
-        function handleCellClick(no, date) {
-            selectedCell = { no, date };
-            const r = activeResidents.find(x => x.no === no);
-            const currentAmount = dbTabungan[no]?.[currentMonth]?.[date] || '';
-
-            document.getElementById('modal-info').innerText = `${r.name} (${months[currentMonth]} ${activeYear}, Tgl ${date})`;
-            document.getElementById('input-nominal').value = currentAmount;
-            
-            document.getElementById('modal-edit').classList.remove('hidden');
-            document.getElementById('modal-edit').classList.add('flex');
-            document.getElementById('input-nominal').focus();
-        }
-
-        function closeModal() {
-            document.getElementById('modal-edit').classList.add('hidden');
-            document.getElementById('modal-edit').classList.remove('flex');
-        }
-
-        function saveTransaction() {
-            const val = document.getElementById('input-nominal').value;
-            const amount = parseInt(val);
-            const { no, date } = selectedCell;
-
-            if(!dbTabungan[no]) dbTabungan[no] = {};
-            if(!dbTabungan[no][currentMonth]) dbTabungan[no][currentMonth] = {};
-
-            if(isNaN(amount) || amount <= 0) {
-                delete dbTabungan[no][currentMonth][date];
+            // 2. Load DB
+            const savedDB = localStorage.getItem(STORAGE_KEY);
+            if (savedDB) {
+                db = JSON.parse(savedDB);
             } else {
-                dbTabungan[no][currentMonth][date] = amount;
+                // First time load: Initialize structure & Migrate/Seed Jan 2026
+                initializeDB();
             }
 
-            closeModal();
-            renderTable();
-            renderKasTable(); 
+            // 3. Set Default Period (Jan 2026)
+            yearSel.value = 2026;
+            monthSel.value = 0;
+            
+            // 4. Activate
+            changePeriod();
+            
+            // Set input date default to today
+            document.getElementById('t-date').valueAsDate = new Date();
+            
+            // Select default tab
+            switchTab('tabungan');
+        }
+
+        function initializeDB() {
+            db = {};
+            // Buat struktur tahun
+            AVAILABLE_YEARS.forEach(y => {
+                db[y] = {};
+            });
+
+            // SEED JANUARI 2026 (Absolut)
+            // Cek apakah ada data lama V3 untuk dimigrasi? 
+            // Sesuai instruksi: "Jangan menghapus data CSV existing". 
+            // Kita pakai CSV constants agar aman dan bersih.
+            
+            const jan2026Citizens = MASTER_CITIZENS.map(mc => {
+                const sRow = CSV_JAN_2026_TABUNGAN.find(x => x.no === mc.id);
+                const kRow = CSV_JAN_2026_KAS.find(x => x.no === mc.id);
+                return {
+                    id: mc.id,
+                    name: mc.name,
+                    savings: sRow ? sRow.s : {},
+                    kas: kRow ? kRow.k : {}
+                };
+            });
+
+            db[2026][0] = {
+                citizens: jan2026Citizens,
+                transactions: []
+            };
+
+            saveDB();
+        }
+
+        function saveDB() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+        }
+
+        function changePeriod() {
+            const yearVal = parseInt(document.getElementById('sel-year').value);
+            const monthVal = parseInt(document.getElementById('sel-month').value);
+
+            currentYear = yearVal;
+            currentMonth = monthVal;
+
+            // Update UI Badges
+            document.getElementById('header-period-badge').innerText = `${MONTH_NAMES[currentMonth].toUpperCase().substring(0,3)} ${currentYear}`;
+            document.getElementById('trx-period-label').innerText = `${MONTH_NAMES[currentMonth].toUpperCase()} ${currentYear}`;
+            document.getElementById('rpt-month-label').innerText = MONTH_NAMES[currentMonth];
+            document.getElementById('rpt-year-val').innerText = currentYear;
+            document.getElementById('rpt-print-period').innerText = `Periode: ${MONTH_NAMES[currentMonth]} ${currentYear}`;
+
+            // Check if data exists for this period
+            if (!db[currentYear]) db[currentYear] = {};
+            
+            if (!db[currentYear][currentMonth]) {
+                // create new blank data
+                console.log(`Creating new data for ${currentYear}-${currentMonth}`);
+                db[currentYear][currentMonth] = createBlankPeriod();
+                saveDB();
+            }
+
+            // Set Current State Pointer
+            currentState = db[currentYear][currentMonth];
+
+            // Render
+            renderAll();
+        }
+
+        function createBlankPeriod() {
+            // Create deep copy of master citizens with empty values
+            const blankCitizens = MASTER_CITIZENS.map(mc => ({
+                id: mc.id,
+                name: mc.name,
+                savings: {}, // Kosong
+                kas: {}      // Kosong
+            }));
+
+            return {
+                citizens: blankCitizens,
+                transactions: []
+            };
+        }
+
+        function resetData() {
+            if(confirm("PERINGATAN KERAS:\nSemua data dari tahun 2026-2030 akan dihapus dan dikembalikan ke kondisi awal (Jan 2026 Default).\n\nLanjutkan?")) {
+                localStorage.removeItem(STORAGE_KEY);
+                location.reload();
+            }
+        }
+
+        // --- UTILS ---
+        const formatRupiahStrict = (num) => {
+            if (!num) return '-';
+            let reverse = num.toString().split('').reverse().join(''),
+            ribuan = reverse.match(/\d{1,3}/g);
+            ribuan = ribuan.join('.').split('').reverse().join('');
+            return 'Rp.' + ribuan;
+        }
+
+        // --- RENDER FUNCTIONS ---
+
+        function renderAll() {
+            renderTabungan();
+            renderKas();
+            renderTransactions();
             renderReport();
         }
 
-        // --- REPORT PAGE ---
-        function renderReport() {
-            const tbody = document.getElementById('report-body');
+        function renderTabungan() {
+            const tbody = document.getElementById('table-tabungan-body');
             tbody.innerHTML = '';
+            let totalsPerDate = {};
             let grandTotal = 0;
-            let grandKas = 0;
+
+            currentState.citizens.forEach(c => {
+                let totalRow = 0;
+                let rowHtml = `<tr class="bg-white border-b hover:bg-gray-50 transition-colors">
+                    <td class="px-4 py-3 text-center font-medium text-gray-500 sticky-col border-r">${c.id}</td>
+                    <td class="px-4 py-3 font-medium text-gray-900 sticky-col border-r left-12 whitespace-nowrap">${c.name}</td>`;
+
+                for(let i=1; i<=31; i++) {
+                    const val = c.savings[i] || 0;
+                    totalRow += val;
+                    if(!totalsPerDate[i]) totalsPerDate[i] = 0;
+                    totalsPerDate[i] += val;
+
+                    const display = val > 0 ? formatRupiahStrict(val) : '-';
+                    const activeClass = val > 0 ? 'text-emerald-700 font-bold bg-emerald-50/50' : 'text-gray-300';
+                    
+                    rowHtml += `<td onclick="editSaving(${c.id}, ${i})" class="px-2 py-3 text-center border-r cursor-pointer hover:bg-emerald-100 transition-colors ${activeClass} text-xs whitespace-nowrap">${display}</td>`;
+                }
+                grandTotal += totalRow;
+                rowHtml += `<td class="px-4 py-3 text-right font-bold text-emerald-700 bg-emerald-100 border-l">${formatRupiahStrict(totalRow)}</td></tr>`;
+                tbody.innerHTML += rowHtml;
+            });
+
+            // Footer
+            for(let i=1; i<=31; i++) {
+                const tf = document.getElementById(`tf-tab-${i}`);
+                if(tf) tf.innerText = totalsPerDate[i] ? formatRupiahStrict(totalsPerDate[i]) : '-';
+            }
+            document.getElementById('tf-tab-total').innerText = formatRupiahStrict(grandTotal);
+        }
+
+        function renderKas() {
+            const tbody = document.getElementById('table-kas-body');
+            tbody.innerHTML = '';
+            let totalsPerDate = {};
+            let grandTotal = 0;
+
+            currentState.citizens.forEach(c => {
+                let totalRow = 0;
+                let rowHtml = `<tr class="bg-white border-b">
+                    <td class="px-4 py-3 text-center font-medium text-gray-500 sticky-col border-r">${c.id}</td>
+                    <td class="px-4 py-3 font-medium text-gray-900 sticky-col border-r left-12 whitespace-nowrap">${c.name}</td>`;
+
+                for(let i=1; i<=31; i++) {
+                    const val = c.kas[i] || 0;
+                    totalRow += val;
+                    if(!totalsPerDate[i]) totalsPerDate[i] = 0;
+                    totalsPerDate[i] += val;
+
+                    const display = val > 0 ? 'Rp.500' : '-';
+                    const activeClass = val > 0 ? 'text-blue-600 font-bold bg-blue-50/50' : 'text-gray-300 font-light';
+
+                    // Kas can be edited manually now for new months
+                    rowHtml += `<td onclick="editKas(${c.id}, ${i})" class="px-2 py-3 text-center border-r cursor-pointer hover:bg-blue-100 text-xs ${activeClass}">${display}</td>`;
+                }
+                grandTotal += totalRow;
+                rowHtml += `<td class="px-4 py-3 text-right font-bold text-blue-700 bg-blue-50 border-l">${formatRupiahStrict(totalRow)}</td></tr>`;
+                tbody.innerHTML += rowHtml;
+            });
+
+            for(let i=1; i<=31; i++) {
+                const tf = document.getElementById(`tf-kas-${i}`);
+                if(tf) tf.innerText = totalsPerDate[i] ? formatRupiahStrict(totalsPerDate[i]) : '-';
+            }
+            document.getElementById('tf-kas-total').innerText = formatRupiahStrict(grandTotal);
+        }
+
+        function renderTransactions() {
+            const tbody = document.getElementById('table-transaksi-body');
+            const emptyState = document.getElementById('empty-transaksi');
+            
+            // Filter is implicitly by current period because currentState points to active month
+            const trxs = currentState.transactions || [];
+            
+            tbody.innerHTML = '';
+            
+            if(trxs.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                // Sort descending by date (though usually entered chronologically)
+                // We map with original index to allow deletion
+                trxs.map((t, i) => ({...t, origIndex: i}))
+                    .sort((a,b) => new Date(b.date) - new Date(a.date))
+                    .forEach(trx => {
+                        const isMasuk = trx.type === 'in';
+                        const nominal = formatRupiahStrict(trx.amount);
+                        const row = `<tr class="bg-white border-b hover:bg-gray-50">
+                            <td class="px-4 py-3 whitespace-nowrap text-gray-600">${trx.date}</td>
+                            <td class="px-4 py-3 font-medium text-gray-800">${trx.desc}</td>
+                            <td class="px-4 py-3 text-emerald-600 font-medium">${isMasuk ? nominal : '-'}</td>
+                            <td class="px-4 py-3 text-rose-600 font-medium">${!isMasuk ? nominal : '-'}</td>
+                            <td class="px-4 py-3 text-right">
+                                <button onclick="deleteTransaction(${trx.origIndex})" class="text-xs text-red-400 hover:text-red-600 underline">Hapus</button>
+                            </td>
+                        </tr>`;
+                        tbody.innerHTML += row;
+                    });
+            }
+        }
+
+        function renderReport() {
+            // 1. Calculate Active Month Stats
+            let mTab = 0, mKas = 0, mIn = 0, mOut = 0;
+            
+            currentState.citizens.forEach(c => {
+                Object.values(c.savings).forEach(v => mTab += v);
+                Object.values(c.kas).forEach(v => mKas += v);
+            });
+            currentState.transactions.forEach(t => {
+                if(t.type === 'in') mIn += t.amount;
+                else mOut += t.amount;
+            });
+
+            const mSaldo = (mTab + mKas + mIn) - mOut;
+
+            document.getElementById('rpt-saldo').innerText = formatRupiahStrict(mSaldo);
+            document.getElementById('rpt-tabungan').innerText = formatRupiahStrict(mTab);
+            document.getElementById('rpt-kas').innerText = formatRupiahStrict(mKas);
+            document.getElementById('rpt-inout').innerText = `${formatRupiahStrict(mIn)} / ${formatRupiahStrict(mOut)}`;
+
+            // 2. Calculate Annual Recap (Loop through db[currentYear])
+            const tbody = document.getElementById('table-rekap-body');
+            tbody.innerHTML = '';
+            
+            let yTab = 0, yKas = 0, yIn = 0, yOut = 0;
 
             for(let m=0; m<12; m++) {
-                let monthTotal = 0;
-                let monthKas = 0;
+                const monthData = db[currentYear][m];
+                let rowHtml = '';
                 
-                activeResidents.forEach(r => {
-                    if(dbTabungan[r.no] && dbTabungan[r.no][m]) {
-                         for(const [d, val] of Object.entries(dbTabungan[r.no][m])) {
-                             monthTotal += val;
-                             if(val > 0) monthKas += 500;
-                         }
-                    }
-                });
+                if (monthData) {
+                    let rTab = 0, rKas = 0, rIn = 0, rOut = 0;
+                    
+                    monthData.citizens.forEach(c => {
+                        Object.values(c.savings).forEach(v => rTab += v);
+                        Object.values(c.kas).forEach(v => rKas += v);
+                    });
+                    monthData.transactions.forEach(t => {
+                        if(t.type === 'in') rIn += t.amount;
+                        else rOut += t.amount;
+                    });
 
-                grandTotal += monthTotal;
-                grandKas += monthKas;
+                    const rSaldo = (rTab + rKas + rIn) - rOut;
+                    
+                    // Add to Year Totals
+                    yTab += rTab; yKas += rKas; yIn += rIn; yOut += rOut;
 
-                if(monthTotal > 0 || m === currentMonth) {
-                    tbody.innerHTML += `
-                        <tr class="${m === currentMonth ? 'bg-emerald-50 font-bold border-l-4 border-emerald-500' : 'hover:bg-gray-50'}">
-                            <td class="p-3 border border-gray-300">${months[m]} ${activeYear}</td>
-                            <td class="p-3 border border-gray-300 text-right font-mono">${formatTotal(monthTotal)}</td>
-                            <td class="p-3 border border-gray-300 text-right font-mono text-blue-700">${formatTotal(monthKas)}</td>
-                        </tr>
-                    `;
+                    const isCurrent = m === currentMonth;
+                    const bgClass = isCurrent ? 'bg-indigo-50 border-l-4 border-indigo-500' : 'bg-white border-b';
+                    const labelClass = isCurrent ? 'font-bold text-indigo-700' : 'text-gray-800';
+
+                    rowHtml = `<tr class="${bgClass}">
+                        <td class="px-4 py-3 ${labelClass}">${MONTH_NAMES[m]}</td>
+                        <td class="px-4 py-3 text-right text-emerald-600">${formatRupiahStrict(rTab)}</td>
+                        <td class="px-4 py-3 text-right text-blue-600">${formatRupiahStrict(rKas)}</td>
+                        <td class="px-4 py-3 text-right text-gray-600">${formatRupiahStrict(rIn)}</td>
+                        <td class="px-4 py-3 text-right text-rose-600">${formatRupiahStrict(rOut)}</td>
+                        <td class="px-4 py-3 text-right font-bold text-gray-900">${formatRupiahStrict(rSaldo)}</td>
+                    </tr>`;
+                } else {
+                    // Empty month row
+                    rowHtml = `<tr class="bg-white border-b opacity-50">
+                        <td class="px-4 py-3 text-gray-400 italic">${MONTH_NAMES[m]}</td>
+                        <td class="px-4 py-3 text-right">-</td>
+                        <td class="px-4 py-3 text-right">-</td>
+                        <td class="px-4 py-3 text-right">-</td>
+                        <td class="px-4 py-3 text-right">-</td>
+                        <td class="px-4 py-3 text-right">-</td>
+                    </tr>`;
                 }
+                tbody.innerHTML += rowHtml;
             }
-            document.getElementById('report-grand-total').innerText = formatTotal(grandTotal);
-            document.getElementById('report-grand-kas').innerText = formatTotal(grandKas);
+
+            // Year Footer
+            const ySaldo = (yTab + yKas + yIn) - yOut;
+            const tfoot = document.getElementById('table-rekap-footer');
+            tfoot.innerHTML = `
+                <td class="px-4 py-3">TOTAL TAHUN ${currentYear}</td>
+                <td class="px-4 py-3 text-right text-emerald-400">${formatRupiahStrict(yTab)}</td>
+                <td class="px-4 py-3 text-right text-blue-400">${formatRupiahStrict(yKas)}</td>
+                <td class="px-4 py-3 text-right text-gray-400">${formatRupiahStrict(yIn)}</td>
+                <td class="px-4 py-3 text-right text-rose-400">${formatRupiahStrict(yOut)}</td>
+                <td class="px-4 py-3 text-right text-amber-400 font-extrabold text-lg">${formatRupiahStrict(ySaldo)}</td>
+            `;
         }
 
-        function switchPage(page) {
-            document.querySelectorAll('.page-section').forEach(el => el.classList.add('hidden'));
+        // --- ACTIONS ---
+
+        function editSaving(id, date) {
+            const citizen = currentState.citizens.find(c => c.id === id);
+            const currentVal = citizen.savings[date] || 0;
+            const input = prompt(`Tabungan ${citizen.name} (Tgl ${date} ${MONTH_NAMES[currentMonth]}):\nMasukkan nominal:`, currentVal === 0 ? '' : currentVal);
             
-            const navs = ['tabungan', 'kas', 'laporan'];
-            navs.forEach(n => {
-                const btn = document.getElementById('nav-' + n);
-                btn.classList.remove('bg-white/20', 'shadow-inner');
-                btn.classList.add('hover:bg-white/10');
-            });
-
-            document.getElementById('page-' + page).classList.remove('hidden');
-            const activeBtn = document.getElementById('nav-' + page);
-            activeBtn.classList.add('bg-white/20', 'shadow-inner');
-            activeBtn.classList.remove('hover:bg-white/10');
-
-            const header = document.getElementById('main-header');
-            const icon = document.getElementById('header-icon');
-            if(page === 'kas') {
-                header.classList.remove('bg-primary');
-                header.classList.add('bg-blue-800');
-                icon.classList.remove('text-primary');
-                icon.classList.add('text-blue-800');
-            } else {
-                header.classList.remove('bg-blue-800');
-                header.classList.add('bg-primary');
-                icon.classList.remove('text-blue-800');
-                icon.classList.add('text-primary');
+            if (input !== null) {
+                const amount = parseInt(input.replace(/\D/g,''));
+                if (!isNaN(amount)) citizen.savings[date] = amount;
+                else if (input === "") citizen.savings[date] = 0;
+                saveDB();
+                renderAll();
             }
-
-            if(page === 'laporan') renderReport();
-            if(page === 'kas') renderKasTable();
         }
 
-        window.onload = function() {
-            loadInitialData();
-            document.getElementById('month-selector').value = currentMonth;
-            renderTable();
-            renderKasTable();
-        };
+        function editKas(id, date) {
+            // Allows manual edit of Kas for flexibility in future months
+            const citizen = currentState.citizens.find(c => c.id === id);
+            const currentVal = citizen.kas[date] || 0;
+            // Toggle 500 or 0 for quick edit, or prompt? Let's use prompt for consistency but suggest 500
+            const input = prompt(`Kas ${citizen.name} (Tgl ${date} ${MONTH_NAMES[currentMonth]}):\n0 atau 500?`, currentVal === 0 ? '500' : currentVal);
+            
+            if (input !== null) {
+                const amount = parseInt(input.replace(/\D/g,''));
+                if (!isNaN(amount)) citizen.kas[date] = amount;
+                else if (input === "") citizen.kas[date] = 0;
+                saveDB();
+                renderAll();
+            }
+        }
+
+        function handleTransactionSubmit(e) {
+            e.preventDefault();
+            const date = document.getElementById('t-date').value;
+            const type = document.querySelector('input[name="t-type"]:checked').value;
+            const desc = document.getElementById('t-desc').value;
+            const amount = parseInt(document.getElementById('t-amount').value);
+
+            if(amount > 0) {
+                currentState.transactions.push({ date, type, desc, amount });
+                document.getElementById('t-desc').value = '';
+                document.getElementById('t-amount').value = '';
+                saveDB();
+                renderAll();
+                alert('Transaksi Berhasil!');
+            }
+        }
+
+        function deleteTransaction(index) {
+            if(confirm('Hapus transaksi ini?')) {
+                currentState.transactions.splice(index, 1);
+                saveDB();
+                renderAll();
+            }
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('tab-active', 'bg-emerald-50', 'bg-blue-50', 'bg-rose-50', 'bg-amber-50');
+            });
+            
+            // Simple active state
+            document.getElementById(`btn-${tabName}`).classList.add('tab-active');
+        }
+
+        // START APP
+        init();
 
     </script>
 </body>
