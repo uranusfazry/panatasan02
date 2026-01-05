@@ -29,7 +29,7 @@
                     boxShadow: {
                         'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
                         'drawer': '4px 0 24px rgba(0,0,0,0.15)',
-                        'sticky-right': '-4px 0 8px -2px rgba(0, 0, 0, 0.05)' // Shadow untuk kolom total kanan
+                        'sticky-right': '-4px 0 8px -2px rgba(0, 0, 0, 0.05)'
                     },
                     zIndex: {
                         '60': '60',
@@ -37,6 +37,7 @@
                         '80': '80',
                         '90': '90',
                         '100': '100', 
+                        'modal': '150',
                     }
                 }
             }
@@ -51,76 +52,38 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
         /* Typography Lock */
-        body {
-            -webkit-text-size-adjust: 100%;
-            text-size-adjust: 100%;
-        }
+        body { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
         /* Table Sticky Magic */
-        .table-container {
-            position: relative;
-            overflow: auto;
-            max-height: 70vh;
-            border-radius: 0.75rem;
+        .table-container { 
+            position: relative; 
+            overflow: auto; 
+            max-height: 70vh; 
+            border-radius: 0.75rem; 
             isolation: isolate; 
         }
+        table { border-collapse: separate; border-spacing: 0; }
+        th, td { white-space: nowrap; }
         
-        table {
-            border-collapse: separate; /* Penting untuk sticky header border */
-            border-spacing: 0;
-        }
-
-        th, td {
-            white-space: nowrap; /* Mencegah teks turun baris */
-        }
-        
+        /* HEADER NOT STICKY (Fixes overlapping issue) */
         thead th { 
-            position: sticky; 
-            top: 0; 
-            z-index: 40; 
-            /* Border fix untuk sticky header */
+            position: static; 
+            top: auto; 
+            z-index: auto; 
             border-bottom: 1px solid #e2e8f0; 
         }
         
-        /* Sticky Column 1: No */
-        .col-sticky-1 {
-            position: sticky; 
-            left: 0; 
-            z-index: 30;
-            background-color: #f8fafc;
-            border-right: 1px solid #e2e8f0;
-        }
+        /* Sticky Columns (Horizontal Only) */
+        /* Note: Vertical stickiness removed because th parent doesn't have top anchor */
+        .col-sticky-1 { position: sticky; left: 0; z-index: 30; background-color: #f8fafc; border-right: 1px solid #e2e8f0; }
+        .col-sticky-2 { position: sticky; left: 48px; z-index: 30; background-color: #f8fafc; border-right: 1px solid #e2e8f0; box-shadow: 4px 0 8px -4px rgba(0,0,0,0.1); }
+        .col-sticky-right { position: sticky; right: 0; z-index: 30; border-left: 1px solid #e2e8f0; box-shadow: -4px 0 8px -4px rgba(0,0,0,0.05); }
         
-        /* Sticky Column 2: Nama */
-        .col-sticky-2 {
-            position: sticky; 
-            left: 48px; /* Disesuaikan dengan lebar kolom No */
-            z-index: 30;
-            background-color: #f8fafc;
-            border-right: 1px solid #e2e8f0;
-            box-shadow: 4px 0 8px -4px rgba(0,0,0,0.1);
-        }
-
-        /* Sticky Right: Total */
-        .col-sticky-right {
-            position: sticky;
-            right: 0;
-            z-index: 30;
-            border-left: 1px solid #e2e8f0;
-            box-shadow: -4px 0 8px -4px rgba(0,0,0,0.05);
-        }
-
-        /* Z-Index Hierarchy untuk Header vs Sticky Cols */
-        thead th.col-sticky-1, thead th.col-sticky-2, thead th.col-sticky-right { z-index: 50; }
+        /* Z-Index Hierarchy */
+        thead th.col-sticky-1, thead th.col-sticky-2, thead th.col-sticky-right { z-index: 30; } 
         tfoot td.col-sticky-1, tfoot td.col-sticky-right { z-index: 50; }
 
-        .select-modern {
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236366f1'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e");
-            background-position: right 0.75rem center;
-            background-repeat: no-repeat;
-            background-size: 1rem;
-        }
+        .select-modern { appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236366f1'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e"); background-position: right 0.75rem center; background-repeat: no-repeat; background-size: 1rem; }
 
         /* Mobile Adjustments */
         @media (max-width: 768px) {
@@ -138,16 +101,33 @@
             table { width: 100%; font-size: 9px; }
             th, td { border: 1px solid #000 !important; padding: 2px 4px; white-space: normal; }
             .col-sticky-1, .col-sticky-2, .col-sticky-right { position: static; box-shadow: none; border: 1px solid #000; }
-            #sidebar, #mobile-header, #mobile-overlay { display: none !important; }
+            #sidebar, #mobile-header, #mobile-overlay, #btn-print-floating { display: none !important; }
         }
 
         .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
         #sidebar { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        
+        /* Image Gallery Styles */
+        .aspect-square { aspect-ratio: 1 / 1; }
+        .line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
     </style>
 </head>
 <body class="bg-brand-bg text-brand-dark font-sans h-screen flex flex-col md:flex-row overflow-hidden selection:bg-indigo-100 selection:text-indigo-700">
+
+    <!-- 0. IMAGE MODAL PREVIEW -->
+    <div id="image-modal" class="fixed inset-0 z-modal hidden bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300 opacity-0" onclick="closeImageModal()">
+        <div class="relative max-w-4xl w-full max-h-screen flex flex-col items-center" onclick="event.stopPropagation()">
+            <img id="modal-img" src="" alt="Preview" class="max-h-[80vh] w-auto rounded-lg shadow-2xl border border-white/10">
+            <div class="mt-4 text-center">
+                <p id="modal-desc" class="text-white font-medium text-lg"></p>
+                <p id="modal-date" class="text-slate-400 text-sm"></p>
+            </div>
+            <button onclick="closeImageModal()" class="absolute -top-12 right-0 text-white hover:text-red-400 transition p-2">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+    </div>
 
     <!-- 0. MOBILE OVERLAY -->
     <div id="mobile-overlay" onclick="toggleMenu()" class="fixed inset-0 bg-slate-900/60 z-90 hidden md:hidden transition-opacity duration-300 backdrop-blur-sm"></div>
@@ -164,7 +144,7 @@
             </div>
         </div>
         <button onclick="window.print()" class="text-indigo-600 bg-indigo-50 p-2 rounded-lg hover:bg-indigo-100 active:scale-95 transition shadow-sm border border-indigo-100">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2z"></path></svg>
         </button>
     </header>
 
@@ -204,6 +184,13 @@
                 <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mr-3 group-hover:scale-110 transition-transform flex-shrink-0 shadow-sm text-lg">💎</span>
                 Kas Operasional
             </button>
+            
+            <!-- NEW MENU GAMBAR -->
+            <button onclick="switchTab('gambar')" id="btn-gambar" class="tab-btn w-full flex items-center px-4 py-3.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-violet-50 hover:text-violet-700 transition-all group border border-transparent active:scale-[0.98]">
+                <span class="w-8 h-8 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center mr-3 group-hover:scale-110 transition-transform flex-shrink-0 shadow-sm text-lg">🖼️</span>
+                Gambar / Dok
+            </button>
+
             <button onclick="switchTab('laporan')" id="btn-laporan" class="tab-btn w-full flex items-center px-4 py-3.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-amber-50 hover:text-amber-700 transition-all group border border-transparent active:scale-[0.98]">
                 <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center mr-3 group-hover:scale-110 transition-transform flex-shrink-0 shadow-sm text-lg">📊</span>
                 Laporan Keuangan
@@ -233,8 +220,8 @@
                         <span class="text-xs text-slate-500">Update Real-time</span>
                     </div>
                 </div>
-                <button onclick="window.print()" class="inline-flex items-center px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg shadow-lg shadow-slate-200 transition-all hover:-translate-y-0.5 no-print">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                <button id="btn-print-floating" onclick="window.print()" class="inline-flex items-center px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg shadow-lg shadow-slate-200 transition-all hover:-translate-y-0.5 no-print">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2z"></path></svg>
                     Cetak Laporan
                 </button>
             </div>
@@ -264,17 +251,13 @@
                         <table class="w-full text-sm text-left">
                             <thead class="text-xs font-semibold text-slate-600 bg-slate-50 uppercase tracking-wider">
                                 <tr>
-                                    <!-- NO Sticky -->
                                     <th class="px-3 py-4 text-center border-b border-r w-10 md:w-12 col-sticky-1 min-w-[40px]">No</th>
-                                    <!-- NAMA Sticky -->
                                     <th class="px-4 py-4 border-b w-32 md:w-48 col-sticky-2 text-left shadow-sm min-w-[140px]">Nama</th>
-                                    <!-- TANGGAL Scrollable (Auto Generated) -->
                                     <script>
                                         for(let i=1; i<=31; i++) {
                                             document.write(`<th class="px-2 py-4 text-center min-w-[70px] border-b border-r hover:bg-slate-100 transition-colors cursor-default select-none">${i}</th>`);
                                         }
                                     </script>
-                                    <!-- TOTAL Sticky Right -->
                                     <th class="px-4 py-4 text-right border-b bg-emerald-50 text-emerald-700 min-w-[120px] col-sticky-right shadow-sticky-right">Total</th>
                                 </tr>
                             </thead>
@@ -341,6 +324,74 @@
                 </div>
             </div>
 
+            <!-- === VIEW: GAMBAR (NEW) === -->
+            <div id="view-gambar" class="view-section fade-in hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+                    
+                    <!-- FORM INPUT -->
+                    <div class="lg:col-span-1 order-1 no-print">
+                        <div class="bg-white rounded-xl shadow-soft border border-slate-200 p-5 md:p-6 sticky top-4">
+                            <h3 class="font-bold text-lg text-slate-800 mb-4 flex items-center">
+                                <span class="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center mr-2 text-violet-600">📷</span>
+                                Upload Dokumentasi
+                            </h3>
+                            
+                            <form onsubmit="handleImageSubmit(event)" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Tanggal</label>
+                                    <input type="date" id="img-date" required class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Judul / Keterangan</label>
+                                    <input type="text" id="img-desc" placeholder="Contoh: Nota Konsumsi Rapat" required class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Kategori</label>
+                                    <select id="img-type" class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all">
+                                        <option value="Kas">Kas Operasional</option>
+                                        <option value="Tabungan">Tabungan</option>
+                                        <option value="Lainnya">Lainnya</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">URL Gambar (Link)</label>
+                                    <input type="url" id="img-url" placeholder="https://imghippo.com/..." required class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all text-sm font-mono">
+                                    <p class="text-[10px] text-slate-400 mt-1">Gunakan link langsung (.jpg, .png) dari ImgHippo atau hosting lain.</p>
+                                </div>
+
+                                <button type="submit" class="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-violet-200 hover:shadow-violet-300 active:scale-95 transition-all duration-200">
+                                    Simpan Dokumentasi
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- GALLERY GRID -->
+                    <div class="lg:col-span-2 order-2">
+                        <div class="bg-white rounded-xl shadow-soft border border-slate-200 overflow-hidden">
+                            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                                <h3 class="font-bold text-slate-700">Galeri Bukti & Laporan</h3>
+                                <span class="text-xs text-slate-400 bg-white border border-slate-200 px-2 py-1 rounded" id="gallery-count">0 File</span>
+                            </div>
+                            
+                            <div id="gallery-grid" class="p-4 grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <!-- Populated by JS -->
+                            </div>
+                            
+                            <div id="empty-gallery" class="hidden py-12 flex flex-col items-center justify-center text-center">
+                                <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                                    <span class="text-2xl opacity-50">📁</span>
+                                </div>
+                                <p class="text-slate-400 font-medium">Belum ada dokumentasi bulan ini.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- === VIEW: LAPORAN === -->
             <div id="view-laporan" class="view-section fade-in hidden">
                 <div class="hidden print-only text-center mb-8 border-b-2 border-black pb-4">
@@ -386,11 +437,14 @@
                             <p class="text-slate-400 text-[10px] md:text-xs">Tabungan & Kas Masuk</p>
                         </div>
                         <div class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center">
-                            <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold mb-1">Penggunaan Dana</p>
-                            <div class="w-full h-1.5 bg-slate-100 rounded-full mb-2 overflow-hidden">
-                                <div class="h-full bg-rose-500 rounded-full" style="width: 30%"></div>
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold mb-1">Dokumentasi</p>
+                                    <h3 class="text-xl font-bold text-violet-600" id="rpt-docs-count">0</h3>
+                                </div>
+                                <span class="text-xl">📷</span>
                             </div>
-                            <p class="text-slate-400 text-[10px] md:text-xs">Operasional Kas</p>
+                            <p class="text-slate-400 text-[10px] md:text-xs mt-2">File terlampir bulan ini</p>
                         </div>
                     </div>
                 </div>
@@ -462,6 +516,30 @@
             }
         }
 
+        // --- IMAGE MODAL LOGIC ---
+        function openImageModal(url, desc, date) {
+            const modal = document.getElementById('image-modal');
+            const img = document.getElementById('modal-img');
+            const txtDesc = document.getElementById('modal-desc');
+            const txtDate = document.getElementById('modal-date');
+
+            img.src = url;
+            txtDesc.innerText = desc;
+            txtDate.innerText = date;
+
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        }
+
+        function closeImageModal() {
+            const modal = document.getElementById('image-modal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.getElementById('modal-img').src = '';
+            }, 300);
+        }
+
         const AVAILABLE_YEARS = [2026, 2027, 2028, 2029, 2030];
         const MONTH_NAMES = [
             "Januari", "Februari", "Maret", "April", "Mei", "Juni", 
@@ -529,7 +607,7 @@
         let db = {};
         let currentYear = 2026;
         let currentMonth = 0;
-        let currentState = { citizens: [], kasOut: {} };
+        let currentState = { citizens: [], kasOut: {}, images: [] };
 
         function init() {
             const yearSel = document.getElementById('sel-year');
@@ -560,6 +638,9 @@
             
             changePeriod();
             switchTab('tabungan');
+            
+            // Set Default Date for Image Form
+            document.getElementById('img-date').valueAsDate = new Date();
         }
 
         function initializeDB() {
@@ -577,7 +658,8 @@
                 };
             });
 
-            db[2026][0] = { citizens: jan2026Citizens, kasOut: {} };
+            // Initialize with kasOut & images array
+            db[2026][0] = { citizens: jan2026Citizens, kasOut: {}, images: [] };
             saveDB();
         }
 
@@ -606,6 +688,7 @@
 
             currentState = db[currentYear][currentMonth];
             if(!currentState.kasOut) currentState.kasOut = {};
+            if(!currentState.images) currentState.images = [];
             
             renderAll();
         }
@@ -617,7 +700,7 @@
                 savings: {},
                 kas: {}
             }));
-            return { citizens: blankCitizens, kasOut: {} };
+            return { citizens: blankCitizens, kasOut: {}, images: [] };
         }
 
         function resetData() {
@@ -639,6 +722,7 @@
             renderTabungan();
             renderKas();
             renderReport();
+            renderImages();
         }
 
         function renderTabungan() {
@@ -733,6 +817,80 @@
             document.getElementById('tf-kas-total').innerText = formatRupiahStrict(grandNet);
         }
 
+        // --- IMAGE GALLERY FUNCTIONS ---
+        function handleImageSubmit(e) {
+            e.preventDefault();
+            const date = document.getElementById('img-date').value;
+            const desc = document.getElementById('img-desc').value;
+            const type = document.getElementById('img-type').value;
+            const url = document.getElementById('img-url').value;
+
+            // Simple URL Validation
+            if(!url.match(/\.(jpeg|jpg|gif|png|webp)$/) && !url.includes('imghippo')) {
+                if(!confirm("URL sepertinya bukan gambar langsung (.jpg/.png). Tetap simpan?")) return;
+            }
+
+            if(!currentState.images) currentState.images = [];
+            currentState.images.push({ date, desc, type, url, id: Date.now() });
+            
+            // Reset Form
+            document.getElementById('img-desc').value = '';
+            document.getElementById('img-url').value = '';
+            
+            saveDB();
+            renderImages();
+            renderReport(); // Update stats
+            alert('Dokumentasi berhasil disimpan!');
+        }
+
+        function deleteImage(id) {
+            if(confirm("Hapus dokumentasi ini?")) {
+                currentState.images = currentState.images.filter(img => img.id !== id);
+                saveDB();
+                renderImages();
+                renderReport();
+            }
+        }
+
+        function renderImages() {
+            const grid = document.getElementById('gallery-grid');
+            const empty = document.getElementById('empty-gallery');
+            const count = document.getElementById('gallery-count');
+            
+            const images = currentState.images || [];
+            count.innerText = `${images.length} File`;
+
+            if(images.length === 0) {
+                grid.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+            grid.innerHTML = images.map(img => `
+                <div class="group relative bg-slate-50 rounded-lg overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                    <div class="aspect-square w-full overflow-hidden bg-slate-200 cursor-pointer" onclick="openImageModal('${img.url}', '${img.desc}', '${img.date}')">
+                        <img src="${img.url}" alt="${img.desc}" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://via.placeholder.com/300?text=Error'">
+                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
+                    </div>
+                    <div class="p-3">
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${getTypeColor(img.type)}">${img.type}</span>
+                            <button onclick="deleteImage(${img.id})" class="text-slate-300 hover:text-red-500 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-700 line-clamp-2 leading-tight mb-1" title="${img.desc}">${img.desc}</p>
+                        <p class="text-[10px] text-slate-400">${img.date}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getTypeColor(type) {
+            if(type === 'Kas') return 'bg-blue-100 text-blue-700';
+            if(type === 'Tabungan') return 'bg-emerald-100 text-emerald-700';
+            return 'bg-slate-100 text-slate-600';
+        }
+
         function renderReport() {
             let mTab = 0, mKasIn = 0, mKasOut = 0;
             currentState.citizens.forEach(c => {
@@ -747,6 +905,9 @@
             document.getElementById('rpt-tabungan').innerText = formatRupiahStrict(mTab);
             document.getElementById('rpt-kas').innerText = formatRupiahStrict(mKasIn);
             document.getElementById('rpt-out').innerText = `-${formatRupiahStrict(mKasOut)}`;
+            
+            // Render Doc Count
+            document.getElementById('rpt-docs-count').innerText = (currentState.images || []).length;
 
             const tbody = document.getElementById('table-rekap-body');
             tbody.innerHTML = '';
@@ -857,6 +1018,7 @@
             if(mobileTitle) {
                 if(tabName === 'tabungan') mobileTitle.innerText = "Tabungan";
                 else if(tabName === 'kas') mobileTitle.innerText = "Kas Harian";
+                else if(tabName === 'gambar') mobileTitle.innerText = "Dokumentasi"; // NEW TITLE
                 else if(tabName === 'laporan') mobileTitle.innerText = "Laporan";
             }
 
