@@ -28,14 +28,15 @@
                     },
                     boxShadow: {
                         'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
-                        'drawer': '4px 0 24px rgba(0,0,0,0.15)', // Shadow lebih tegas untuk drawer
+                        'drawer': '4px 0 24px rgba(0,0,0,0.15)',
+                        'sticky-right': '-4px 0 8px -2px rgba(0, 0, 0, 0.05)' // Shadow untuk kolom total kanan
                     },
                     zIndex: {
                         '60': '60',
                         '70': '70',
                         '80': '80',
                         '90': '90',
-                        '100': '100', // Khusus Drawer Mobile
+                        '100': '100', 
                     }
                 }
             }
@@ -49,34 +50,69 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+        /* Typography Lock */
+        body {
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+
         /* Table Sticky Magic */
         .table-container {
             position: relative;
             overflow: auto;
             max-height: 70vh;
             border-radius: 0.75rem;
-            /* Isolasi konteks stacking tabel agar tidak tembus menu */
             isolation: isolate; 
         }
         
-        thead th { position: sticky; top: 0; z-index: 40; }
+        table {
+            border-collapse: separate; /* Penting untuk sticky header border */
+            border-spacing: 0;
+        }
+
+        th, td {
+            white-space: nowrap; /* Mencegah teks turun baris */
+        }
+        
+        thead th { 
+            position: sticky; 
+            top: 0; 
+            z-index: 40; 
+            /* Border fix untuk sticky header */
+            border-bottom: 1px solid #e2e8f0; 
+        }
         
         /* Sticky Column 1: No */
         .col-sticky-1 {
-            position: sticky; left: 0; z-index: 30;
+            position: sticky; 
+            left: 0; 
+            z-index: 30;
             background-color: #f8fafc;
+            border-right: 1px solid #e2e8f0;
         }
         
         /* Sticky Column 2: Nama */
         .col-sticky-2 {
-            position: sticky; left: 40px; z-index: 30;
+            position: sticky; 
+            left: 48px; /* Disesuaikan dengan lebar kolom No */
+            z-index: 30;
             background-color: #f8fafc;
             border-right: 1px solid #e2e8f0;
             box-shadow: 4px 0 8px -4px rgba(0,0,0,0.1);
         }
 
-        /* Sticky Header harus di atas Sticky Column */
-        thead th.col-sticky-1, thead th.col-sticky-2 { z-index: 50; }
+        /* Sticky Right: Total */
+        .col-sticky-right {
+            position: sticky;
+            right: 0;
+            z-index: 30;
+            border-left: 1px solid #e2e8f0;
+            box-shadow: -4px 0 8px -4px rgba(0,0,0,0.05);
+        }
+
+        /* Z-Index Hierarchy untuk Header vs Sticky Cols */
+        thead th.col-sticky-1, thead th.col-sticky-2, thead th.col-sticky-right { z-index: 50; }
+        tfoot td.col-sticky-1, tfoot td.col-sticky-right { z-index: 50; }
 
         .select-modern {
             appearance: none;
@@ -84,6 +120,12 @@
             background-position: right 0.75rem center;
             background-repeat: no-repeat;
             background-size: 1rem;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .col-sticky-1 { width: 40px; min-width: 40px; }
+            .col-sticky-2 { left: 40px; width: 140px; min-width: 140px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
         }
 
         /* Print Mode */
@@ -94,29 +136,25 @@
             .print-only { display: block !important; }
             .table-container { max-height: none; overflow: visible; box-shadow: none; }
             table { width: 100%; font-size: 9px; }
-            th, td { border: 1px solid #000 !important; padding: 2px 4px; }
-            .col-sticky-1, .col-sticky-2 { position: static; box-shadow: none; border: 1px solid #000; }
-            /* Hide Sidebar & Header on Print */
+            th, td { border: 1px solid #000 !important; padding: 2px 4px; white-space: normal; }
+            .col-sticky-1, .col-sticky-2, .col-sticky-right { position: static; box-shadow: none; border: 1px solid #000; }
             #sidebar, #mobile-header, #mobile-overlay { display: none !important; }
         }
 
         .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Mobile Sidebar Transition */
-        #sidebar { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); } /* Ease-out quart */
+        #sidebar { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
     </style>
 </head>
 <body class="bg-brand-bg text-brand-dark font-sans h-screen flex flex-col md:flex-row overflow-hidden selection:bg-indigo-100 selection:text-indigo-700">
 
-    <!-- 0. MOBILE OVERLAY (Dark Background) -->
-    <!-- z-index 90: Di atas konten utama (z-50 kebawah), di bawah drawer (z-100) -->
+    <!-- 0. MOBILE OVERLAY -->
     <div id="mobile-overlay" onclick="toggleMenu()" class="fixed inset-0 bg-slate-900/60 z-90 hidden md:hidden transition-opacity duration-300 backdrop-blur-sm"></div>
 
-    <!-- 1. MOBILE HEADER (Visible only on small screens) -->
+    <!-- 1. MOBILE HEADER -->
     <header id="mobile-header" class="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center sticky top-0 z-40 shadow-sm">
         <div class="flex items-center gap-4">
-            <!-- Hamburger Button -->
             <button onclick="toggleMenu()" class="text-slate-700 focus:outline-none p-2 -ml-2 rounded-lg hover:bg-slate-100 active:bg-slate-200 transition">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h7"></path></svg>
             </button>
@@ -130,25 +168,18 @@
         </button>
     </header>
 
-    <!-- 2. SIDEBAR / DRAWER MENU -->
-    <!-- Mobile: Fixed Drawer (z-100), Desktop: Static Sidebar (z-auto) -->
+    <!-- 2. SIDEBAR -->
     <nav id="sidebar" class="fixed inset-y-0 left-0 z-100 w-[280px] md:w-72 bg-white border-r border-slate-200 shadow-drawer md:shadow-none transform -translate-x-full md:translate-x-0 md:static flex flex-col h-full no-print">
-        
-        <!-- Brand Header (Desktop Only) -->
         <div class="hidden md:block p-6 bg-gradient-to-r from-indigo-600 to-violet-600 text-white">
             <h1 class="text-xl font-bold tracking-wide leading-tight">RT/RW 02/19</h1>
             <p class="text-xs text-indigo-100 opacity-90 mt-1">Sistem Keuangan Digital</p>
         </div>
-
-        <!-- Mobile Drawer Header (Close Button) -->
         <div class="md:hidden p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/80 backdrop-blur">
             <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Navigasi Utama</span>
             <button onclick="toggleMenu()" class="text-slate-400 hover:text-red-500 hover:bg-red-50 p-1 rounded-full transition">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>
-
-        <!-- Period Selector -->
         <div class="px-5 py-5 bg-indigo-50/50 border-b border-indigo-100">
             <label class="text-[10px] uppercase font-bold text-indigo-400 tracking-wider mb-2 block">Pilih Periode Aktif</label>
             <div class="flex items-center space-x-2">
@@ -164,26 +195,20 @@
                 </div>
             </div>
         </div>
-
-        <!-- Menu Items -->
         <div class="flex-1 overflow-y-auto p-4 space-y-2">
             <button onclick="switchTab('tabungan')" id="btn-tabungan" class="tab-btn w-full flex items-center px-4 py-3.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition-all group border border-transparent active:scale-[0.98]">
                 <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center mr-3 group-hover:scale-110 transition-transform flex-shrink-0 shadow-sm text-lg">💰</span>
                 Tabungan Harian
             </button>
-
             <button onclick="switchTab('kas')" id="btn-kas" class="tab-btn w-full flex items-center px-4 py-3.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-all group border border-transparent active:scale-[0.98]">
                 <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mr-3 group-hover:scale-110 transition-transform flex-shrink-0 shadow-sm text-lg">💎</span>
                 Kas Operasional
             </button>
-
             <button onclick="switchTab('laporan')" id="btn-laporan" class="tab-btn w-full flex items-center px-4 py-3.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-amber-50 hover:text-amber-700 transition-all group border border-transparent active:scale-[0.98]">
                 <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center mr-3 group-hover:scale-110 transition-transform flex-shrink-0 shadow-sm text-lg">📊</span>
                 Laporan Keuangan
             </button>
         </div>
-
-        <!-- Footer / Reset -->
         <div class="p-4 border-t border-slate-100 bg-slate-50/50">
             <button onclick="resetData()" class="text-xs text-red-400 hover:text-red-600 font-medium flex items-center justify-center w-full py-2.5 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100">
                 <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -199,14 +224,12 @@
     <main class="flex-1 overflow-y-auto overflow-x-hidden bg-[#F8FAFC] relative w-full pt-0 md:pt-0">
         <div class="max-w-7xl mx-auto p-4 md:p-8">
 
-            <!-- Header Content (Desktop) -->
+            <!-- Header Desktop -->
             <div class="hidden md:flex justify-between items-end mb-8">
                 <div>
                     <h2 class="text-3xl font-bold text-slate-800 tracking-tight" id="page-title">Dashboard</h2>
                     <div class="flex items-center mt-2 space-x-2">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-indigo-100 text-indigo-800" id="header-period-badge">
-                            PERIODE AKTIF
-                        </span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-indigo-100 text-indigo-800" id="header-period-badge">PERIODE AKTIF</span>
                         <span class="text-xs text-slate-500">Update Real-time</span>
                     </div>
                 </div>
@@ -216,7 +239,7 @@
                 </button>
             </div>
 
-            <!-- Header Content (Mobile Page Title) -->
+            <!-- Header Mobile -->
             <div class="md:hidden mb-4 flex items-center justify-between mt-2">
                 <h2 class="text-xl font-bold text-slate-800" id="mobile-page-title">Tabungan</h2>
                 <span class="text-[10px] font-bold bg-indigo-100 text-indigo-800 px-2.5 py-1 rounded shadow-sm border border-indigo-50" id="mobile-period-badge">JAN 2026</span>
@@ -238,17 +261,21 @@
                     </div>
                     
                     <div class="table-container">
-                        <table class="w-full text-sm text-left border-collapse">
+                        <table class="w-full text-sm text-left">
                             <thead class="text-xs font-semibold text-slate-600 bg-slate-50 uppercase tracking-wider">
                                 <tr>
-                                    <th class="px-3 py-4 text-center border-b border-r w-12 col-sticky-1">No</th>
-                                    <th class="px-4 py-4 border-b w-32 md:w-48 col-sticky-2 text-left shadow-sm">Nama</th>
+                                    <!-- NO Sticky -->
+                                    <th class="px-3 py-4 text-center border-b border-r w-10 md:w-12 col-sticky-1 min-w-[40px]">No</th>
+                                    <!-- NAMA Sticky -->
+                                    <th class="px-4 py-4 border-b w-32 md:w-48 col-sticky-2 text-left shadow-sm min-w-[140px]">Nama</th>
+                                    <!-- TANGGAL Scrollable (Auto Generated) -->
                                     <script>
                                         for(let i=1; i<=31; i++) {
-                                            document.write(`<th class="px-2 py-4 text-center min-w-[40px] md:min-w-[50px] border-b border-r hover:bg-slate-100 transition-colors cursor-default select-none">${i}</th>`);
+                                            document.write(`<th class="px-2 py-4 text-center min-w-[70px] border-b border-r hover:bg-slate-100 transition-colors cursor-default select-none">${i}</th>`);
                                         }
                                     </script>
-                                    <th class="px-4 py-4 text-right border-b bg-emerald-50 text-emerald-700 min-w-[100px] sticky right-0 z-20 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)]">Total</th>
+                                    <!-- TOTAL Sticky Right -->
+                                    <th class="px-4 py-4 text-right border-b bg-emerald-50 text-emerald-700 min-w-[120px] col-sticky-right shadow-sticky-right">Total</th>
                                 </tr>
                             </thead>
                             <tbody id="table-tabungan-body" class="divide-y divide-slate-100">
@@ -256,11 +283,11 @@
                             </tbody>
                             <tfoot class="bg-slate-50 font-bold text-slate-700 sticky bottom-0 z-40 border-t-2 border-slate-200">
                                 <tr>
-                                    <td colspan="2" class="px-4 py-3 text-right bg-slate-50 col-sticky-1 z-50 text-[10px]">TOTAL</td>
+                                    <td colspan="2" class="px-4 py-3 text-right bg-slate-50 col-sticky-1 z-50 text-[10px] border-r border-slate-200">TOTAL</td>
                                     <script>
-                                        for(let i=1; i<=31; i++) { document.write(`<td id="tf-tab-${i}" class="px-1 py-3 text-center text-[10px] text-slate-500 border-r">-</td>`); }
+                                        for(let i=1; i<=31; i++) { document.write(`<td id="tf-tab-${i}" class="px-1 py-3 text-center text-[10px] text-slate-500 border-r min-w-[70px]">-</td>`); }
                                     </script>
-                                    <td id="tf-tab-total" class="px-4 py-3 text-right text-emerald-700 bg-emerald-100 sticky right-0 z-50 text-xs">0</td>
+                                    <td id="tf-tab-total" class="px-4 py-3 text-right text-emerald-700 bg-emerald-100 col-sticky-right z-50 text-xs min-w-[120px] border-l border-emerald-200">0</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -287,14 +314,14 @@
                         <table class="w-full text-sm text-left border-collapse">
                             <thead class="text-xs font-semibold text-slate-600 bg-slate-50 uppercase tracking-wider">
                                 <tr>
-                                    <th class="px-3 py-4 text-center border-b border-r w-12 col-sticky-1">No</th>
-                                    <th class="px-4 py-4 border-b w-32 md:w-48 col-sticky-2 text-left shadow-sm">Nama/Ket</th>
+                                    <th class="px-3 py-4 text-center border-b border-r w-10 md:w-12 col-sticky-1 min-w-[40px]">No</th>
+                                    <th class="px-4 py-4 border-b w-32 md:w-48 col-sticky-2 text-left shadow-sm min-w-[140px]">Nama/Ket</th>
                                     <script>
                                         for(let i=1; i<=31; i++) {
-                                            document.write(`<th class="px-2 py-4 text-center min-w-[40px] md:min-w-[50px] border-b border-r hover:bg-slate-100 transition-colors cursor-default select-none">${i}</th>`);
+                                            document.write(`<th class="px-2 py-4 text-center min-w-[70px] border-b border-r hover:bg-slate-100 transition-colors cursor-default select-none">${i}</th>`);
                                         }
                                     </script>
-                                    <th class="px-4 py-4 text-right border-b bg-blue-50 text-blue-700 min-w-[100px] sticky right-0 z-20 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)]">Total</th>
+                                    <th class="px-4 py-4 text-right border-b bg-blue-50 text-blue-700 min-w-[120px] col-sticky-right shadow-sticky-right">Total</th>
                                 </tr>
                             </thead>
                             <tbody id="table-kas-body" class="divide-y divide-slate-100">
@@ -302,11 +329,11 @@
                             </tbody>
                             <tfoot class="bg-slate-800 text-white font-bold sticky bottom-0 z-40 border-t-2 border-slate-700">
                                 <tr>
-                                    <td colspan="2" class="px-4 py-3 text-right bg-slate-800 col-sticky-1 z-50 text-[10px]">NET</td>
+                                    <td colspan="2" class="px-4 py-3 text-right bg-slate-800 col-sticky-1 z-50 text-[10px] border-r border-slate-600">NET</td>
                                     <script>
-                                        for(let i=1; i<=31; i++) { document.write(`<td id="tf-kas-${i}" class="px-1 py-3 text-center text-[10px] border-r border-slate-600 font-normal">-</td>`); }
+                                        for(let i=1; i<=31; i++) { document.write(`<td id="tf-kas-${i}" class="px-1 py-3 text-center text-[10px] border-r border-slate-600 font-normal min-w-[70px]">-</td>`); }
                                     </script>
-                                    <td id="tf-kas-total" class="px-4 py-3 text-right bg-indigo-600 sticky right-0 z-50 text-xs">0</td>
+                                    <td id="tf-kas-total" class="px-4 py-3 text-right bg-indigo-600 col-sticky-right z-50 text-xs min-w-[120px] border-l border-indigo-500">0</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -316,20 +343,17 @@
 
             <!-- === VIEW: LAPORAN === -->
             <div id="view-laporan" class="view-section fade-in hidden">
-                <!-- Header Print -->
                 <div class="hidden print-only text-center mb-8 border-b-2 border-black pb-4">
                     <h1 class="text-2xl font-bold uppercase">Laporan Keuangan RT/RW 02/19</h1>
                     <p class="text-sm font-bold" id="rpt-print-period">Periode: -</p>
                 </div>
 
-                <!-- 1. ACTIVE MONTH SUMMARY -->
                 <div class="mb-4 flex items-center justify-between no-print">
                     <h3 class="font-bold text-slate-800 text-base md:text-lg border-l-4 border-indigo-500 pl-3">Ringkasan Bulan Ini</h3>
                     <span class="text-xs md:text-sm font-medium text-slate-500 bg-white px-3 py-1 rounded-full border shadow-sm" id="rpt-month-label">Januari</span>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
-                    <!-- Main Saldo Card -->
                     <div class="lg:col-span-2 bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl shadow-xl shadow-indigo-200 p-6 md:p-8 text-white relative overflow-hidden">
                         <div class="relative z-10">
                             <p class="text-indigo-200 text-xs md:text-sm font-semibold uppercase tracking-widest mb-2">Saldo Bersih (Net)</p>
@@ -353,7 +377,6 @@
                         <div class="absolute right-0 top-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
                     </div>
 
-                    <!-- Quick Stats -->
                     <div class="lg:col-span-1 grid grid-cols-2 lg:grid-cols-1 gap-3 md:gap-4">
                         <div class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center">
                             <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold mb-1">Sumber Dana</p>
@@ -372,7 +395,6 @@
                     </div>
                 </div>
 
-                <!-- 2. YEARLY RECAP TABLE -->
                 <div class="mb-4 flex items-center justify-between mt-8 md:mt-10">
                     <h3 class="font-bold text-slate-800 text-base md:text-lg border-l-4 border-emerald-500 pl-3">Rekapitulasi Tahun <span id="rpt-year-val">2026</span></h3>
                 </div>
@@ -401,7 +423,6 @@
                     </div>
                 </div>
 
-                <!-- Signature -->
                 <div class="hidden print-only mt-16 grid grid-cols-2 gap-8 text-center page-break-inside-avoid">
                     <div>
                         <p class="mb-20">Mengetahui,<br>Ketua RT 02</p>
@@ -417,7 +438,7 @@
         </div>
     </main>
 
-    <!-- 4. JAVASCRIPT LOGIC (V8 + Mobile Toggle) -->
+    <!-- 4. JAVASCRIPT LOGIC -->
     <script>
         // --- MOBILE MENU LOGIC ---
         let isMenuOpen = false;
@@ -429,27 +450,18 @@
             const body = document.body;
             
             if (isMenuOpen) {
-                // Open Menu
                 sidebar.classList.remove('-translate-x-full');
                 overlay.classList.remove('hidden');
-                // Lock Body Scroll
                 body.classList.add('overflow-hidden');
-                
-                // Fade in overlay
                 setTimeout(() => overlay.classList.remove('opacity-0'), 10);
             } else {
-                // Close Menu
                 sidebar.classList.add('-translate-x-full');
                 overlay.classList.add('opacity-0');
-                // Unlock Body Scroll
                 body.classList.remove('overflow-hidden');
-                
-                // Hide overlay after transition
                 setTimeout(() => overlay.classList.add('hidden'), 300);
             }
         }
 
-        // --- KONSTANTA & CONFIG ---
         const AVAILABLE_YEARS = [2026, 2027, 2028, 2029, 2030];
         const MONTH_NAMES = [
             "Januari", "Februari", "Maret", "April", "Mei", "Juni", 
@@ -457,7 +469,6 @@
         ];
         const STORAGE_KEY = 'rtDataV8';
 
-        // --- MASTER DATA ---
         const MASTER_CITIZENS = [
             { id: 1, name: "WAWAN R" }, { id: 2, name: "SAKRI" }, { id: 3, name: "YAYAT H" }, 
             { id: 4, name: "EDENG K" }, { id: 5, name: "SATIA P" },
@@ -566,7 +577,6 @@
                 };
             });
 
-            // Initialize with kasOut object
             db[2026][0] = { citizens: jan2026Citizens, kasOut: {} };
             saveDB();
         }
@@ -652,10 +662,10 @@
                     const display = val > 0 ? formatRupiahStrict(val) : '';
                     const activeClass = val > 0 ? 'text-emerald-700 font-bold bg-emerald-50/50' : 'text-slate-300';
                     
-                    rowHtml += `<td onclick="editSaving(${c.id}, ${i})" class="px-1 py-3 text-center border-b border-r cursor-pointer hover:bg-emerald-100 transition-colors ${activeClass} text-xs whitespace-nowrap select-none">${display}</td>`;
+                    rowHtml += `<td onclick="editSaving(${c.id}, ${i})" class="px-1 py-3 text-center border-b border-r cursor-pointer hover:bg-emerald-100 transition-colors ${activeClass} text-xs whitespace-nowrap select-none min-w-[70px]">${display}</td>`;
                 }
                 grandTotal += totalRow;
-                rowHtml += `<td class="px-4 py-3 text-right font-bold text-emerald-700 bg-emerald-50 border-b sticky right-0 z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)]">${formatRupiahStrict(totalRow)}</td></tr>`;
+                rowHtml += `<td class="px-4 py-3 text-right font-bold text-emerald-700 bg-emerald-50 border-b sticky right-0 z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] col-sticky-right">${formatRupiahStrict(totalRow)}</td></tr>`;
                 tbody.innerHTML += rowHtml;
             });
 
@@ -687,10 +697,10 @@
                     const display = val > 0 ? '500' : '';
                     const activeClass = val > 0 ? 'text-blue-600 font-bold bg-blue-50/50' : 'text-slate-300 font-light';
 
-                    rowHtml += `<td onclick="editKas(${c.id}, ${i})" class="px-1 py-3 text-center border-b border-r cursor-pointer hover:bg-blue-100 text-xs ${activeClass} select-none">${display}</td>`;
+                    rowHtml += `<td onclick="editKas(${c.id}, ${i})" class="px-1 py-3 text-center border-b border-r cursor-pointer hover:bg-blue-100 text-xs ${activeClass} select-none min-w-[70px]">${display}</td>`;
                 }
                 grandTotalIn += totalRow;
-                rowHtml += `<td class="px-4 py-3 text-right font-bold text-blue-700 bg-blue-50 border-b sticky right-0 z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)]">${formatRupiahStrict(totalRow)}</td></tr>`;
+                rowHtml += `<td class="px-4 py-3 text-right font-bold text-blue-700 bg-blue-50 border-b sticky right-0 z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] col-sticky-right">${formatRupiahStrict(totalRow)}</td></tr>`;
                 tbody.innerHTML += rowHtml;
             });
 
@@ -706,9 +716,9 @@
                 const display = val > 0 ? `-${formatRupiahStrict(val).replace('Rp.','')}` : '-';
                 const activeClass = val > 0 ? 'text-rose-600 font-bold bg-rose-100' : 'text-slate-400';
                 
-                expenseHtml += `<td onclick="editKasOut(${i})" class="px-1 py-3 text-center border-b border-r border-rose-200 cursor-pointer hover:bg-rose-200 transition-colors ${activeClass} text-[10px] whitespace-nowrap select-none">${display}</td>`;
+                expenseHtml += `<td onclick="editKasOut(${i})" class="px-1 py-3 text-center border-b border-r border-rose-200 cursor-pointer hover:bg-rose-200 transition-colors ${activeClass} text-[10px] whitespace-nowrap select-none min-w-[70px]">${display}</td>`;
             }
-            expenseHtml += `<td class="px-4 py-3 text-right font-bold text-rose-700 bg-rose-100 border-b sticky right-0 z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)]">-${formatRupiahStrict(totalExpenseRow)}</td></tr>`;
+            expenseHtml += `<td class="px-4 py-3 text-right font-bold text-rose-700 bg-rose-100 border-b sticky right-0 z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] col-sticky-right">-${formatRupiahStrict(totalExpenseRow)}</td></tr>`;
             tbody.innerHTML += expenseHtml;
 
             let grandNet = grandTotalIn - totalExpenseRow;
@@ -717,7 +727,7 @@
                 const net = (totalsPerDateIn[i] || 0) - (currentState.kasOut[i] || 0);
                 if(tf) {
                     tf.innerText = formatRupiahStrict(net).replace('Rp.','');
-                    tf.className = `px-1 py-3 text-center text-[10px] border-r border-slate-600 ${net < 0 ? 'text-rose-400 font-bold' : 'text-slate-300'}`;
+                    tf.className = `px-1 py-3 text-center text-[10px] border-r border-slate-600 ${net < 0 ? 'text-rose-400 font-bold' : 'text-slate-300'} min-w-[70px]`;
                 }
             }
             document.getElementById('tf-kas-total').innerText = formatRupiahStrict(grandNet);
