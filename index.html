@@ -58,14 +58,65 @@
         /* Typography Lock */
         body { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
-        /* Table Sticky Magic - Desktop Default */
-        .table-container { position: relative; overflow: auto; max-height: 70vh; border-radius: 0.75rem; isolation: isolate; }
+        /* Table Container Config */
+        .table-container { 
+            position: relative; 
+            overflow: auto; /* Enable Scroll */
+            max-height: 70vh; 
+            border-radius: 0.75rem; 
+            isolation: isolate; 
+        }
+
         table { border-collapse: separate; border-spacing: 0; }
         th, td { white-space: nowrap; }
-        thead th { position: sticky; top: 0; z-index: 40; background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; } /* Header Sticky Top */
+
+        /* --- FIX SCROLL BEHAVIOR (NON-STICKY HEADERS/FOOTERS) --- */
+        /* Sesuai instruksi: Header dan Footer TIDAK sticky, ikut scroll */
+        #view-tabungan thead th,
+        #view-kas thead th {
+            position: static !important;
+            top: auto !important;
+            z-index: auto !important;
+            background-color: #f8fafc; /* Keep bg color */
+        }
+
+        #view-tabungan tfoot td,
+        #view-kas tfoot td {
+            position: static !important;
+            bottom: auto !important;
+            z-index: auto !important;
+        }
+
+        /* --- STICKY COLUMNS (LEFT ONLY) --- */
+        /* Kolom No */
+        .col-sticky-1 { 
+            position: sticky; 
+            left: 0; 
+            z-index: 20; 
+            background-color: #ffffff;
+            border-right: 1px solid #e2e8f0; 
+        }
         
-        .col-sticky-1 { position: sticky; left: 0; z-index: 30; background-color: #f8fafc; border-right: 1px solid #e2e8f0; }
-        .col-sticky-2 { position: sticky; left: 48px; z-index: 30; background-color: #f8fafc; border-right: 1px solid #e2e8f0; box-shadow: 4px 0 8px -4px rgba(0,0,0,0.1); }
+        /* Kolom Nama */
+        .col-sticky-2 { 
+            position: sticky; 
+            left: 48px; /* Width of col 1 roughly */
+            z-index: 20; 
+            background-color: #ffffff; 
+            border-right: 1px solid #e2e8f0; 
+            box-shadow: 4px 0 8px -4px rgba(0,0,0,0.1); 
+        }
+
+        /* Ensure sticky columns inside headers/footers have slightly higher Z if needed, 
+           though with static headers/footers this is less critical for vertical overlap, 
+           mostly for horizontal scroll overlap */
+        thead th.col-sticky-1, thead th.col-sticky-2 { 
+            z-index: 21; 
+            background-color: #f8fafc; /* Header background */
+        }
+        tfoot td.col-sticky-1, tfoot td.col-sticky-2 {
+            z-index: 21;
+        }
         
         /* Right Column Static for scroll-to-end view */
         .col-sticky-right { 
@@ -74,11 +125,6 @@
             border-left: 2px solid #e2e8f0; 
             box-shadow: none; 
         }
-        
-        /* Ensure headers stay above body sticky cols */
-        thead th.col-sticky-1, thead th.col-sticky-2 { z-index: 50; }
-        
-        tfoot td.col-sticky-1 { z-index: 50; }
 
         .select-modern { appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236366f1'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e"); background-position: right 0.75rem center; background-repeat: no-repeat; background-size: 1rem; }
 
@@ -95,7 +141,6 @@
         }
 
         /* Specific style for Disabled Buttons in Warga Mode */
-        /* PERBAIKAN LOGIC: Hanya diterapkan pada tombol yang memiliki class ini, bukan Load button */
         body.role-warga .btn-disabled-warga {
             opacity: 0.5;
             cursor: not-allowed;
@@ -134,13 +179,13 @@
             /* No */
             .col-sticky-1 { 
                 width: 35px; min-width: 35px; 
-                position: sticky; left: 0; z-index: 45;
+                position: sticky; left: 0; z-index: 25;
                 background-color: #fff; /* Ensure text doesn't show through */
             }
             /* Nama */
             .col-sticky-2 { 
                 left: 35px; width: 110px; min-width: 110px; max-width: 110px; 
-                position: sticky; z-index: 45;
+                position: sticky; z-index: 25;
                 overflow: hidden; text-overflow: ellipsis; 
                 box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* Separator shadow */
                 background-color: #fff;
@@ -156,11 +201,6 @@
             #view-kas .col-sticky-right {
                 background-color: #eff6ff; /* Match Kas bg */
             }
-
-            /* Z-Index Hierarchy for Mobile */
-            thead th { z-index: 50 !important; } /* Headers always top */
-            thead th.col-sticky-1, thead th.col-sticky-2 { z-index: 60 !important; } /* Sticky headers highest */
-            tfoot td { z-index: 50 !important; }
 
             /* 4. Date Column Sizing & Font */
             th { font-size: 11px !important; padding: 10px 4px; }
@@ -551,7 +591,7 @@
                             <tbody id="table-tabungan-body" class="divide-y divide-slate-100">
                                 <!-- JS Populated -->
                             </tbody>
-                            <tfoot class="bg-slate-50 font-bold text-slate-700 sticky bottom-0 z-40 border-t-2 border-slate-200">
+                            <tfoot class="bg-slate-50 font-bold text-slate-700 border-t-2 border-slate-200">
                                 <tr>
                                     <td colspan="2" class="px-4 py-3 text-right bg-slate-50 col-sticky-1 z-50 text-[10px] border-r border-slate-200">TOTAL</td>
                                     <script>
@@ -600,7 +640,7 @@
                             <tbody id="table-kas-body" class="divide-y divide-slate-100">
                                 <!-- JS Populated -->
                             </tbody>
-                            <tfoot class="bg-slate-800 text-white font-bold sticky bottom-0 z-40 border-t-2 border-slate-700">
+                            <tfoot class="bg-slate-800 text-white font-bold border-t-2 border-slate-700">
                                 <tr>
                                     <td colspan="2" class="px-4 py-3 text-right bg-slate-800 col-sticky-1 z-50 text-[10px] border-r border-slate-600">NET</td>
                                     <script>
@@ -1404,8 +1444,7 @@
     let currentYear = 2026;
     let currentMonth = 0;
     let currentState = { citizens: [], kasOut: {}, images: [], generalNotes: '' };
-
-    // --- REFACTORED ACTION FUNCTIONS (PREVIEW FIRST) ---
+// --- REFACTORED ACTION FUNCTIONS (PREVIEW FIRST) ---
     
     window.editSaving = function(id, date, forceEdit = false) {
         const citizen = currentState.citizens.find(c => c.id === id);
@@ -1430,10 +1469,8 @@
 
         // --- ROLE CHECK: WARGA ---
         if (currentRole !== 'admin') {
-            // Jika data kosong, warga tidak bisa klik/input
             if (net === 0) return;
 
-            // Jika ada data, warga hanya bisa melihat (Preview Mode)
             openUiModal({
                 title: 'Detail Transaksi',
                 subtitle: `Tabungan ${citizen.name} (Read Only)`,
@@ -1443,16 +1480,13 @@
                     dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
                     note: note
                 },
-                onEdit: null // Disable edit button
+                onEdit: null 
             });
             return;
         }
 
         // --- ROLE CHECK: ADMIN (Normal Flow) ---
-
-        // DECISION: Preview or Edit?
         if (!forceEdit && net !== 0) {
-            // Show Preview if data exists
             openUiModal({
                 title: 'Detail Transaksi',
                 subtitle: `Tabungan ${citizen.name}`,
@@ -1463,7 +1497,7 @@
                     note: note
                 },
                 onEdit: () => {
-                    window.editSaving(id, date, true); // Force edit mode
+                    window.editSaving(id, date, true); 
                 }
             });
             return;
@@ -1519,9 +1553,8 @@
             net = currentData;
         }
         
-        // --- ROLE CHECK: WARGA ---
         if (currentRole !== 'admin') {
-            if (net === 0) return; // Warga cannot input new data
+            if (net === 0) return; 
             
             openUiModal({
                 title: 'Detail Transaksi',
@@ -1536,8 +1569,6 @@
             });
             return;
         }
-
-        // --- ROLE CHECK: ADMIN ---
 
         if (!forceEdit && net !== 0) {
             openUiModal({
@@ -1584,7 +1615,44 @@
             }
         });
     };
-window.editKasOut = function(date) {
+
+    // --- FITUR BARU: PENGELUARAN TABUNGAN (OPS) ---
+    window.editTabOut = function(date) {
+        // ADMIN ONLY
+        if(currentRole !== 'admin') {
+            showToast('Hanya Admin yang bisa edit pengeluaran!', 'error');
+            return;
+        }
+
+        const currentVal = currentState.tabOut ? (currentState.tabOut[date] || 0) : 0;
+        const currentNote = currentState.tabOutNotes ? currentState.tabOutNotes[date] : '';
+        
+        openUiModal({
+            title: 'Pengeluaran Tabungan (OPS)',
+            subtitle: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
+            mode: 'input',
+            inputType: 'number',
+            initialValue: currentVal,
+            placeholder: "15000",
+            showNoteInput: true,
+            initialNote: currentNote,
+            onConfirm: (val, note) => {
+                let amount = parseInt(val.toString().replace(/[^0-9]/g, ''));
+                if (isNaN(amount)) amount = 0;
+                
+                if(!currentState.tabOut) currentState.tabOut = {};
+                currentState.tabOut[date] = amount;
+                
+                if(!currentState.tabOutNotes) currentState.tabOutNotes = {};
+                currentState.tabOutNotes[date] = note;
+
+                saveDB(); renderAll();
+                showToast('Pengeluaran Tabungan disimpan', 'success');
+            }
+        });
+    };
+
+    window.editKasOut = function(date) {
         // ADMIN ONLY
         if(currentRole !== 'admin') {
             showToast('Hanya Admin yang bisa edit pengeluaran!', 'error');
@@ -1612,7 +1680,7 @@ window.editKasOut = function(date) {
                 currentState.kasOutNotes[date] = note;
 
                 saveDB(); renderAll();
-                showToast('Pengeluaran disimpan', 'success');
+                showToast('Pengeluaran Kas disimpan', 'success');
             }
         });
     };
@@ -1653,7 +1721,7 @@ window.editKasOut = function(date) {
             title: 'Hapus Warga?',
             message: `Yakin ingin menghapus warga "${name}"? Data tabungan/kas mereka di bulan ini akan HILANG PERMANEN.`,
             mode: 'input',
-            isDelete: true, // Requires "lanjut" validation
+            isDelete: true,
             actionText: 'Ya, Hapus',
             onConfirm: () => {
                 currentState.citizens = currentState.citizens.filter(c => c.id !== id);
@@ -1670,7 +1738,7 @@ window.editKasOut = function(date) {
             title: 'Reset Nominal Bulan Ini?',
             message: "Ini akan me-RESET semua uang menjadi 0 untuk bulan ini saja. Nama warga TETAP ADA.",
             mode: 'input',
-            isDelete: true, // Requires "lanjut" validation
+            isDelete: true, 
             actionText: 'Ya, Reset 0',
             onConfirm: () => {
                 currentState.citizens.forEach(c => { 
@@ -1678,6 +1746,8 @@ window.editKasOut = function(date) {
                 });
                 currentState.kasOut = {};
                 currentState.kasOutNotes = {};
+                currentState.tabOut = {}; // Reset Tab Out
+                currentState.tabOutNotes = {};
                 saveDB(); renderAll();
                 showToast("Semua nominal di-reset ke 0.", 'success');
             }
@@ -1691,7 +1761,7 @@ window.editKasOut = function(date) {
             title: 'HARD RESET SYSTEM?',
             message: "PERINGATAN KERAS: Semua data akan DIHAPUS PERMANEN dan kembali ke kondisi awal Jan 2026. Tidak bisa dibatalkan!",
             mode: 'input',
-            isDelete: true, // Requires "lanjut" validation
+            isDelete: true,
             actionText: 'Hapus Semua Data',
             onConfirm: () => {
                 localStorage.removeItem(STORAGE_KEY);
@@ -1750,7 +1820,7 @@ window.editKasOut = function(date) {
 
         openUiModal({
             title: 'Hapus Dokumentasi?',
-            isDelete: true, // Requires "lanjut" validation
+            isDelete: true,
             mode: 'input',
             actionText: 'Hapus',
             onConfirm: () => {
@@ -1783,6 +1853,8 @@ window.editKasOut = function(date) {
         currentState = db[currentYear][currentMonth];
         if(!currentState.kasOut) currentState.kasOut = {};
         if(!currentState.kasOutNotes) currentState.kasOutNotes = {};
+        if(!currentState.tabOut) currentState.tabOut = {}; // Ensure tabOut exists
+        if(!currentState.tabOutNotes) currentState.tabOutNotes = {};
         if(!currentState.images) currentState.images = [];
         if(!currentState.generalNotes) currentState.generalNotes = '';
         
@@ -1821,7 +1893,6 @@ window.editKasOut = function(date) {
     // --- HELPER FUNCTIONS ---
 
     function init() {
-        // Init Role First
         initRole();
 
         const yearSel = document.getElementById('sel-year');
@@ -1871,7 +1942,12 @@ window.editKasOut = function(date) {
             };
         });
 
-        db[2026][0] = { citizens: jan2026Citizens, kasOut: {}, kasOutNotes: {}, images: [], generalNotes: '' };
+        db[2026][0] = { 
+            citizens: jan2026Citizens, 
+            kasOut: {}, kasOutNotes: {}, 
+            tabOut: {}, tabOutNotes: {}, 
+            images: [], generalNotes: '' 
+        };
         saveDB();
     }
 
@@ -1884,7 +1960,12 @@ window.editKasOut = function(date) {
             savingsNotes: {},
             kasNotes: {}
         }));
-        return { citizens: blankCitizens, kasOut: {}, kasOutNotes: {}, images: [], generalNotes: '' };
+        return { 
+            citizens: blankCitizens, 
+            kasOut: {}, kasOutNotes: {}, 
+            tabOut: {}, tabOutNotes: {},
+            images: [], generalNotes: '' 
+        };
     }
 
     function saveDB() {
@@ -2014,16 +2095,58 @@ window.editKasOut = function(date) {
             tbody.innerHTML += rowHtml;
         });
 
+        // --- NEW: BARIS PENGELUARAN TABUNGAN (OPS) ---
+        let totalTabOutRow = 0;
+        let tabOutHtml = `<tr class="bg-rose-50/30 hover:bg-rose-50 transition-colors group border-t-2 border-slate-100">
+            <td class="px-3 py-3 text-center font-bold text-rose-500 border-b border-r col-sticky-1 bg-rose-50/30">OUT</td>
+            <td class="px-4 py-3 font-bold text-rose-700 border-b col-sticky-2 whitespace-nowrap bg-rose-50/30 text-left">PENGELUARAN (OPS)</td>`;
+        
+        for(let i=1; i<=31; i++) {
+            const val = currentState.tabOut ? (currentState.tabOut[i] || 0) : 0;
+            const hasNote = currentState.tabOutNotes && currentState.tabOutNotes[i];
+            totalTabOutRow += val;
+            
+            const display = val > 0 ? `-${formatRupiahStrict(val).replace('Rp.','')}` : '-';
+            
+            let activeClass = '';
+            let clickAttr = '';
+            
+            if (currentRole === 'admin') {
+                 activeClass = val > 0 ? 'text-rose-600 font-bold bg-rose-100 hover:bg-rose-200 cursor-pointer' : 'text-slate-400 hover:bg-slate-100 cursor-pointer';
+                 clickAttr = `onclick="editTabOut(${i})"`;
+            } else {
+                 activeClass = val > 0 ? 'text-rose-600 font-bold bg-rose-100 cursor-default' : 'text-slate-200 cursor-default';
+            }
+            
+            let noteIndicator = '';
+            if(hasNote) {
+                noteIndicator = `<span class="absolute top-0 right-0 text-[8px] leading-none p-0.5">📝</span>`;
+            }
+
+            tabOutHtml += `<td ${clickAttr} class="relative px-1 py-3 text-center border-b border-r border-rose-100 transition-colors ${activeClass} text-[10px] whitespace-nowrap select-none min-w-[70px]" title="${hasNote || ''}">
+                ${display}
+                ${noteIndicator}
+            </td>`;
+        }
+        tabOutHtml += `<td class="px-4 py-3 text-right font-bold text-rose-700 bg-rose-50 border-b col-sticky-right">-${formatRupiahStrict(totalTabOutRow)}</td></tr>`;
+        tbody.innerHTML += tabOutHtml;
+
+        // Footer Net
+        let grandNet = grandTotal - totalTabOutRow;
         for(let i=1; i<=31; i++) {
             const tf = document.getElementById(`tf-tab-${i}`);
+            const valIn = totalsPerDate[i] || 0;
+            const valOut = currentState.tabOut ? (currentState.tabOut[i] || 0) : 0;
+            const net = valIn - valOut;
+
             if(tf) {
-                const val = totalsPerDate[i] || 0;
-                tf.innerText = val !== 0 ? formatRupiahStrict(val) : '-';
-                if(val < 0) tf.className = "px-1 py-3 text-center text-[10px] text-red-500 font-bold border-r min-w-[70px]";
-                else tf.className = "px-1 py-3 text-center text-[10px] text-slate-500 border-r min-w-[70px]";
+                tf.innerText = formatRupiahStrict(net).replace('Rp.','');
+                if(net < 0) tf.className = "px-1 py-3 text-center text-[10px] text-red-500 font-bold border-r min-w-[70px]";
+                else if(net > 0) tf.className = "px-1 py-3 text-center text-[10px] text-emerald-600 font-bold border-r min-w-[70px]";
+                else tf.className = "px-1 py-3 text-center text-[10px] text-slate-400 border-r min-w-[70px]";
             }
         }
-        document.getElementById('tf-tab-total').innerText = formatRupiahStrict(grandTotal);
+        document.getElementById('tf-tab-total').innerText = formatRupiahStrict(grandNet);
     }
 
     function renderKas() {
@@ -2187,7 +2310,6 @@ window.editKasOut = function(date) {
                         
                         <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         
-                        <!-- Delete Button (Hover) - ADMIN ONLY -->
                         <button onclick="event.stopPropagation(); deleteImage(${img.id})" class="admin-only absolute top-2 right-2 p-1.5 bg-white/90 text-red-500 rounded-full shadow-sm opacity-0 group-hover:opacity-100 hover:bg-red-50 transition-all transform hover:scale-110 z-10" title="Hapus">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
@@ -2214,7 +2336,7 @@ window.editKasOut = function(date) {
         return 'bg-slate-100 text-slate-600';
     }
 
-    // === LOGIKA LAPORAN BARU (TAMBAHAN) ===
+    // === LOGIKA LAPORAN BARU ===
     function getSafeValue(data, type) {
         if (typeof data === 'number') {
             if (type === 'income') return data > 0 ? data : 0;
@@ -2232,6 +2354,7 @@ window.editKasOut = function(date) {
         let totalKasIncome = 0;
         let totalKasExpense = 0; 
         let totalKasOutOps = 0;
+        let totalTabOutOps = 0;
 
         if (currentState && currentState.citizens) {
             currentState.citizens.forEach(c => {
@@ -2251,9 +2374,13 @@ window.editKasOut = function(date) {
         if (currentState && currentState.kasOut) {
             Object.values(currentState.kasOut).forEach(v => totalKasOutOps += (v || 0));
         }
+        
+        if (currentState && currentState.tabOut) {
+            Object.values(currentState.tabOut).forEach(v => totalTabOutOps += (v || 0));
+        }
 
         const totalIncome = totalSavingsIncome + totalKasIncome;
-        const totalExpense = totalSavingsExpense + totalKasExpense + totalKasOutOps;
+        const totalExpense = totalSavingsExpense + totalKasExpense + totalKasOutOps + totalTabOutOps;
         const finalBalance = totalIncome - totalExpense;
 
         return {
@@ -2261,7 +2388,7 @@ window.editKasOut = function(date) {
             savingsExpense: totalSavingsExpense,
             kasIncome: totalKasIncome,
             kasExpense: totalKasExpense,
-            opsExpense: totalKasOutOps,
+            opsExpense: totalKasOutOps + totalTabOutOps,
             totalIncome,
             totalExpense,
             finalBalance
@@ -2269,7 +2396,6 @@ window.editKasOut = function(date) {
     }
 
     function renderReport() {
-        // === GUNAKAN LOGIKA BARU ===
         const summary = calculateReportSummary();
 
         const elSaldo = document.getElementById('rpt-saldo');
@@ -2279,11 +2405,10 @@ window.editKasOut = function(date) {
         const elDocs = document.getElementById('rpt-docs-count');
         const elNotes = document.getElementById('rpt-general-notes');
 
-        // Update UI dengan nilai baru
         if(elSaldo) elSaldo.innerText = formatRupiahStrict(summary.finalBalance);
-        if(elTab) elTab.innerText = formatRupiahStrict(summary.savingsIncome); // Tampilkan Pemasukan Tabungan
-        if(elKas) elKas.innerText = formatRupiahStrict(summary.kasIncome); // Tampilkan Pemasukan Kas
-        if(elOut) elOut.innerText = `-${formatRupiahStrict(summary.totalExpense)}`; // Tampilkan Total Keluar
+        if(elTab) elTab.innerText = formatRupiahStrict(summary.savingsIncome);
+        if(elKas) elKas.innerText = formatRupiahStrict(summary.kasIncome);
+        if(elOut) elOut.innerText = `-${formatRupiahStrict(summary.totalExpense)}`;
         
         if(elDocs) elDocs.innerText = (currentState.images || []).length;
         if(elNotes) elNotes.innerText = currentState.generalNotes || 'Tidak ada catatan.';
@@ -2301,10 +2426,6 @@ window.editKasOut = function(date) {
                 if (monthData) {
                     let rTab = 0, rKasIn = 0, rKasOut = 0;
                     
-                    // Simple Net calculation for RECAP table (still using old logic for recap simplicity, or update if needed)
-                    // Requirement said "HANYA di menu Laporan Keuangan" which usually means the detail cards.
-                    // For consistency, let's keep Recap as Net flow for now to avoid complexity or update?
-                    // Let's use getNetValue for consistency with table data in recap
                     if(monthData.citizens) {
                         monthData.citizens.forEach(c => {
                             Object.values(c.savings || {}).forEach(v => rTab += getNetValue(v));
@@ -2312,9 +2433,14 @@ window.editKasOut = function(date) {
                         });
                     }
                     
-                    if(monthData.kasOut) {
-                        Object.values(monthData.kasOut).forEach(v => rKasOut += (v || 0));
-                    }
+                    // Add Tabungan Out & Kas Out to Total Out for Recap
+                    let mKasOut = 0;
+                    if(monthData.kasOut) Object.values(monthData.kasOut).forEach(v => mKasOut += (v || 0));
+                    
+                    let mTabOut = 0;
+                    if(monthData.tabOut) Object.values(monthData.tabOut).forEach(v => mTabOut += (v || 0));
+                    
+                    rKasOut = mKasOut + mTabOut; // Combine them as "Keluar" column in Recap
 
                     const rSaldo = rTab + rKasIn - rKasOut;
                     yTab += rTab; yKasIn += rKasIn; yKasOut += rKasOut;
@@ -2359,13 +2485,11 @@ window.editKasOut = function(date) {
     // --- PDF GENERATION LOGIC (PROFESSIONAL F4) ---
     window.downloadPDF = function() {
         const { jsPDF } = window.jspdf;
-        // F4 size approx 215mm x 330mm (Landscape and Portrait handling)
         const doc = new jsPDF('p', 'mm', [215, 330]);
         const currentMonthName = MONTH_NAMES[currentMonth];
         const periodStr = `${currentMonthName} ${currentYear}`;
         
         // --- PAGE 1: COVER (Portrait) ---
-        // Header Line
         doc.setLineWidth(0.5);
         doc.line(20, 20, 195, 20);
         doc.setLineWidth(0.2);
@@ -2388,7 +2512,6 @@ window.editKasOut = function(date) {
         doc.setFontSize(12);
         doc.text("Lokasi: Lingk. Panatasan", 107.5, 250, { align: "center" });
         
-        // Footer Cover
         doc.setFontSize(10);
         doc.setTextColor(100);
         doc.text("Sistem Manajemen Keuangan Digital RT 02 / RW 19", 107.5, 310, { align: "center" });
@@ -2404,15 +2527,13 @@ window.editKasOut = function(date) {
         doc.text(`Periode: ${periodStr}`, 14, 21);
         doc.text(`Digenerate pada: ${new Date().toLocaleDateString('id-ID')}`, 14, 26);
 
-        // --- USE NEW LOGIC FOR PDF ---
         const summary = calculateReportSummary();
         const mTab = summary.savingsIncome;
         const mKasIn = summary.kasIncome;
-        const mKasOut = summary.totalExpense; // Total Expense used for Summary
+        const mTotalOut = summary.totalExpense;
         const mSaldo = summary.finalBalance;
 
         // Draw Cards
-        // Card 1: Saldo Bersih
         doc.setFillColor(79, 70, 229); // Indigo
         doc.rect(14, 35, 70, 40, 'F');
         doc.setTextColor(255);
@@ -2422,7 +2543,6 @@ window.editKasOut = function(date) {
         doc.setFont("helvetica", "bold");
         doc.text(formatRupiahStrict(mSaldo), 20, 60);
 
-        // Card 2: Tabungan (Income)
         doc.setFillColor(16, 185, 129); // Emerald
         doc.rect(90, 35, 70, 40, 'F');
         doc.setFontSize(10);
@@ -2432,7 +2552,6 @@ window.editKasOut = function(date) {
         doc.setFont("helvetica", "bold");
         doc.text(formatRupiahStrict(mTab), 96, 60);
 
-        // Card 3: Kas Masuk
         doc.setFillColor(59, 130, 246); // Blue
         doc.rect(166, 35, 70, 40, 'F');
         doc.setFontSize(10);
@@ -2442,7 +2561,6 @@ window.editKasOut = function(date) {
         doc.setFont("helvetica", "bold");
         doc.text(formatRupiahStrict(mKasIn), 172, 60);
 
-        // Card 4: Pengeluaran
         doc.setFillColor(244, 63, 94); // Rose
         doc.rect(242, 35, 70, 40, 'F');
         doc.setFontSize(10);
@@ -2450,14 +2568,13 @@ window.editKasOut = function(date) {
         doc.text("Total Pengeluaran", 248, 45);
         doc.setFontSize(16);
         doc.setFont("helvetica", "bold");
-        doc.text("-" + formatRupiahStrict(mKasOut).replace('Rp.','Rp. '), 248, 60);
+        doc.text("-" + formatRupiahStrict(mTotalOut).replace('Rp.','Rp. '), 248, 60);
         
-        doc.setTextColor(0); // Reset color
+        doc.setTextColor(0); 
         doc.setFontSize(9);
         doc.setFont("helvetica", "italic");
         doc.text("Keterangan Rumus: Saldo Bersih = (Tabungan Masuk + Kas Masuk) - (Tarik Tabungan + Tarik Kas + Ops)", 14, 85);
 
-        // Footer Page 2
         doc.setFontSize(8);
         doc.text("Halaman 2", 310, 205, { align: "right" });
 
@@ -2476,12 +2593,8 @@ window.editKasOut = function(date) {
             return [i+1, c.name, ...dates, rowTotal.toLocaleString('id-ID')];
         });
 
-        // MASALAH 1 FIXED: Add Footer Row with Total Tabungan
-        // Column index 33 is the last column (Total per user). 
-        // We will make a footer that spans and shows the grand total.
         const tabunganFooterData = ['', 'TOTAL TABUNGAN BULAN INI', ...Array(31).fill(''), totalTabunganKeseluruhan.toLocaleString('id-ID')];
 
-        // Part A: 1-25
         doc.addPage([330, 215], 'l');
         doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
@@ -2508,14 +2621,13 @@ window.editKasOut = function(date) {
         doc.text("Tabungan Harian - Halaman 1 dari 2", 165, 205, { align: "center" });
         doc.text("Halaman 3", 310, 205, { align: "right" });
 
-        // Part B: 26-End with TOTAL FOOTER
         doc.addPage([330, 215], 'l');
         doc.setFontSize(14);
         doc.text("TABUNGAN HARIAN (26-Selesai)", 14, 15);
         
         doc.autoTable({
             head: tabunganHead,
-            body: [...tabunganBody.slice(25), tabunganFooterData], // Append Footer Row
+            body: [...tabunganBody.slice(25), tabunganFooterData], 
             startY: 20,
             theme: 'grid',
             styles: { fontSize: 6, cellPadding: 1 },
@@ -2529,11 +2641,10 @@ window.editKasOut = function(date) {
                 if (data.section === 'body' && data.column.index > 1 && data.column.index < 33) {
                     data.cell.styles.halign = 'center';
                 }
-                // Highlight Total Row (Last Row)
                 if (data.row.index === (tabunganBody.slice(25).length)) {
                     data.cell.styles.fontStyle = 'bold';
-                    data.cell.styles.fillColor = [209, 250, 229]; // Light Emerald
-                    data.cell.styles.textColor = [6, 95, 70]; // Dark Emerald
+                    data.cell.styles.fillColor = [209, 250, 229]; 
+                    data.cell.styles.textColor = [6, 95, 70]; 
                 }
             }
         });
@@ -2555,7 +2666,6 @@ window.editKasOut = function(date) {
             return [i+1, c.name, ...dates, rowTotal.toLocaleString('id-ID')];
         });
 
-        // Add Total Row for Kas
         let grandTotalKas = 0;
         currentState.citizens.forEach(c => {
              Object.values(c.kas || {}).forEach(v => grandTotalKas += getNetValue(v));
@@ -2564,7 +2674,7 @@ window.editKasOut = function(date) {
         const totalRowData = ['', 'TOTAL KAS MASUK BULAN INI', ...Array(31).fill(''), grandTotalKas.toLocaleString('id-ID')];
 
         doc.autoTable({
-            head: tabunganHead, // Reuse headers
+            head: tabunganHead, 
             body: [...kasBody, totalRowData],
             startY: 20,
             theme: 'grid',
@@ -2579,7 +2689,6 @@ window.editKasOut = function(date) {
                 if (data.section === 'body' && data.column.index > 1 && data.column.index < 33) {
                     data.cell.styles.halign = 'center';
                 }
-                // Highlight last row
                 if (data.row.index === kasBody.length) {
                     data.cell.styles.fontStyle = 'bold';
                     data.cell.styles.fillColor = [219, 234, 254];
@@ -2587,7 +2696,6 @@ window.editKasOut = function(date) {
             }
         });
         doc.text("Halaman 5", 310, 205, { align: "right" });
-
 
         // --- PAGE 7: CATATAN TRANSAKSI (Portrait F4: 215x330) ---
         doc.addPage([215, 330], 'p');
@@ -2599,7 +2707,6 @@ window.editKasOut = function(date) {
         doc.setFontSize(10);
         let hasNotes = false;
 
-        // General Note
         if(currentState.generalNotes) {
             hasNotes = true;
             doc.setFont("helvetica", "bold");
@@ -2614,9 +2721,14 @@ window.editKasOut = function(date) {
         for(let i=1; i<=31; i++) {
             let dayNotes = [];
             
-            // Check Kas Out Note
-            if(currentState.kasOutNotes[i]) {
-                dayNotes.push(`• Pengeluaran: ${currentState.kasOutNotes[i]} (Rp ${currentState.kasOut[i]?.toLocaleString('id-ID')})`);
+            // Check Kas Out
+            if(currentState.kasOutNotes && currentState.kasOutNotes[i]) {
+                dayNotes.push(`• Pengeluaran KAS: ${currentState.kasOutNotes[i]} (Rp ${currentState.kasOut[i]?.toLocaleString('id-ID')})`);
+            }
+            
+            // Check Tabungan Out
+            if(currentState.tabOutNotes && currentState.tabOutNotes[i]) {
+                dayNotes.push(`• Pengeluaran TABUNGAN: ${currentState.tabOutNotes[i]} (Rp ${currentState.tabOut[i]?.toLocaleString('id-ID')})`);
             }
 
             // Check Citizens Notes
@@ -2670,7 +2782,15 @@ window.editKasOut = function(date) {
                         Object.values(c.kas || {}).forEach(v => rKasIn += getNetValue(v));
                     });
                 }
-                if(md.kasOut) Object.values(md.kasOut).forEach(v => rKasOut += (v || 0));
+                
+                let mKasOut = 0;
+                if(md.kasOut) Object.values(md.kasOut).forEach(v => mKasOut += (v || 0));
+                
+                let mTabOut = 0;
+                if(md.tabOut) Object.values(md.tabOut).forEach(v => mTabOut += (v || 0));
+                
+                rKasOut = mKasOut + mTabOut;
+
                 const rSaldo = rTab + rKasIn - rKasOut;
                 rekapBody.push([MONTH_NAMES[m], rTab.toLocaleString(), rKasIn.toLocaleString(), rKasOut.toLocaleString(), rSaldo.toLocaleString()]);
             } else {
@@ -2679,7 +2799,7 @@ window.editKasOut = function(date) {
         }
 
         doc.autoTable({
-            head: [['Bulan', 'Total Saldo Tabungan', 'Total Saldo Kas', 'Abaikan', 'Saldo Akhir']],
+            head: [['Bulan', 'Total Saldo Tabungan', 'Total Saldo Kas', 'Pengeluaran', 'Saldo Akhir']],
             body: rekapBody,
             startY: 20,
             theme: 'grid',
@@ -2690,7 +2810,7 @@ window.editKasOut = function(date) {
             },
             didParseCell: function(data) {
                 if (data.row.index === currentMonth && data.section === 'body') {
-                    data.cell.styles.fillColor = [224, 231, 255]; // Highlight active month
+                    data.cell.styles.fillColor = [224, 231, 255]; 
                     data.cell.styles.fontStyle = 'bold';
                 }
             }
@@ -2720,11 +2840,11 @@ window.editKasOut = function(date) {
         doc.text("Bendahara", 165, 96, { align: 'center' });
 
         doc.setLineWidth(0.5);
-        doc.line(30, 140, 70, 140); // Line RT
+        doc.line(30, 140, 70, 140); 
         doc.setFont("helvetica", "normal");
         doc.text("( ........................ )", 50, 145, { align: 'center' });
 
-        doc.line(145, 140, 185, 140); // Line Bendahara
+        doc.line(145, 140, 185, 140); 
         doc.text("( ........................ )", 165, 145, { align: 'center' });
         
         doc.text("Halaman 8", 195, 310, { align: "right" });
