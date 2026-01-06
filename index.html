@@ -67,13 +67,33 @@
         
         .col-sticky-1 { position: sticky; left: 0; z-index: 30; background-color: #f8fafc; border-right: 1px solid #e2e8f0; }
         .col-sticky-2 { position: sticky; left: 48px; z-index: 30; background-color: #f8fafc; border-right: 1px solid #e2e8f0; box-shadow: 4px 0 8px -4px rgba(0,0,0,0.1); }
-        .col-sticky-right { position: sticky; right: 0; z-index: 30; border-left: 1px solid #e2e8f0; box-shadow: -4px 0 8px -4px rgba(0,0,0,0.05); }
+        
+        /* Right Column Static for scroll-to-end view */
+        .col-sticky-right { 
+            position: static; 
+            z-index: auto; 
+            border-left: 2px solid #e2e8f0; 
+            box-shadow: none; 
+        }
         
         /* Ensure headers stay above body sticky cols */
-        thead th.col-sticky-1, thead th.col-sticky-2, thead th.col-sticky-right { z-index: 50; }
-        tfoot td.col-sticky-1, tfoot td.col-sticky-right { z-index: 50; }
+        thead th.col-sticky-1, thead th.col-sticky-2 { z-index: 50; }
+        
+        tfoot td.col-sticky-1 { z-index: 50; }
 
         .select-modern { appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236366f1'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e"); background-position: right 0.75rem center; background-repeat: no-repeat; background-size: 1rem; }
+
+        /* --- ROLE BASED CSS --- */
+        /* Sembunyikan elemen admin saat role = warga */
+        body.role-warga .admin-only { display: none !important; }
+        
+        /* Visual cue untuk tombol/elemen yang didisable secara visual tapi tetap ada */
+        body.role-warga .admin-locked { 
+            opacity: 0.5; 
+            cursor: not-allowed; 
+            pointer-events: none; 
+            filter: grayscale(100%);
+        }
 
         /* --- MOBILE FIXES IMPLEMENTATION --- */
         @media (max-width: 768px) {
@@ -96,7 +116,7 @@
             #view-tabungan .table-container table td:nth-child(n+6),
             #view-kas .table-container table th:nth-child(n+6),
             #view-kas .table-container table td:nth-child(n+6) { 
-                display: table-cell !important; /* OVERRIDE PREVIOUS NONE */
+                display: table-cell !important; 
             }
 
             /* 3. Sticky Columns on Mobile */
@@ -114,10 +134,13 @@
                 box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* Separator shadow */
                 background-color: #fff;
             }
-            /* Total (Right) */
+            
+            /* MODIFIED: Mobile Total (Right) - Now Scrollable */
             .col-sticky-right {
-                position: sticky; right: 0; z-index: 45;
+                position: static; /* Was sticky right: 0 */
+                z-index: auto;
                 background-color: #f0fdf4; /* Match Tabungan bg */
+                border-left: 2px solid #cbd5e1;
             }
             #view-kas .col-sticky-right {
                 background-color: #eff6ff; /* Match Kas bg */
@@ -125,7 +148,7 @@
 
             /* Z-Index Hierarchy for Mobile */
             thead th { z-index: 50 !important; } /* Headers always top */
-            thead th.col-sticky-1, thead th.col-sticky-2, thead th.col-sticky-right { z-index: 60 !important; } /* Sticky headers highest */
+            thead th.col-sticky-1, thead th.col-sticky-2 { z-index: 60 !important; } /* Sticky headers highest */
             tfoot td { z-index: 50 !important; }
 
             /* 4. Date Column Sizing & Font */
@@ -186,6 +209,9 @@
             #view-tabungan .table-container table td:nth-child(n+6),
             #view-kas .table-container table th:nth-child(n+6),
             #view-kas .table-container table td:nth-child(n+6) { display: table-cell !important; }
+            
+            /* Sembunyikan elemen admin saat print */
+            .admin-only { display: none !important; }
         }
 
         .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -202,7 +228,7 @@
         .modal-exit-active { opacity: 0; transform: scale(0.95); transition: opacity 0.2s, transform 0.2s; }
     </style>
 </head>
-<body class="bg-brand-bg text-brand-dark font-sans h-screen flex flex-col md:flex-row overflow-hidden selection:bg-indigo-100 selection:text-indigo-700">
+<body class="bg-brand-bg text-brand-dark font-sans h-screen flex flex-col md:flex-row overflow-hidden selection:bg-indigo-100 selection:text-indigo-700 role-warga">
 
     <!-- 0. MEDIA PREVIEW MODAL (Video & Image Support) -->
     <div id="image-modal" class="fixed inset-0 z-modal hidden bg-black/95 backdrop-blur-md flex items-center justify-center p-4 transition-opacity duration-300 opacity-0" onclick="closeImageModal()">
@@ -329,7 +355,8 @@
             <!-- Modal Footer -->
             <div class="px-6 py-4 bg-slate-50 flex justify-end gap-3 flex-shrink-0">
                 <button onclick="closeUiModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">Tutup</button>
-                <button id="ui-modal-edit-btn" class="hidden px-4 py-2 rounded-lg text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all">✏️ Edit Data</button>
+                <!-- ADMIN ONLY EDIT BTN -->
+                <button id="ui-modal-edit-btn" class="hidden admin-only px-4 py-2 rounded-lg text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all">✏️ Edit Data</button>
                 <button id="ui-modal-action-btn" class="hidden px-4 py-2 rounded-lg text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5">Simpan</button>
             </div>
         </div>
@@ -431,16 +458,17 @@
             <div class="p-4 space-y-2 pb-8">
                 <p class="px-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Sistem & Data</p>
                 
-                <button onclick="addCitizen()" class="w-full flex items-center px-3 py-2 rounded-lg text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-100 transition-colors">
+                <!-- ADMIN ONLY BUTTONS -->
+                <button onclick="addCitizen()" class="admin-only w-full flex items-center px-3 py-2 rounded-lg text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-100 transition-colors">
                     <span class="mr-2 text-sm">➕</span> Tambah Warga
                 </button>
 
-                 <button onclick="resetValuesOnly()" class="w-full flex items-center px-3 py-2 rounded-lg text-xs font-medium text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-100 transition-colors">
+                 <button onclick="resetValuesOnly()" class="admin-only w-full flex items-center px-3 py-2 rounded-lg text-xs font-medium text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-100 transition-colors">
                     <span class="mr-2 text-sm">🔄</span> Reset Nominal (0)
                 </button>
 
                 <div class="grid grid-cols-2 gap-2 mt-2">
-                    <button onclick="downloadBackup()" class="flex items-center justify-center px-3 py-2 rounded-lg text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 transition-colors">
+                    <button onclick="downloadBackup()" class="admin-only flex items-center justify-center px-3 py-2 rounded-lg text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 transition-colors">
                         <span class="mr-1">📦</span> Backup
                     </button>
 
@@ -449,8 +477,13 @@
                     </button>
                 </div>
 
-                <button onclick="resetData()" class="w-full flex items-center justify-center px-3 py-2 rounded-lg text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 transition-colors mt-2">
+                <button onclick="resetData()" class="admin-only w-full flex items-center justify-center px-3 py-2 rounded-lg text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 transition-colors mt-2">
                     <span class="mr-2">🗑️</span> Hard Reset System
+                </button>
+                
+                <!-- Role Toggle Button -->
+                <button onclick="toggleRole()" id="btn-role-toggle" class="w-full flex items-center justify-center px-3 py-2 rounded-lg text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-colors mt-4">
+                    <span id="role-icon" class="mr-2">🔐</span> <span id="role-text">Masuk sebagai Admin</span>
                 </button>
             </div>
 
@@ -458,6 +491,9 @@
 
         <!-- Sidebar Footer -->
         <div class="p-4 border-t border-slate-200 bg-white flex-shrink-0 text-center">
+            <div id="role-badge" class="mb-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                MODE: WARGA (Read Only)
+            </div>
             <p class="text-[10px] text-slate-400 font-medium">RT 02 / RW 19 &copy; 2026</p>
         </div>
     </nav>
@@ -502,7 +538,7 @@
                         </div>
                     </div>
                     
-                    <div class="swipe-hint md:hidden">⬅️ Geser tabel ke kanan untuk lihat tanggal ➡️</div>
+                    <div class="swipe-hint block">⬅️ Geser mentok ke kanan untuk lihat TOTAL ➡️</div>
 
                     <div class="table-container">
                         <table class="w-full text-sm text-left">
@@ -515,7 +551,7 @@
                                             document.write(`<th class="px-2 py-4 text-center min-w-[70px] border-b border-r hover:bg-slate-100 transition-colors cursor-default select-none">${i}</th>`);
                                         }
                                     </script>
-                                    <th class="px-4 py-4 text-right border-b bg-emerald-50 text-emerald-700 min-w-[120px] col-sticky-right shadow-sticky-right">Total</th>
+                                    <th class="px-4 py-4 text-right border-b bg-emerald-50 text-emerald-700 min-w-[120px] col-sticky-right">Total</th>
                                 </tr>
                             </thead>
                             <tbody id="table-tabungan-body" class="divide-y divide-slate-100">
@@ -527,7 +563,7 @@
                                     <script>
                                         for(let i=1; i<=31; i++) { document.write(`<td id="tf-tab-${i}" class="px-1 py-3 text-center text-[10px] text-slate-500 border-r min-w-[70px]">-</td>`); }
                                     </script>
-                                    <td id="tf-tab-total" class="px-4 py-3 text-right text-emerald-700 bg-emerald-100 col-sticky-right z-50 text-xs min-w-[120px] border-l border-emerald-200">0</td>
+                                    <td id="tf-tab-total" class="px-4 py-3 text-right text-emerald-700 bg-emerald-100 col-sticky-right text-xs min-w-[120px] border-l border-emerald-200">0</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -550,7 +586,7 @@
                         </div>
                     </div>
                     
-                    <div class="swipe-hint md:hidden">⬅️ Geser tabel ke kanan untuk lihat tanggal ➡️</div>
+                    <div class="swipe-hint block">⬅️ Geser mentok ke kanan untuk lihat TOTAL ➡️</div>
 
                     <div class="table-container">
                         <table class="w-full text-sm text-left border-collapse">
@@ -563,7 +599,7 @@
                                             document.write(`<th class="px-2 py-4 text-center min-w-[70px] border-b border-r hover:bg-slate-100 transition-colors cursor-default select-none">${i}</th>`);
                                         }
                                     </script>
-                                    <th class="px-4 py-4 text-right border-b bg-blue-50 text-blue-700 min-w-[120px] col-sticky-right shadow-sticky-right">Total</th>
+                                    <th class="px-4 py-4 text-right border-b bg-blue-50 text-blue-700 min-w-[120px] col-sticky-right">Total</th>
                                 </tr>
                             </thead>
                             <tbody id="table-kas-body" class="divide-y divide-slate-100">
@@ -575,7 +611,7 @@
                                     <script>
                                         for(let i=1; i<=31; i++) { document.write(`<td id="tf-kas-${i}" class="px-1 py-3 text-center text-[10px] border-r border-slate-600 font-normal min-w-[70px]">-</td>`); }
                                     </script>
-                                    <td id="tf-kas-total" class="px-4 py-3 text-right bg-indigo-600 col-sticky-right z-50 text-xs min-w-[120px] border-l border-indigo-500">0</td>
+                                    <td id="tf-kas-total" class="px-4 py-3 text-right bg-indigo-600 col-sticky-right text-xs min-w-[120px] border-l border-indigo-500">0</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -587,8 +623,8 @@
             <div id="view-gambar" class="view-section fade-in hidden">
                 <div class="flex flex-col lg:flex-row gap-6 md:gap-8 items-start">
                     
-                    <!-- COLUMN 1: FORM INPUT (40% Desktop) -->
-                    <div class="w-full lg:w-2/5 flex-shrink-0 order-1">
+                    <!-- COLUMN 1: FORM INPUT (40% Desktop) - ADMIN ONLY -->
+                    <div class="w-full lg:w-2/5 flex-shrink-0 order-1 admin-only">
                         <div class="bg-white rounded-xl shadow-soft border border-slate-200 p-5 md:p-6 sticky top-24">
                             <!-- Header -->
                             <div class="flex items-center gap-4 mb-6">
@@ -741,7 +777,7 @@
                                 <p class="text-xs text-slate-500">Catatan untuk keperluan laporan atau pengingat.</p>
                             </div>
                         </div>
-                        <button onclick="saveGeneralNotes()" class="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-slate-700 transition">Simpan Catatan</button>
+                        <button onclick="saveGeneralNotes()" class="admin-only px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-slate-700 transition">Simpan Catatan</button>
                     </div>
                     <div class="p-6">
                         <textarea id="general-notes-area" class="w-full h-64 p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 text-slate-700 leading-relaxed resize-none" placeholder="Tulis catatan di sini... Contoh:&#10;- Dana iuran dipakai untuk konsumsi rapat tanggal 12.&#10;- Pak Budi iuran dobel bulan depan."></textarea>
@@ -914,12 +950,19 @@
             const actionBtn = document.getElementById('ui-modal-action-btn');
             const editBtn = document.getElementById('ui-modal-edit-btn');
 
+            // Reset visibility
+            actionBtn.classList.add('hidden');
+            editBtn.classList.add('hidden');
+
             if (options.mode === 'preview') {
                 // PREVIEW MODE
                 inputContainer.classList.add('hidden');
                 previewContainer.classList.remove('hidden');
-                actionBtn.classList.add('hidden');
-                editBtn.classList.remove('hidden');
+                
+                // Show edit button only if admin
+                if(currentRole === 'admin') {
+                    editBtn.classList.remove('hidden');
+                }
 
                 // Populate Preview Data
                 const data = options.previewData;
@@ -941,7 +984,6 @@
                 previewContainer.classList.add('hidden');
                 inputContainer.classList.remove('hidden');
                 actionBtn.classList.remove('hidden');
-                editBtn.classList.add('hidden');
 
                 // Input Logic (Existing)
                 const noteContainer = document.getElementById('ui-modal-note-container');
@@ -982,6 +1024,7 @@
                     inputField.placeholder = options.placeholder || '';
                     
                     if(options.inputType === 'number') inputField.type = 'tel';
+                    else if(options.inputType === 'password') inputField.type = 'password';
                     else inputField.type = 'text';
                     
                     setTimeout(() => inputField.focus(), 100);
@@ -1069,6 +1112,75 @@
                 overlay.classList.add('opacity-0');
                 body.classList.remove('overflow-hidden');
                 setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        }
+
+        /* --- ROLE MANAGEMENT SYSTEM (NEW) --- */
+        let currentRole = localStorage.getItem('userRole') || 'warga';
+
+        function initRole() {
+            // Update Body Class for CSS Rules
+            document.body.classList.remove('role-warga', 'role-admin');
+            document.body.classList.add(`role-${currentRole}`);
+            
+            // Update Sidebar UI
+            const btnText = document.getElementById('role-text');
+            const btnIcon = document.getElementById('role-icon');
+            const badge = document.getElementById('role-badge');
+            
+            if(currentRole === 'admin') {
+                btnText.innerText = "Keluar Admin";
+                btnIcon.innerText = "🔓";
+                badge.innerText = "MODE: ADMIN (Full Access)";
+                badge.className = "mb-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700 border border-indigo-200";
+            } else {
+                btnText.innerText = "Masuk sebagai Admin";
+                btnIcon.innerText = "🔐";
+                badge.innerText = "MODE: WARGA (Read Only)";
+                badge.className = "mb-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200";
+            }
+        }
+
+        function toggleRole() {
+            if(currentRole === 'admin') {
+                // Logout Process
+                openUiModal({
+                    title: 'Keluar Admin',
+                    message: 'Kembali ke mode Warga (Read-only)?',
+                    mode: 'input',
+                    isDelete: true, // Red button
+                    actionText: 'Keluar',
+                    onConfirm: () => {
+                        currentRole = 'warga';
+                        localStorage.setItem('userRole', 'warga');
+                        initRole();
+                        // Refresh view to apply restrictions immediately
+                        changePeriod(); 
+                        showToast('Anda sekarang dalam mode Warga');
+                    }
+                });
+            } else {
+                // Login Process
+                openUiModal({
+                    title: 'Login Administrator',
+                    subtitle: 'Akses penuh pengelolaan data',
+                    mode: 'input',
+                    inputType: 'password',
+                    placeholder: 'Masukkan Password Admin',
+                    actionText: 'Masuk',
+                    onConfirm: (pass) => {
+                        if(pass === 'uranusfazry123') {
+                            currentRole = 'admin';
+                            localStorage.setItem('userRole', 'admin');
+                            initRole();
+                            // Refresh view to show admin controls
+                            changePeriod();
+                            showToast('Login Admin Berhasil!', 'success');
+                        } else {
+                            showToast('Password Salah! Akses Ditolak.', 'error');
+                        }
+                    }
+                });
             }
         }
 
@@ -1225,7 +1337,6 @@
         let currentState = { citizens: [], kasOut: {}, images: [], generalNotes: '' };
 
         // --- REFACTORED ACTION FUNCTIONS (PREVIEW FIRST) ---
-
         window.editSaving = function(id, date, forceEdit = false) {
             const citizen = currentState.citizens.find(c => c.id === id);
             
@@ -1246,6 +1357,28 @@
                 else if (currentData < 0) expense = Math.abs(currentData);
                 net = currentData;
             }
+
+            // --- ROLE CHECK: WARGA ---
+            if (currentRole !== 'admin') {
+                // Jika data kosong, warga tidak bisa klik/input
+                if (net === 0) return;
+
+                // Jika ada data, warga hanya bisa melihat (Preview Mode)
+                openUiModal({
+                    title: 'Detail Transaksi',
+                    subtitle: `Tabungan ${citizen.name} (Read Only)`,
+                    mode: 'preview',
+                    previewData: {
+                        net: net,
+                        dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
+                        note: note
+                    },
+                    onEdit: null // Disable edit button
+                });
+                return;
+            }
+
+            // --- ROLE CHECK: ADMIN (Normal Flow) ---
 
             // DECISION: Preview or Edit?
             if (!forceEdit && net !== 0) {
@@ -1316,6 +1449,26 @@
                 net = currentData;
             }
             
+            // --- ROLE CHECK: WARGA ---
+            if (currentRole !== 'admin') {
+                if (net === 0) return; // Warga cannot input new data
+                
+                openUiModal({
+                    title: 'Detail Transaksi',
+                    subtitle: `Kas Operasional ${citizen.name} (Read Only)`,
+                    mode: 'preview',
+                    previewData: {
+                        net: net,
+                        dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
+                        note: note
+                    },
+                    onEdit: null
+                });
+                return;
+            }
+
+            // --- ROLE CHECK: ADMIN ---
+
             if (!forceEdit && net !== 0) {
                 openUiModal({
                     title: 'Detail Transaksi',
@@ -1362,6 +1515,12 @@
             });
         };
 window.editKasOut = function(date) {
+            // ADMIN ONLY
+            if(currentRole !== 'admin') {
+                showToast('Hanya Admin yang bisa edit pengeluaran!', 'error');
+                return;
+            }
+
             const currentVal = currentState.kasOut[date] || 0;
             const currentNote = currentState.kasOutNotes ? currentState.kasOutNotes[date] : '';
             
@@ -1390,6 +1549,8 @@ window.editKasOut = function(date) {
 
 
         window.saveGeneralNotes = function() {
+            if(currentRole !== 'admin') return;
+
             const text = document.getElementById('general-notes-area').value;
             currentState.generalNotes = text;
             saveDB();
@@ -1398,6 +1559,8 @@ window.editKasOut = function(date) {
         };
 
         window.addCitizen = function() {
+            if(currentRole !== 'admin') return;
+
             openUiModal({
                 title: 'Tambah Warga Baru',
                 mode: 'input',
@@ -1415,6 +1578,8 @@ window.editKasOut = function(date) {
         };
 
         window.deleteCitizen = function(id, name) {
+            if(currentRole !== 'admin') return;
+
             openUiModal({
                 title: 'Hapus Warga?',
                 message: `Yakin ingin menghapus warga "${name}"? Data tabungan/kas mereka di bulan ini akan HILANG PERMANEN.`,
@@ -1430,6 +1595,8 @@ window.editKasOut = function(date) {
         };
 
         window.resetValuesOnly = function() {
+            if(currentRole !== 'admin') return;
+
             openUiModal({
                 title: 'Reset Nominal Bulan Ini?',
                 message: "Ini akan me-RESET semua uang menjadi 0 untuk bulan ini saja. Nama warga TETAP ADA.",
@@ -1449,6 +1616,8 @@ window.editKasOut = function(date) {
         };
 
         window.resetData = function() {
+            if(currentRole !== 'admin') return;
+
             openUiModal({
                 title: 'HARD RESET SYSTEM?',
                 message: "PERINGATAN KERAS: Semua data akan DIHAPUS PERMANEN dan kembali ke kondisi awal Jan 2026. Tidak bisa dibatalkan!",
@@ -1463,6 +1632,8 @@ window.editKasOut = function(date) {
         };
 
         window.downloadBackup = function() {
+            if(currentRole !== 'admin') return;
+
             const zip = new JSZip();
             zip.file("data.json", JSON.stringify(db));
             zip.file("meta.json", JSON.stringify({ app: "Manajemen Keuangan RT 02 / RW 19", version: "v2.2", backup_at: new Date().toLocaleString() }));
@@ -1474,10 +1645,13 @@ window.editKasOut = function(date) {
         };
 
         window.triggerLoad = function() {
+            if(currentRole !== 'admin') return;
             document.getElementById('file-input-backup').click();
         };
 
         window.handleLoadBackup = function(input) {
+            if(currentRole !== 'admin') return;
+
             const file = input.files[0];
             if(!file) return;
 
@@ -1512,6 +1686,12 @@ window.editKasOut = function(date) {
 
         window.handleImageSubmit = function(e) {
             e.preventDefault();
+            
+            if(currentRole !== 'admin') {
+                showToast('Hanya Admin yang bisa upload!', 'error');
+                return;
+            }
+
             const date = document.getElementById('img-date').value;
             const desc = document.getElementById('img-desc').value;
             const category = document.getElementById('img-category').value;
@@ -1550,6 +1730,8 @@ window.editKasOut = function(date) {
         };
 
         window.deleteImage = function(id) {
+            if(currentRole !== 'admin') return;
+
             openUiModal({
                 title: 'Hapus Dokumentasi?',
                 isDelete: true,
@@ -1588,6 +1770,7 @@ window.editKasOut = function(date) {
             if(!currentState.images) currentState.images = [];
             if(!currentState.generalNotes) currentState.generalNotes = '';
             
+            // Re-render UI based on state and ROLE
             renderAll();
         };
 
@@ -1622,6 +1805,9 @@ window.editKasOut = function(date) {
         // --- HELPER FUNCTIONS ---
 
         function init() {
+            // Init Role First
+            initRole();
+
             const yearSel = document.getElementById('sel-year');
             AVAILABLE_YEARS.forEach(y => {
                 const opt = document.createElement('option');
@@ -1716,7 +1902,20 @@ window.editKasOut = function(date) {
             renderKas();
             renderReport();
             renderImages();
-            document.getElementById('general-notes-area').value = currentState.generalNotes || '';
+            
+            // Handle General Notes Readonly State
+            const notesArea = document.getElementById('general-notes-area');
+            if(notesArea) {
+                notesArea.value = currentState.generalNotes || '';
+                notesArea.readOnly = (currentRole !== 'admin');
+                if(currentRole !== 'admin') {
+                    notesArea.classList.add('bg-slate-100', 'cursor-not-allowed');
+                    notesArea.classList.remove('bg-white');
+                } else {
+                    notesArea.classList.remove('bg-slate-100', 'cursor-not-allowed');
+                    notesArea.classList.add('bg-white');
+                }
+            }
         }
 
         function renderTabungan() {
@@ -1727,12 +1926,12 @@ window.editKasOut = function(date) {
 
             currentState.citizens.forEach((c, index) => {
                 let totalRow = 0;
-                // UPDATE: Menggunakan (index + 1) untuk tampilan No, bukan c.id
                 let rowHtml = `<tr class="bg-white hover:bg-slate-50 transition-colors group">
                     <td class="px-3 py-3 text-center font-medium text-slate-500 border-b border-r col-sticky-1 bg-white group-hover:bg-slate-50">${index + 1}</td>
                     <td class="px-4 py-3 font-medium text-slate-800 border-b col-sticky-2 whitespace-nowrap bg-white group-hover:bg-slate-50 text-left flex justify-between items-center group">
                         <span>${c.name}</span>
-                        <button onclick="deleteCitizen(${c.id}, '${c.name}')" class="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" title="Hapus Warga">
+                        <!-- Delete button only for admin (handled via css class admin-only, but strict JS check in onclick too) -->
+                        <button onclick="deleteCitizen(${c.id}, '${c.name}')" class="admin-only text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" title="Hapus Warga">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </button>
                     </td>`;
@@ -1747,14 +1946,26 @@ window.editKasOut = function(date) {
                     totalsPerDate[i] += val;
 
                     let display = '';
-                    let activeClass = 'text-slate-300 hover:bg-slate-50 cursor-pointer'; // Default empty style
+                    // Style determination
+                    let baseClass = 'relative px-1 py-1 text-center border-b border-r transition-colors select-none min-w-[70px]';
+                    let activeClass = (currentRole === 'admin') 
+                        ? 'text-slate-300 hover:bg-slate-50 cursor-pointer' 
+                        : 'text-slate-200 cursor-default'; // Warga default empty
+
+                    if (val !== 0) {
+                        // Data exists: Warga gets cursor-pointer for preview
+                        activeClass = 'cursor-pointer '; 
+                    } else {
+                        // Empty: Warga gets default cursor
+                        if(currentRole !== 'admin') activeClass = 'text-slate-200 cursor-default';
+                    }
+
                     let isSplit = false;
                     let splitHtml = '';
 
                     // Display Logic
                     if (typeof rawData === 'object' && rawData !== null && (rawData.income > 0 || rawData.expense > 0)) {
                         if (rawData.income > 0 && rawData.expense > 0) {
-                            // Both Income and Expense
                             isSplit = true;
                             splitHtml = `
                                 <div class="flex flex-col text-[10px] leading-tight">
@@ -1762,24 +1973,21 @@ window.editKasOut = function(date) {
                                     <span class="text-red-500 font-bold">-${formatRupiahStrict(rawData.expense).replace('Rp.','')}</span>
                                 </div>
                             `;
-                            activeClass = 'bg-slate-50 hover:bg-slate-100 cursor-pointer';
+                            activeClass += 'bg-slate-50 hover:bg-slate-100';
                         } else if (rawData.income > 0) {
                             display = formatRupiahStrict(rawData.income);
-                            activeClass = 'text-emerald-700 font-bold bg-emerald-50/50 hover:bg-emerald-100 cursor-pointer';
+                            activeClass += 'text-emerald-700 font-bold bg-emerald-50/50 hover:bg-emerald-100';
                         } else if (rawData.expense > 0) {
                             display = `-${formatRupiahStrict(rawData.expense)}`;
-                            activeClass = 'text-red-600 font-bold bg-red-50 hover:bg-red-100 cursor-pointer';
+                            activeClass += 'text-red-600 font-bold bg-red-50 hover:bg-red-100';
                         }
                     } else if (typeof rawData === 'number' && rawData !== 0) {
-                        // Legacy support
                         display = formatRupiahStrict(rawData);
-                        activeClass = rawData < 0 
-                            ? 'text-red-600 font-bold bg-red-50 hover:bg-red-100 cursor-pointer' 
-                            : 'text-emerald-700 font-bold bg-emerald-50/50 hover:bg-emerald-100 cursor-pointer';
+                        activeClass += rawData < 0 
+                            ? 'text-red-600 font-bold bg-red-50 hover:bg-red-100' 
+                            : 'text-emerald-700 font-bold bg-emerald-50/50 hover:bg-emerald-100';
                     } else {
-                        // Empty cell styling
                         display = ''; 
-                        // Optional: Add a subtle '+' on hover via CSS or just cursor-pointer
                     }
 
                     // Add note indicator
@@ -1788,22 +1996,18 @@ window.editKasOut = function(date) {
                         noteIndicator = `<span class="absolute top-0 right-0 text-[8px] leading-none p-0.5">📝</span>`;
                     }
                     
-                    if(isSplit) {
-                         rowHtml += `<td onclick="editSaving(${c.id}, ${i})" class="relative px-1 py-1 text-center border-b border-r transition-colors ${activeClass} min-w-[70px]" title="${note || ''}">
-                            ${splitHtml}
+                    // Onclick logic inside HTML string
+                    const clickAttr = (val !== 0 || currentRole === 'admin') ? `onclick="editSaving(${c.id}, ${i})"` : '';
+
+                    rowHtml += `<td ${clickAttr} class="${baseClass} ${activeClass}" title="${note || ''}">
+                            ${isSplit ? splitHtml : display}
                             ${noteIndicator}
                         </td>`;
-                    } else {
-                        rowHtml += `<td onclick="editSaving(${c.id}, ${i})" class="relative px-1 py-3 text-center border-b border-r transition-colors ${activeClass} text-xs whitespace-nowrap select-none min-w-[70px]" title="${note || ''}">
-                            ${display}
-                            ${noteIndicator}
-                        </td>`;
-                    }
                 }
                 grandTotal += totalRow;
                 
                 const rowClass = totalRow < 0 ? 'text-red-700 bg-red-50' : 'text-emerald-700 bg-emerald-50';
-                rowHtml += `<td class="px-4 py-3 text-right font-bold ${rowClass} border-b sticky right-0 z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] col-sticky-right">${formatRupiahStrict(totalRow)}</td></tr>`;
+                rowHtml += `<td class="px-4 py-3 text-right font-bold ${rowClass} border-b col-sticky-right">${formatRupiahStrict(totalRow)}</td></tr>`;
                 tbody.innerHTML += rowHtml;
             });
 
@@ -1827,12 +2031,11 @@ window.editKasOut = function(date) {
 
             currentState.citizens.forEach((c, index) => {
                 let totalRow = 0;
-                // UPDATE: Menggunakan (index + 1) untuk tampilan No, bukan c.id
                 let rowHtml = `<tr class="bg-white hover:bg-slate-50 transition-colors group">
                     <td class="px-3 py-3 text-center font-medium text-slate-500 border-b border-r col-sticky-1 bg-white group-hover:bg-slate-50">${index + 1}</td>
                     <td class="px-4 py-3 font-medium text-slate-800 border-b col-sticky-2 whitespace-nowrap bg-white group-hover:bg-slate-50 text-left flex justify-between items-center group">
                         <span>${c.name}</span>
-                        <button onclick="deleteCitizen(${c.id}, '${c.name}')" class="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" title="Hapus Warga">
+                        <button onclick="deleteCitizen(${c.id}, '${c.name}')" class="admin-only text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" title="Hapus Warga">
                              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </button>
                     </td>`;
@@ -1847,11 +2050,17 @@ window.editKasOut = function(date) {
                     totalsPerDateIn[i] += val;
 
                     let display = '';
-                    let activeClass = 'text-slate-300 hover:bg-slate-50 cursor-pointer';
+                    let baseClass = 'relative px-1 py-1 text-center border-b border-r transition-colors select-none min-w-[70px]';
+                    let activeClass = (currentRole === 'admin') 
+                        ? 'text-slate-300 hover:bg-slate-50 cursor-pointer' 
+                        : 'text-slate-200 cursor-default';
+
+                    if (val !== 0) activeClass = 'cursor-pointer '; 
+                    else if(currentRole !== 'admin') activeClass = 'text-slate-200 cursor-default';
+
                     let isSplit = false;
                     let splitHtml = '';
 
-                    // Display Logic similar to Tabungan
                     if (typeof rawData === 'object' && rawData !== null && (rawData.income > 0 || rawData.expense > 0)) {
                         if (rawData.income > 0 && rawData.expense > 0) {
                             isSplit = true;
@@ -1861,19 +2070,19 @@ window.editKasOut = function(date) {
                                     <span class="text-red-500 font-bold">-${formatRupiahStrict(rawData.expense).replace('Rp.','')}</span>
                                 </div>
                             `;
-                            activeClass = 'bg-slate-50 hover:bg-slate-100 cursor-pointer';
+                            activeClass += 'bg-slate-50 hover:bg-slate-100';
                         } else if (rawData.income > 0) {
                             display = formatRupiahStrict(rawData.income);
-                            activeClass = 'text-blue-700 font-bold bg-blue-50 hover:bg-blue-100 cursor-pointer';
+                            activeClass += 'text-blue-700 font-bold bg-blue-50 hover:bg-blue-100';
                         } else if (rawData.expense > 0) {
                             display = `-${formatRupiahStrict(rawData.expense)}`;
-                            activeClass = 'text-red-600 font-bold bg-red-50 hover:bg-red-100 cursor-pointer';
+                            activeClass += 'text-red-600 font-bold bg-red-50 hover:bg-red-100';
                         }
                     } else if (typeof rawData === 'number' && rawData !== 0) {
                         display = formatRupiahStrict(rawData);
-                        activeClass = rawData > 0 
-                            ? 'text-blue-700 font-bold bg-blue-50 hover:bg-blue-100 cursor-pointer' 
-                            : 'text-red-600 font-bold bg-red-50 hover:bg-red-100 cursor-pointer';
+                        activeClass += rawData > 0 
+                            ? 'text-blue-700 font-bold bg-blue-50 hover:bg-blue-100' 
+                            : 'text-red-600 font-bold bg-red-50 hover:bg-red-100';
                     }
 
                     let noteIndicator = '';
@@ -1881,20 +2090,15 @@ window.editKasOut = function(date) {
                         noteIndicator = `<span class="absolute top-0 right-0 text-[8px] leading-none p-0.5">📝</span>`;
                     }
 
-                    if(isSplit) {
-                        rowHtml += `<td onclick="editKas(${c.id}, ${i})" class="relative px-1 py-1 text-center border-b border-r transition-colors ${activeClass} select-none min-w-[70px]" title="${note || ''}">
-                            ${splitHtml}
+                    const clickAttr = (val !== 0 || currentRole === 'admin') ? `onclick="editKas(${c.id}, ${i})"` : '';
+
+                    rowHtml += `<td ${clickAttr} class="${baseClass} ${activeClass}" title="${note || ''}">
+                            ${isSplit ? splitHtml : display}
                             ${noteIndicator}
                         </td>`;
-                    } else {
-                        rowHtml += `<td onclick="editKas(${c.id}, ${i})" class="relative px-1 py-3 text-center border-b border-r transition-colors ${activeClass} select-none min-w-[70px]" title="${note || ''}">
-                            ${display}
-                            ${noteIndicator}
-                        </td>`;
-                    }
                 }
                 grandTotalIn += totalRow;
-                rowHtml += `<td class="px-4 py-3 text-right font-bold text-blue-700 bg-blue-50 border-b sticky right-0 z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] col-sticky-right">${formatRupiahStrict(totalRow)}</td></tr>`;
+                rowHtml += `<td class="px-4 py-3 text-right font-bold text-blue-700 bg-blue-50 border-b col-sticky-right">${formatRupiahStrict(totalRow)}</td></tr>`;
                 tbody.innerHTML += rowHtml;
             });
 
@@ -1909,19 +2113,31 @@ window.editKasOut = function(date) {
                 totalExpenseRow += val;
                 
                 const display = val > 0 ? `-${formatRupiahStrict(val).replace('Rp.','')}` : '-';
-                const activeClass = val > 0 ? 'text-rose-600 font-bold bg-rose-100 hover:bg-rose-200 cursor-pointer' : 'text-slate-400 hover:bg-slate-100 cursor-pointer';
+                
+                // Admin vs Warga for Expenses
+                let activeClass = '';
+                let clickAttr = '';
+                
+                if (currentRole === 'admin') {
+                     activeClass = val > 0 ? 'text-rose-600 font-bold bg-rose-100 hover:bg-rose-200 cursor-pointer' : 'text-slate-400 hover:bg-slate-100 cursor-pointer';
+                     clickAttr = `onclick="editKasOut(${i})"`;
+                } else {
+                     // Warga Read Only
+                     activeClass = val > 0 ? 'text-rose-600 font-bold bg-rose-100 cursor-default' : 'text-slate-200 cursor-default';
+                     // No onclick for Warga on expense row (or could show preview if needed, but req says "DISABLE")
+                }
                 
                 let noteIndicator = '';
                 if(hasNote) {
                     noteIndicator = `<span class="absolute top-0 right-0 text-[8px] leading-none p-0.5">📝</span>`;
                 }
 
-                expenseHtml += `<td onclick="editKasOut(${i})" class="relative px-1 py-3 text-center border-b border-r border-rose-200 transition-colors ${activeClass} text-[10px] whitespace-nowrap select-none min-w-[70px]" title="${hasNote || ''}">
+                expenseHtml += `<td ${clickAttr} class="relative px-1 py-3 text-center border-b border-r border-rose-200 transition-colors ${activeClass} text-[10px] whitespace-nowrap select-none min-w-[70px]" title="${hasNote || ''}">
                     ${display}
                     ${noteIndicator}
                 </td>`;
             }
-            expenseHtml += `<td class="px-4 py-3 text-right font-bold text-rose-700 bg-rose-100 border-b sticky right-0 z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] col-sticky-right">-${formatRupiahStrict(totalExpenseRow)}</td></tr>`;
+            expenseHtml += `<td class="px-4 py-3 text-right font-bold text-rose-700 bg-rose-100 border-b col-sticky-right">-${formatRupiahStrict(totalExpenseRow)}</td></tr>`;
             tbody.innerHTML += expenseHtml;
 
             let grandNet = grandTotalIn - totalExpenseRow;
@@ -1936,7 +2152,6 @@ window.editKasOut = function(date) {
             document.getElementById('tf-kas-total').innerText = formatRupiahStrict(grandNet);
         }
 
-        // Added missing renderImages and getTypeColor functions
         function renderImages() {
             const grid = document.getElementById('gallery-grid');
             const empty = document.getElementById('empty-gallery');
@@ -1972,8 +2187,8 @@ window.editKasOut = function(date) {
                             
                             <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                             
-                            <!-- Delete Button (Hover) -->
-                            <button onclick="event.stopPropagation(); deleteImage(${img.id})" class="absolute top-2 right-2 p-1.5 bg-white/90 text-red-500 rounded-full shadow-sm opacity-0 group-hover:opacity-100 hover:bg-red-50 transition-all transform hover:scale-110 z-10" title="Hapus">
+                            <!-- Delete Button (Hover) - ADMIN ONLY -->
+                            <button onclick="event.stopPropagation(); deleteImage(${img.id})" class="admin-only absolute top-2 right-2 p-1.5 bg-white/90 text-red-500 rounded-full shadow-sm opacity-0 group-hover:opacity-100 hover:bg-red-50 transition-all transform hover:scale-110 z-10" title="Hapus">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
                         </div>
