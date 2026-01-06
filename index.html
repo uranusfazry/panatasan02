@@ -59,7 +59,7 @@
         table { border-collapse: separate; border-spacing: 0; }
         th, td { white-space: nowrap; }
         
-        /* Header tidak sticky vertikal sesuai request sebelumnya, tapi border tetap ada */
+        /* Header tidak sticky vertikal */
         thead th { position: static; top: auto; z-index: auto; border-bottom: 1px solid #e2e8f0; }
         
         /* Sticky Columns (Horizontal) */
@@ -73,10 +73,38 @@
 
         .select-modern { appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236366f1'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e"); background-position: right 0.75rem center; background-repeat: no-repeat; background-size: 1rem; }
 
-        /* Mobile Adjustments */
+        /* --- MOBILE SPECIFIC RULES (Perbaikan UI Mobile Tabungan) --- */
         @media (max-width: 768px) {
             .col-sticky-1 { width: 40px; min-width: 40px; }
             .col-sticky-2 { left: 40px; width: 140px; min-width: 140px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+            
+            /* Sembunyikan kolom ke-6 dst (Tgl 4 - Total) KHUSUS di view-tabungan */
+            #view-tabungan .table-container table th:nth-child(n+6),
+            #view-tabungan .table-container table td:nth-child(n+6) {
+                display: none;
+            }
+
+            /* Styling Khusus Kolom Tgl 1, 2, 3 di Mobile */
+            #view-tabungan .table-container table td:nth-child(3),
+            #view-tabungan .table-container table td:nth-child(4),
+            #view-tabungan .table-container table td:nth-child(5) {
+                background-color: #ecfdf5; /* bg-emerald-50 */
+                color: #047857; /* text-emerald-700 */
+                font-weight: 700; /* font-bold */
+                font-size: 0.85rem; /* text-sm/xs */
+                padding: 12px 8px; /* Spasi sentuh diperbesar */
+                text-align: center;
+                border-right: 1px solid #d1fae5;
+            }
+
+            /* Styling Header Tgl 1, 2, 3 Mobile */
+            #view-tabungan .table-container table th:nth-child(3),
+            #view-tabungan .table-container table th:nth-child(4),
+            #view-tabungan .table-container table th:nth-child(5) {
+                background-color: #f0fdf4;
+                color: #15803d;
+                font-weight: 800;
+            }
         }
 
         /* Print Mode */
@@ -90,6 +118,11 @@
             th, td { border: 1px solid #000 !important; padding: 2px 4px; white-space: normal; }
             .col-sticky-1, .col-sticky-2, .col-sticky-right { position: static; box-shadow: none; border: 1px solid #000; }
             #sidebar, #mobile-header, #mobile-overlay, #btn-print-floating { display: none !important; }
+            /* Pastikan semua kolom tampil saat print */
+            #view-tabungan .table-container table th:nth-child(n+6),
+            #view-tabungan .table-container table td:nth-child(n+6) {
+                display: table-cell;
+            }
         }
 
         .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -131,7 +164,7 @@
             </div>
         </div>
         <button onclick="window.print()" class="text-indigo-600 bg-indigo-50 p-2 rounded-lg hover:bg-indigo-100 active:scale-95 transition shadow-sm border border-indigo-100">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2z"></path></svg>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2z"></path></svg>
         </button>
     </header>
 
@@ -207,7 +240,7 @@
                     </div>
                 </div>
                 <button id="btn-print-floating" onclick="window.print()" class="inline-flex items-center px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg shadow-lg shadow-slate-200 transition-all hover:-translate-y-0.5 no-print">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2z"></path></svg>
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2z"></path></svg>
                     Cetak Laporan
                 </button>
             </div>
