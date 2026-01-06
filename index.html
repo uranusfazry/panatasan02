@@ -13,9 +13,13 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- JSZip & FileSaver -->
+    <!-- JSZip & FileSaver (Untuk Backup Data) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <!-- jsPDF & AutoTable (Untuk Fitur Download PDF Profesional) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
     
     <!-- Config -->
     <script>
@@ -36,13 +40,8 @@
                         'sticky-right': '-4px 0 8px -2px rgba(0, 0, 0, 0.05)'
                     },
                     zIndex: {
-                        '60': '60',
-                        '70': '70',
-                        '80': '80',
-                        '90': '90',
-                        '100': '100', 
-                        'modal': '200',
-                        'toast': '300'
+                        '60': '60', '70': '70', '80': '80', '90': '90', '100': '100', 
+                        'modal': '200', 'toast': '300'
                     }
                 }
             }
@@ -93,6 +92,18 @@
             cursor: not-allowed; 
             pointer-events: none; 
             filter: grayscale(100%);
+        }
+
+        /* Specific style for Disabled Buttons in Warga Mode */
+        /* PERBAIKAN LOGIC: Hanya diterapkan pada tombol yang memiliki class ini, bukan Load button */
+        body.role-warga .btn-disabled-warga {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #f1f5f9 !important; /* Slate-100 */
+            color: #94a3b8 !important; /* Slate-400 */
+            border-color: #e2e8f0 !important;
+            box-shadow: none !important;
+            pointer-events: none;
         }
 
         /* --- MOBILE FIXES IMPLEMENTATION --- */
@@ -192,27 +203,6 @@
         
         .swipe-hint { display: none; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-
-        /* Print Mode */
-        @media print {
-            @page { size: landscape; margin: 5mm; }
-            body { background: white; -webkit-print-color-adjust: exact; overflow: visible !important; }
-            .no-print { display: none !important; }
-            .print-only { display: block !important; }
-            .table-container { max-height: none; overflow: visible; box-shadow: none; }
-            table { width: 100%; font-size: 9px; }
-            th, td { border: 1px solid #000 !important; padding: 2px 4px; white-space: normal; }
-            .col-sticky-1, .col-sticky-2, .col-sticky-right { position: static; box-shadow: none; border: 1px solid #000; }
-            #sidebar, #mobile-header, #mobile-overlay, #btn-print-floating, #toast-container, .swipe-hint { display: none !important; }
-            /* Force show all in print */
-            #view-tabungan .table-container table th:nth-child(n+6),
-            #view-tabungan .table-container table td:nth-child(n+6),
-            #view-kas .table-container table th:nth-child(n+6),
-            #view-kas .table-container table td:nth-child(n+6) { display: table-cell !important; }
-            
-            /* Sembunyikan elemen admin saat print */
-            .admin-only { display: none !important; }
-        }
 
         .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -380,8 +370,9 @@
                 <p class="text-[10px] text-slate-500 font-medium uppercase tracking-wide">RT 02 / RW 19</p>
             </div>
         </div>
-        <button onclick="window.print()" class="text-indigo-600 bg-indigo-50 p-2 rounded-lg hover:bg-indigo-100 active:scale-95 transition shadow-sm border border-indigo-100">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2z"></path></svg>
+        <!-- DOWNLOAD PDF BUTTON (MOBILE) -->
+        <button onclick="downloadPDF()" class="text-red-600 bg-red-50 p-2 rounded-lg hover:bg-red-100 active:scale-95 transition shadow-sm border border-red-100">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
         </button>
     </header>
 
@@ -433,7 +424,7 @@
 
                 <button onclick="switchTab('kas')" id="btn-kas" class="tab-btn w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all group border border-transparent">
                     <span class="w-8 h-8 rounded-md bg-blue-100 text-blue-600 flex items-center justify-center mr-3 group-hover:scale-105 transition-transform flex-shrink-0 text-lg shadow-sm">💎</span>
-                    Kas Operasional
+                    Kas Harian
                 </button>
                 
                 <button onclick="switchTab('gambar')" id="btn-gambar" class="tab-btn w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all group border border-transparent">
@@ -472,7 +463,8 @@
                         <span class="mr-1">📦</span> Backup
                     </button>
 
-                    <button onclick="triggerLoad()" class="flex items-center justify-center px-3 py-2 rounded-lg text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 transition-colors">
+                    <!-- LOAD BUTTON: Enabled for Warga now -->
+                    <button onclick="triggerLoad()" id="btn-load-database" class="flex items-center justify-center px-3 py-2 rounded-lg text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 transition-colors">
                         <span class="mr-1">♻️</span> Load
                     </button>
                 </div>
@@ -511,9 +503,10 @@
                         <span class="text-xs text-slate-500">Update Real-time</span>
                     </div>
                 </div>
-                <button id="btn-print-floating" onclick="window.print()" class="inline-flex items-center px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg shadow-lg shadow-slate-200 transition-all hover:-translate-y-0.5 no-print">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2z"></path></svg>
-                    Cetak Laporan
+                <!-- DOWNLOAD PDF BUTTON (DESKTOP) -->
+                <button id="btn-print-floating" onclick="downloadPDF()" class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow-lg shadow-red-200 transition-all hover:-translate-y-0.5">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download Laporan (PDF)
                 </button>
             </div>
 
@@ -546,9 +539,10 @@
                                 <tr>
                                     <th class="px-3 py-4 text-center border-b border-r w-10 md:w-12 col-sticky-1 min-w-[40px]">No</th>
                                     <th class="px-4 py-4 border-b w-32 md:w-48 col-sticky-2 text-left shadow-sm min-w-[140px]">Nama</th>
+                                    <!-- MODIFIED: DATE HEADER FORMAT (Tgl 1, Tgl 2...) -->
                                     <script>
                                         for(let i=1; i<=31; i++) {
-                                            document.write(`<th class="px-2 py-4 text-center min-w-[70px] border-b border-r hover:bg-slate-100 transition-colors cursor-default select-none">${i}</th>`);
+                                            document.write(`<th class="px-2 py-4 text-center min-w-[70px] border-b border-r hover:bg-slate-100 transition-colors cursor-default select-none">Tgl ${i}</th>`);
                                         }
                                     </script>
                                     <th class="px-4 py-4 text-right border-b bg-emerald-50 text-emerald-700 min-w-[120px] col-sticky-right">Total</th>
@@ -594,9 +588,10 @@
                                 <tr>
                                     <th class="px-3 py-4 text-center border-b border-r w-10 md:w-12 col-sticky-1 min-w-[40px]">No</th>
                                     <th class="px-4 py-4 border-b w-32 md:w-48 col-sticky-2 text-left shadow-sm min-w-[140px]">Nama/Ket</th>
+                                    <!-- MODIFIED: DATE HEADER FORMAT (Tgl 1, Tgl 2...) -->
                                     <script>
                                         for(let i=1; i<=31; i++) {
-                                            document.write(`<th class="px-2 py-4 text-center min-w-[70px] border-b border-r hover:bg-slate-100 transition-colors cursor-default select-none">${i}</th>`);
+                                            document.write(`<th class="px-2 py-4 text-center min-w-[70px] border-b border-r hover:bg-slate-100 transition-colors cursor-default select-none">Tgl ${i}</th>`);
                                         }
                                     </script>
                                     <th class="px-4 py-4 text-right border-b bg-blue-50 text-blue-700 min-w-[120px] col-sticky-right">Total</th>
@@ -619,7 +614,7 @@
                 </div>
             </div>
 
-            <!-- === VIEW: GAMBAR (NEW) === -->
+            <!-- === VIEW: GAMBAR === -->
             <div id="view-gambar" class="view-section fade-in hidden">
                 <div class="flex flex-col lg:flex-row gap-6 md:gap-8 items-start">
                     
@@ -766,7 +761,7 @@
                 </div>
             </div>
 
-            <!-- === VIEW: CATATAN (NEW) === -->
+            <!-- === VIEW: CATATAN === -->
             <div id="view-catatan" class="view-section fade-in hidden">
                 <div class="bg-white rounded-xl shadow-soft border border-slate-200 overflow-hidden max-w-4xl mx-auto">
                     <div class="px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white flex justify-between items-center">
@@ -875,1452 +870,1874 @@
                         </table>
                     </div>
                 </div>
-
-                <div class="hidden print-only mt-16 grid grid-cols-2 gap-8 text-center page-break-inside-avoid">
-                    <div>
-                        <p class="mb-20">Mengetahui,<br>Ketua RT 02</p>
-                        <p class="font-bold border-t border-black inline-block px-8 pt-1">Bpk. Ketua</p>
-                    </div>
-                    <div>
-                        <p class="mb-20">Dibuat Oleh,<br>Bendahara</p>
-                        <p class="font-bold border-t border-black inline-block px-8 pt-1">Ibu Bendahara</p>
-                    </div>
-                </div>
             </div>
 
         </div>
     </main>
-    <!-- 4. JAVASCRIPT LOGIC -->
 <script>
-        // --- 0. PROFESSIONAL UI SYSTEM (TOAST & MODALS) ---
+    // --- 0. PROFESSIONAL UI SYSTEM (TOAST & MODALS) ---
 
-        // Show Toast Notification
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            
-            const colors = type === 'success' 
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                : (type === 'error' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-blue-50 text-blue-700 border-blue-200');
-            const icon = type === 'success' ? '✅' : (type === 'error' ? '⚠️' : 'ℹ️');
+    // Show Toast Notification
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        
+        const colors = type === 'success' 
+            ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+            : (type === 'error' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-blue-50 text-blue-700 border-blue-200');
+        const icon = type === 'success' ? '✅' : (type === 'error' ? '⚠️' : 'ℹ️');
 
-            toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg transform transition-all duration-300 translate-x-8 opacity-0 pointer-events-auto max-w-sm ${colors}`;
-            toast.innerHTML = `
-                <span class="text-lg">${icon}</span>
-                <p class="text-sm font-semibold">${message}</p>
-            `;
+        toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg transform transition-all duration-300 translate-x-8 opacity-0 pointer-events-auto max-w-sm ${colors}`;
+        toast.innerHTML = `
+            <span class="text-lg">${icon}</span>
+            <p class="text-sm font-semibold">${message}</p>
+        `;
 
-            container.appendChild(toast);
+        container.appendChild(toast);
 
-            // Animate In
-            requestAnimationFrame(() => {
-                toast.classList.remove('translate-x-8', 'opacity-0');
-            });
+        // Animate In
+        requestAnimationFrame(() => {
+            toast.classList.remove('translate-x-8', 'opacity-0');
+        });
 
-            // Remove after 3s
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-[-10px]');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+        // Remove after 3s
+        setTimeout(() => {
+            toast.classList.add('opacity-0', 'translate-y-[-10px]');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // Internal vars for modal callbacks
+    let currentModalCallback = null;
+    let currentEditAction = null; // Stores the function to call when "Edit" is clicked in preview
+    let isCurrentModalDelete = false; // ADDED: Flag for delete mode validation
+
+    function openUiModal(options) {
+        const backdrop = document.getElementById('ui-modal-backdrop');
+        const panel = document.getElementById('ui-modal-panel');
+        
+        // Set content
+        document.getElementById('ui-modal-title').innerText = options.title || 'Konfirmasi';
+        document.getElementById('ui-modal-subtitle').innerText = options.subtitle || '';
+        
+        const msgEl = document.getElementById('ui-modal-message');
+        if(options.message) {
+            msgEl.innerText = options.message;
+            msgEl.classList.remove('hidden');
+        } else {
+            msgEl.classList.add('hidden');
         }
 
-        // Internal vars for modal callbacks
-        let currentModalCallback = null;
-        let currentEditAction = null; // Stores the function to call when "Edit" is clicked in preview
+        // Container Logic
+        const inputContainer = document.getElementById('ui-modal-input-container');
+        const previewContainer = document.getElementById('ui-modal-preview-container');
+        const actionBtn = document.getElementById('ui-modal-action-btn');
+        const editBtn = document.getElementById('ui-modal-edit-btn');
 
-        function openUiModal(options) {
-            const backdrop = document.getElementById('ui-modal-backdrop');
-            const panel = document.getElementById('ui-modal-panel');
+        // Reset visibility
+        actionBtn.classList.add('hidden');
+        editBtn.classList.add('hidden');
+
+        // ADDED: Capture isDelete state
+        isCurrentModalDelete = !!options.isDelete;
+
+        if (options.mode === 'preview') {
+            // PREVIEW MODE
+            inputContainer.classList.add('hidden');
+            previewContainer.classList.remove('hidden');
             
-            // Set content
-            document.getElementById('ui-modal-title').innerText = options.title || 'Konfirmasi';
-            document.getElementById('ui-modal-subtitle').innerText = options.subtitle || '';
-            
-            const msgEl = document.getElementById('ui-modal-message');
-            if(options.message) {
-                msgEl.innerText = options.message;
-                msgEl.classList.remove('hidden');
-            } else {
-                msgEl.classList.add('hidden');
+            // Show edit button only if admin
+            if(currentRole === 'admin') {
+                editBtn.classList.remove('hidden');
             }
 
-            // Container Logic
-            const inputContainer = document.getElementById('ui-modal-input-container');
-            const previewContainer = document.getElementById('ui-modal-preview-container');
-            const actionBtn = document.getElementById('ui-modal-action-btn');
-            const editBtn = document.getElementById('ui-modal-edit-btn');
+            // Populate Preview Data
+            const data = options.previewData;
+            const net = data.net || 0;
+            const isExpense = net < 0;
+            
+            const amountEl = document.getElementById('ui-preview-amount');
+            amountEl.innerText = formatRupiahStrict(net);
+            amountEl.className = `text-3xl font-extrabold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}`;
 
-            // Reset visibility
-            actionBtn.classList.add('hidden');
-            editBtn.classList.add('hidden');
+            document.getElementById('ui-preview-type').innerText = isExpense ? 'Pengeluaran (Tarik)' : 'Pemasukan (Setor)';
+            document.getElementById('ui-preview-date').innerText = data.dateLabel;
+            document.getElementById('ui-preview-note').innerText = data.note || 'Tidak ada catatan';
 
-            if (options.mode === 'preview') {
-                // PREVIEW MODE
-                inputContainer.classList.add('hidden');
-                previewContainer.classList.remove('hidden');
-                
-                // Show edit button only if admin
-                if(currentRole === 'admin') {
-                    editBtn.classList.remove('hidden');
-                }
+            currentEditAction = options.onEdit; // Store the edit function
 
-                // Populate Preview Data
-                const data = options.previewData;
-                const net = data.net || 0;
-                const isExpense = net < 0;
-                
-                const amountEl = document.getElementById('ui-preview-amount');
-                amountEl.innerText = formatRupiahStrict(net);
-                amountEl.className = `text-3xl font-extrabold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}`;
+        } else {
+            // INPUT MODE
+            previewContainer.classList.add('hidden');
+            inputContainer.classList.remove('hidden');
+            actionBtn.classList.remove('hidden');
 
-                document.getElementById('ui-preview-type').innerText = isExpense ? 'Pengeluaran (Tarik)' : 'Pemasukan (Setor)';
-                document.getElementById('ui-preview-date').innerText = data.dateLabel;
-                document.getElementById('ui-preview-note').innerText = data.note || 'Tidak ada catatan';
+            // Input Logic (Existing)
+            const noteContainer = document.getElementById('ui-modal-note-container');
+            const singleInputWrapper = document.getElementById('ui-single-input-wrapper');
+            const dualInputWrapper = document.getElementById('ui-dual-input-wrapper');
+            const incomeInput = document.getElementById('ui-input-income');
+            const expenseInput = document.getElementById('ui-input-expense');
+            const incomeQuickActions = document.getElementById('ui-income-quick-actions');
 
-                currentEditAction = options.onEdit; // Store the edit function
-
+            if(options.showNoteInput) {
+                noteContainer.classList.remove('hidden');
+                document.getElementById('ui-modal-note').value = options.initialNote || '';
             } else {
-                // INPUT MODE
-                previewContainer.classList.add('hidden');
-                inputContainer.classList.remove('hidden');
-                actionBtn.classList.remove('hidden');
+                noteContainer.classList.add('hidden');
+            }
 
-                // Input Logic (Existing)
-                const noteContainer = document.getElementById('ui-modal-note-container');
-                const singleInputWrapper = document.getElementById('ui-single-input-wrapper');
-                const dualInputWrapper = document.getElementById('ui-dual-input-wrapper');
-                const incomeInput = document.getElementById('ui-input-income');
-                const expenseInput = document.getElementById('ui-input-expense');
-                const incomeQuickActions = document.getElementById('ui-income-quick-actions');
+            if(options.dualInput) {
+                singleInputWrapper.classList.add('hidden');
+                dualInputWrapper.classList.remove('hidden');
+                
+                incomeInput.value = options.initialIncome > 0 ? options.initialIncome : '';
+                expenseInput.value = options.initialExpense > 0 ? options.initialExpense : '';
 
-                if(options.showNoteInput) {
-                    noteContainer.classList.remove('hidden');
-                    document.getElementById('ui-modal-note').value = options.initialNote || '';
+                if(options.quickAmounts) {
+                    incomeQuickActions.innerHTML = options.quickAmounts.map(amt => 
+                        `<button onclick="setIncomeValue(${amt})" class="flex-1 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded text-xs font-bold transition border border-emerald-200">+${amt/1000}k</button>`
+                    ).join('');
                 } else {
-                    noteContainer.classList.add('hidden');
+                    incomeQuickActions.innerHTML = '';
                 }
-
-                if(options.dualInput) {
-                    singleInputWrapper.classList.add('hidden');
-                    dualInputWrapper.classList.remove('hidden');
-                    
-                    incomeInput.value = options.initialIncome > 0 ? options.initialIncome : '';
-                    expenseInput.value = options.initialExpense > 0 ? options.initialExpense : '';
-
-                    if(options.quickAmounts) {
-                        incomeQuickActions.innerHTML = options.quickAmounts.map(amt => 
-                            `<button onclick="setIncomeValue(${amt})" class="flex-1 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded text-xs font-bold transition border border-emerald-200">+${amt/1000}k</button>`
-                        ).join('');
-                    } else {
-                        incomeQuickActions.innerHTML = '';
-                    }
-                    setTimeout(() => incomeInput.focus(), 100);
+                setTimeout(() => incomeInput.focus(), 100);
+            } else {
+                dualInputWrapper.classList.add('hidden');
+                singleInputWrapper.classList.remove('hidden');
+                
+                const inputField = document.getElementById('ui-modal-input');
+                
+                // ADDED: Logic for isDelete default value
+                if (options.isDelete) {
+                    inputField.value = "lanjut";
+                    inputField.placeholder = "Ketik 'lanjut' untuk konfirmasi";
                 } else {
-                    dualInputWrapper.classList.add('hidden');
-                    singleInputWrapper.classList.remove('hidden');
-                    
-                    const inputField = document.getElementById('ui-modal-input');
                     inputField.value = options.initialValue || '';
                     inputField.placeholder = options.placeholder || '';
-                    
-                    if(options.inputType === 'number') inputField.type = 'tel';
-                    else if(options.inputType === 'password') inputField.type = 'password';
-                    else inputField.type = 'text';
-                    
-                    setTimeout(() => inputField.focus(), 100);
                 }
-
-                // Action Button Logic
-                actionBtn.innerText = options.actionText || 'Simpan';
-                if(options.isDelete) {
-                    actionBtn.className = "px-4 py-2 rounded-lg text-sm font-bold text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-200 transition-all hover:-translate-y-0.5";
-                } else {
-                    actionBtn.className = "px-4 py-2 rounded-lg text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5";
-                }
-                currentModalCallback = options.onConfirm;
-            }
-
-            // Show Modal
-            backdrop.classList.remove('hidden');
-            requestAnimationFrame(() => {
-                backdrop.classList.remove('opacity-0');
-                panel.classList.remove('scale-95', 'opacity-0');
-                panel.classList.add('scale-100', 'opacity-100');
-            });
-        }
-
-        function setIncomeValue(val) {
-            const input = document.getElementById('ui-input-income');
-            const current = parseInt(input.value.replace(/\D/g,'')) || 0;
-            input.value = current + val;
-            input.focus();
-        }
-
-        function closeUiModal() {
-            const backdrop = document.getElementById('ui-modal-backdrop');
-            const panel = document.getElementById('ui-modal-panel');
-            
-            backdrop.classList.add('opacity-0');
-            panel.classList.remove('scale-100', 'opacity-100');
-            panel.classList.add('scale-95', 'opacity-0');
-
-            setTimeout(() => {
-                backdrop.classList.add('hidden');
-                currentModalCallback = null;
-                currentEditAction = null;
-            }, 200);
-        }
-
-        // Action Button Listeners
-        document.getElementById('ui-modal-action-btn').addEventListener('click', () => {
-            const isDual = !document.getElementById('ui-dual-input-wrapper').classList.contains('hidden');
-            const noteVal = document.getElementById('ui-modal-note').value;
-
-            if (isDual) {
-                const inc = document.getElementById('ui-input-income').value;
-                const exp = document.getElementById('ui-input-expense').value;
-                if(currentModalCallback) currentModalCallback({ income: inc, expense: exp, note: noteVal });
-            } else {
-                const val = document.getElementById('ui-modal-input').value;
-                if(currentModalCallback) currentModalCallback(val, noteVal);
-            }
-            closeUiModal();
-        });
-
-        document.getElementById('ui-modal-edit-btn').addEventListener('click', () => {
-            if(currentEditAction) currentEditAction(); // Trigger the edit function passed in options
-            // Note: openUiModal will be called again by currentEditAction, refreshing the content
-        });
-
-        // --- GLOBAL FUNCTIONS ---
-        
-        let isMenuOpen = false;
-
-        function toggleMenu() {
-            isMenuOpen = !isMenuOpen;
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('mobile-overlay');
-            const body = document.body;
-            
-            if (isMenuOpen) {
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
-                body.classList.add('overflow-hidden');
-                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('opacity-0');
-                body.classList.remove('overflow-hidden');
-                setTimeout(() => overlay.classList.add('hidden'), 300);
-            }
-        }
-
-        /* --- ROLE MANAGEMENT SYSTEM (NEW) --- */
-        let currentRole = localStorage.getItem('userRole') || 'warga';
-
-        function initRole() {
-            // Update Body Class for CSS Rules
-            document.body.classList.remove('role-warga', 'role-admin');
-            document.body.classList.add(`role-${currentRole}`);
-            
-            // Update Sidebar UI
-            const btnText = document.getElementById('role-text');
-            const btnIcon = document.getElementById('role-icon');
-            const badge = document.getElementById('role-badge');
-            
-            if(currentRole === 'admin') {
-                btnText.innerText = "Keluar Admin";
-                btnIcon.innerText = "🔓";
-                badge.innerText = "MODE: ADMIN (Full Access)";
-                badge.className = "mb-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700 border border-indigo-200";
-            } else {
-                btnText.innerText = "Masuk sebagai Admin";
-                btnIcon.innerText = "🔐";
-                badge.innerText = "MODE: WARGA (Read Only)";
-                badge.className = "mb-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200";
-            }
-        }
-
-        function toggleRole() {
-            if(currentRole === 'admin') {
-                // Logout Process
-                openUiModal({
-                    title: 'Keluar Admin',
-                    message: 'Kembali ke mode Warga (Read-only)?',
-                    mode: 'input',
-                    isDelete: true, // Red button
-                    actionText: 'Keluar',
-                    onConfirm: () => {
-                        currentRole = 'warga';
-                        localStorage.setItem('userRole', 'warga');
-                        initRole();
-                        // Refresh view to apply restrictions immediately
-                        changePeriod(); 
-                        showToast('Anda sekarang dalam mode Warga');
-                    }
-                });
-            } else {
-                // Login Process
-                openUiModal({
-                    title: 'Login Administrator',
-                    subtitle: 'Akses penuh pengelolaan data',
-                    mode: 'input',
-                    inputType: 'password',
-                    placeholder: 'Masukkan Password Admin',
-                    actionText: 'Masuk',
-                    onConfirm: (pass) => {
-                        if(pass === 'uranusfazry123') {
-                            currentRole = 'admin';
-                            localStorage.setItem('userRole', 'admin');
-                            initRole();
-                            // Refresh view to show admin controls
-                            changePeriod();
-                            showToast('Login Admin Berhasil!', 'success');
-                        } else {
-                            showToast('Password Salah! Akses Ditolak.', 'error');
-                        }
-                    }
-                });
-            }
-        }
-
-        /* --- UPDATED MEDIA LOGIC FOR VIDEO/IMAGE & ORIENTATION --- */
-
-        function openImageModal(url, desc, date, orientation = 'auto', mediaType = 'image') {
-            const modal = document.getElementById('image-modal');
-            const img = document.getElementById('modal-img');
-            const video = document.getElementById('modal-video');
-            const wrapper = document.getElementById('modal-media-wrapper');
-            
-            const txtDesc = document.getElementById('modal-desc');
-            const txtDate = document.getElementById('modal-date');
-            const badge = document.getElementById('modal-badge');
-
-            // Reset Display
-            img.classList.add('hidden');
-            video.classList.add('hidden');
-            video.pause();
-            
-            // Set Text
-            txtDesc.innerText = desc;
-            txtDate.innerText = date;
-            
-            // Badge logic
-            const isVideo = mediaType === 'video' || url.match(/\.(mp4|webm)$/i);
-            badge.innerText = isVideo ? "VIDEO" : "FOTO";
-            badge.className = `inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mb-2 ${isVideo ? 'bg-red-500 text-white' : 'bg-indigo-500 text-white'}`;
-
-            // Orientation Classes
-            wrapper.className = "relative transition-all duration-300 flex items-center justify-center"; // Reset
-            if (orientation === 'portrait') {
-                wrapper.classList.add('h-[80vh]', 'w-[45vh]'); // approx 9:16
-            } else if (orientation === 'landscape') {
-                wrapper.classList.add('w-full', 'max-w-4xl', 'aspect-video');
-            } else {
-                // Auto: allow natural size but constrained
-                wrapper.classList.add('max-h-[85vh]', 'max-w-full');
-            }
-
-            if (isVideo) {
-                video.src = url;
-                video.classList.remove('hidden');
-                // Ensure orientation applies to video element style for object-fit
-                video.className = `max-h-[80vh] w-full h-full rounded-lg shadow-2xl border border-white/10 bg-black ${orientation === 'portrait' ? 'object-cover' : 'object-contain'}`;
-            } else {
-                img.src = url;
-                img.classList.remove('hidden');
-                img.className = `max-h-[80vh] w-full h-full rounded-lg shadow-2xl border border-white/10 ${orientation === 'portrait' ? 'object-cover' : 'object-contain'}`;
-            }
-
-            modal.classList.remove('hidden');
-            setTimeout(() => modal.classList.remove('opacity-0'), 10);
-        }
-
-        function closeImageModal() {
-            const modal = document.getElementById('image-modal');
-            const video = document.getElementById('modal-video');
-            
-            modal.classList.add('opacity-0');
-            video.pause(); // Stop audio
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                document.getElementById('modal-img').src = '';
-                video.src = '';
-            }, 300);
-        }
-
-        // Auto-detect Media Type on Input
-        if(document.getElementById('img-url')) {
-            document.getElementById('img-url').addEventListener('input', function(e) {
-                const val = e.target.value.toLowerCase();
-                const typeSelect = document.getElementById('img-type');
-                if (val.match(/\.(mp4|webm)$/) || val.includes('catbox.moe') && val.endsWith('.mp4')) {
-                    typeSelect.value = 'video';
-                } else if (val.match(/\.(jpg|jpeg|png|webp)$/)) {
-                    typeSelect.value = 'image';
-                }
-            });
-        }
-
-        // --- CONSTANTS ---
-        const AVAILABLE_YEARS = [2026, 2027, 2028, 2029, 2030];
-        const MONTH_NAMES = [
-            "Januari", "Februari", "Maret", "April", "Mei", "Juni", 
-            "Juli", "Agustus", "September", "Oktober", "November", "Desember"
-        ];
-        const STORAGE_KEY = 'rtDataV10';
-
-        // --- MASTER DATA ---
-        const MASTER_CITIZENS = [
-            { id: 1, name: "WAWAN R" }, { id: 2, name: "SAKRI" }, { id: 3, name: "YAYAT H" }, 
-            { id: 4, name: "EDENG K" }, { id: 5, name: "SATIA P" },
-            { id: 6, name: "SAHIDI" }, { id: 7, name: "ADE JENI" }, { id: 8, name: "DANIL/REKA" }, { id: 9, name: "DODI/ANOY" }, { id: 10, name: "KUNDANG" },
-            { id: 11, name: "IDA DIANA" }, { id: 12, name: "TISNA" },
-            { id: 13, name: "JONIH" }, { id: 14, name: "AMUNG" }, { id: 15, name: "ENCU S" },
-            { id: 16, name: "SANA" }, { id: 17, name: "NURDIN" }, { id: 18, name: "A.AZIS" }, { id: 19, name: "PERMANA" }, { id: 20, name: "UHO" },
-            { id: 21, name: "DEDE R DANIEL" }, { id: 22, name: "DINDIN" },
-            { id: 22.1, name: "ALDILA" }, 
-            { id: 23, name: "TUTI W" }, { id: 24, name: "ERO S" }, { id: 25, name: "ACO Y" },
-            { id: 26, name: "DEDI" }, { id: 27, name: "ROHANA" }, { id: 28, name: "YEYET" }, { id: 29, name: "DIAH" },
-            { id: 30, name: "MAMAH" },
-            { id: 31, name: "DODI DWI P" }, { id: 32, name: "TETI M" }, { id: 33, name: "KUSNADI" },
-            { id: 34, name: "YANA S" }, { id: 35, name: "ENOK S" }, { id: 36, name: "HERI P" },
-            { id: 37, name: "NANDANG" }, { id: 38, name: "ENDANG D" }, { id: 39, name: "IRAWAN" }, { id: 40, name: "KARTI" },
-            { id: 41, name: "ANAH" }, { id: 42, name: "EMONG S" }, { id: 43, name: "GUGUM Y" }, { id: 44, name: "KUSWANTO" },
-            { id: 45, name: "ENCU /INA" },
-            { id: 46, name: "MAMAN S" }, { id: 47, name: "WARUNG IBU IIS" }, { id: 48, name: "(Kosong)" }, { id: 49, name: "(Kosong)" }, { id: 50, name: "(Kosong)" }
-        ];
-
-        // --- DATA SEED (REMOVED FOR BREVITY - ASSUME SAME AS BEFORE) ---
-        const CSV_JAN_2026_TABUNGAN = [
-            { no: 1, s: {1: 1500, 2: 2000, 3: 3000, 4: 5000, 5: 3000} }, { no: 2, s: {1: 2000, 2: 2000, 3: 10000, 4: 10000, 5: 10000} }, { no: 3, s: {1: 4500, 2: 4500, 3: 4500, 4: 5000, 5: 5000} },
-            { no: 6, s: {1: 2000, 2: 2000, 3: 2000, 4: 2000, 5: 2000} }, { no: 7, s: {1: 2000, 2: 2000, 3: 2000, 4: 2000, 5: 2000} }, { no: 8, s: {1: 5000, 3: 10000} },
-            { no: 9, s: {1: 1500, 2: 4500, 3: 2000, 4: 3500, 5: 2000} }, { no: 10, s: {1: 1500, 2: 1500, 3: 1500, 5: 5500} }, { no: 11, s: {1: 1500, 2: 1500, 3: 1500, 4: 1500, 5: 1500} },
-            { no: 13, s: {1: 5500, 2: 4500, 3: 5500, 5: 9500} }, { no: 14, s: {1: 1500, 2: 5000, 3: 2000, 4: 1500, 5: 1500} }, { no: 15, s: {1: 1500, 2: 1500, 3: 1500, 4: 4500, 5: 1500} },
-            { no: 16, s: {1: 1500, 2: 2000, 3: 2000, 4: 5000, 5: 2000} }, { no: 17, s: {1: 500, 2: 2500, 3: 500, 4: 500, 5: 1500} }, { no: 18, s: {4: 1000, 5: 2000} },
-            { no: 19, s: {3: 2000, 4: 2000, 5: 4500} }, { no: 20, s: {1: 2000, 2: 1500, 3: 2000, 4: 1500, 5: 1500} }, { no: 21, s: {1: 1000, 2: 1000, 3: 1000, 4: 1000, 5: 1500} },
-            { no: 22, s: {1: 1500, 2: 1000, 3: 2000, 4: 1000, 5: 1500} }, { no: 22.1, s: {3: 1000, 4: 1000, 5: 5000} }, { no: 23, s: {1: 1500, 2: 500, 3: 1500, 4: 1500, 5: 1500} }, { no: 24, s: {1: 2000, 2: 2500, 3: 500, 4: 5000, 5: 2000} },
-            { no: 26, s: {1: 500, 2: 1000, 3: 3000, 4: 3500, 5: 5000} }, { no: 27, s: {1: 2000, 2: 2000, 3: 5000, 4: 5000, 5: 5000} }, { no: 28, s: {1: 2000, 2: 2000, 3: 2000, 4: 2500, 5: 2000} },
-            { no: 29, s: {3: 1000, 4: 1000, 5: 5000} }, { no: 30, s: {1: 1500, 2: 500, 3: 1500, 4: 1500, 5: 1500} }, { no: 31, s: {1: 500, 2: 500, 3: 1000, 4: 1000, 5: 1000} },
-            { no: 32, s: {1: 500, 2: 500, 3: 1000, 4: 1000, 5: 1000} }, { no: 34, s: {1: 1500, 2: 1500, 3: 1500, 4: 1500, 5: 1500} }, 
-            { no: 36, s: {5: 10000} },
-            { no: 37, s: {1: 1500, 2: 4500, 3: 4500, 4: 4500, 5: 4500} }
-        ];
-
-        const CSV_JAN_2026_KAS = [
-            { no: 1, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 2, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 3, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
-            { no: 4, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 5, k: {} },
-            { no: 6, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 7, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
-            { no: 8, k: {1:500, 2:500, 3:500, 5:500} }, { no: 9, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 10, k: {1:500, 2:500, 3:500, 5:500} },
-            { no: 11, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 12, k: {} },
-            { no: 13, k: {1:500, 2:500, 3:500, 5:500} }, { no: 14, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
-            { no: 15, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 16, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 17, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
-            { no: 18, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 19, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 20, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
-            { no: 21, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 22, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 23, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
-            { no: 24, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 25, k: {} },
-            { no: 26, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 27, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
-            { no: 28, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 29, k: {} },
-            { no: 30, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 31, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
-            { no: 32, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 33, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
-            { no: 34, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 35, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
-            { no: 36, k: {5:500} }, { no: 37, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
-            { no: 38, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 39, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 40, k: {2:500, 3:500, 4:500, 5:500} },
-            { no: 41, k: {} }, { no: 42, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 43, k: {1:500, 2:500, 3:500, 4:500} }, { no: 44, k: {} },
-            { no: 46, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 47, k: {1:500, 2:500, 3:500, 4:500, 5:500} }
-        ];
-
-        // --- GLOBAL STATE ---
-        let db = {};
-        let currentYear = 2026;
-        let currentMonth = 0;
-        let currentState = { citizens: [], kasOut: {}, images: [], generalNotes: '' };
-
-        // --- REFACTORED ACTION FUNCTIONS (PREVIEW FIRST) ---
-        window.editSaving = function(id, date, forceEdit = false) {
-            const citizen = currentState.citizens.find(c => c.id === id);
-            
-            // Extract Data
-            let currentData = citizen.savings[date];
-            let income = 0;
-            let expense = 0;
-            let note = '';
-            let net = 0;
-
-            if (typeof currentData === 'object' && currentData !== null) {
-                income = currentData.income || 0;
-                expense = currentData.expense || 0;
-                note = currentData.note || '';
-                net = currentData.net || (income - expense);
-            } else if (typeof currentData === 'number') {
-                if (currentData > 0) income = currentData;
-                else if (currentData < 0) expense = Math.abs(currentData);
-                net = currentData;
-            }
-
-            // --- ROLE CHECK: WARGA ---
-            if (currentRole !== 'admin') {
-                // Jika data kosong, warga tidak bisa klik/input
-                if (net === 0) return;
-
-                // Jika ada data, warga hanya bisa melihat (Preview Mode)
-                openUiModal({
-                    title: 'Detail Transaksi',
-                    subtitle: `Tabungan ${citizen.name} (Read Only)`,
-                    mode: 'preview',
-                    previewData: {
-                        net: net,
-                        dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
-                        note: note
-                    },
-                    onEdit: null // Disable edit button
-                });
-                return;
-            }
-
-            // --- ROLE CHECK: ADMIN (Normal Flow) ---
-
-            // DECISION: Preview or Edit?
-            if (!forceEdit && net !== 0) {
-                // Show Preview if data exists
-                openUiModal({
-                    title: 'Detail Transaksi',
-                    subtitle: `Tabungan ${citizen.name}`,
-                    mode: 'preview',
-                    previewData: {
-                        net: net,
-                        dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
-                        note: note
-                    },
-                    onEdit: () => {
-                        window.editSaving(id, date, true); // Force edit mode
-                    }
-                });
-                return;
-            }
-            
-            // Show Input (Edit Mode)
-            openUiModal({
-                title: `Tabungan: ${citizen.name}`,
-                subtitle: `Input transaksi Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
-                mode: 'input',
-                inputType: 'number',
-                dualInput: true,
-                initialIncome: income,
-                initialExpense: expense,
-                initialNote: note,
-                quickAmounts: [1000, 2000, 5000, 10000],
-                showNoteInput: true,
-                onConfirm: (data) => {
-                    const inc = parseInt(data.income.toString().replace(/\D/g,'')) || 0;
-                    const exp = parseInt(data.expense.toString().replace(/\D/g,'')) || 0;
-                    const newNet = inc - exp;
-
-                    citizen.savings[date] = {
-                        income: inc,
-                        expense: exp,
-                        net: newNet,
-                        note: data.note
-                    };
-
-                    saveDB(); renderAll();
-                    showToast(`Transaksi ${citizen.name} disimpan!`, 'success');
-                }
-            });
-        };
-
-        window.editKas = function(id, date, forceEdit = false) {
-            const citizen = currentState.citizens.find(c => c.id === id);
-            
-            let currentData = citizen.kas[date];
-            let income = 0;
-            let expense = 0;
-            let note = '';
-            let net = 0;
-
-            if (typeof currentData === 'object' && currentData !== null) {
-                income = currentData.income || 0;
-                expense = currentData.expense || 0;
-                note = currentData.note || '';
-                net = currentData.net || (income - expense);
-            } else if (typeof currentData === 'number') {
-                if (currentData > 0) income = currentData;
-                else if (currentData < 0) expense = Math.abs(currentData);
-                net = currentData;
-            }
-            
-            // --- ROLE CHECK: WARGA ---
-            if (currentRole !== 'admin') {
-                if (net === 0) return; // Warga cannot input new data
                 
-                openUiModal({
-                    title: 'Detail Transaksi',
-                    subtitle: `Kas Operasional ${citizen.name} (Read Only)`,
-                    mode: 'preview',
-                    previewData: {
-                        net: net,
-                        dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
-                        note: note
-                    },
-                    onEdit: null
-                });
-                return;
+                if(options.inputType === 'number') inputField.type = 'tel';
+                else if(options.inputType === 'password') inputField.type = 'password';
+                else inputField.type = 'text';
+                
+                setTimeout(() => inputField.focus(), 100);
             }
 
-            // --- ROLE CHECK: ADMIN ---
-
-            if (!forceEdit && net !== 0) {
-                openUiModal({
-                    title: 'Detail Transaksi',
-                    subtitle: `Kas Operasional ${citizen.name}`,
-                    mode: 'preview',
-                    previewData: {
-                        net: net,
-                        dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
-                        note: note
-                    },
-                    onEdit: () => {
-                        window.editKas(id, date, true);
-                    }
-                });
-                return;
-            }
-
-            openUiModal({
-                title: `Kas: ${citizen.name}`,
-                subtitle: `Input Kas Operasional Tgl ${date}`,
-                mode: 'input',
-                inputType: 'number',
-                dualInput: true,
-                initialIncome: income,
-                initialExpense: expense,
-                initialNote: note,
-                quickAmounts: [500, 1000, 2000, 5000],
-                showNoteInput: true,
-                onConfirm: (data) => {
-                    const inc = parseInt(data.income.toString().replace(/\D/g,'')) || 0;
-                    const exp = parseInt(data.expense.toString().replace(/\D/g,'')) || 0;
-                    const newNet = inc - exp;
-
-                    citizen.kas[date] = {
-                        income: inc,
-                        expense: exp,
-                        net: newNet,
-                        note: data.note
-                    };
-
-                    saveDB(); renderAll();
-                    showToast(`Kas ${citizen.name} disimpan!`, 'success');
-                }
-            });
-        };
-window.editKasOut = function(date) {
-            // ADMIN ONLY
-            if(currentRole !== 'admin') {
-                showToast('Hanya Admin yang bisa edit pengeluaran!', 'error');
-                return;
-            }
-
-            const currentVal = currentState.kasOut[date] || 0;
-            const currentNote = currentState.kasOutNotes ? currentState.kasOutNotes[date] : '';
-            
-            openUiModal({
-                title: 'Pengeluaran Kas Ops',
-                subtitle: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
-                mode: 'input',
-                inputType: 'number',
-                initialValue: currentVal,
-                placeholder: "15000",
-                showNoteInput: true,
-                initialNote: currentNote,
-                onConfirm: (val, note) => {
-                    let amount = parseInt(val.toString().replace(/[^0-9]/g, ''));
-                    if (isNaN(amount)) amount = 0;
-                    currentState.kasOut[date] = amount;
-                    
-                    if(!currentState.kasOutNotes) currentState.kasOutNotes = {};
-                    currentState.kasOutNotes[date] = note;
-
-                    saveDB(); renderAll();
-                    showToast('Pengeluaran disimpan', 'success');
-                }
-            });
-        };
-
-
-        window.saveGeneralNotes = function() {
-            if(currentRole !== 'admin') return;
-
-            const text = document.getElementById('general-notes-area').value;
-            currentState.generalNotes = text;
-            saveDB();
-            renderReport(); 
-            showToast('Catatan umum tersimpan!', 'success');
-        };
-
-        window.addCitizen = function() {
-            if(currentRole !== 'admin') return;
-
-            openUiModal({
-                title: 'Tambah Warga Baru',
-                mode: 'input',
-                inputType: 'text',
-                actionText: 'Tambah',
-                onConfirm: (name) => {
-                    if(!name) return;
-                    const maxId = currentState.citizens.reduce((max, c) => Math.max(max, typeof c.id === 'number' ? c.id : 0), 0);
-                    const newId = maxId + 1;
-                    currentState.citizens.push({ id: newId, name: name, savings: {}, kas: {}, savingsNotes: {}, kasNotes: {} });
-                    saveDB(); renderAll();
-                    showToast(`Warga "${name}" berhasil ditambahkan!`, 'success');
-                }
-            });
-        };
-
-        window.deleteCitizen = function(id, name) {
-            if(currentRole !== 'admin') return;
-
-            openUiModal({
-                title: 'Hapus Warga?',
-                message: `Yakin ingin menghapus warga "${name}"? Data tabungan/kas mereka di bulan ini akan HILANG PERMANEN.`,
-                mode: 'input',
-                isDelete: true,
-                actionText: 'Ya, Hapus',
-                onConfirm: () => {
-                    currentState.citizens = currentState.citizens.filter(c => c.id !== id);
-                    saveDB(); renderAll();
-                    showToast(`Warga "${name}" dihapus.`, 'error');
-                }
-            });
-        };
-
-        window.resetValuesOnly = function() {
-            if(currentRole !== 'admin') return;
-
-            openUiModal({
-                title: 'Reset Nominal Bulan Ini?',
-                message: "Ini akan me-RESET semua uang menjadi 0 untuk bulan ini saja. Nama warga TETAP ADA.",
-                mode: 'input',
-                isDelete: true,
-                actionText: 'Ya, Reset 0',
-                onConfirm: () => {
-                    currentState.citizens.forEach(c => { 
-                        c.savings = {}; c.kas = {}; c.savingsNotes = {}; c.kasNotes = {}; 
-                    });
-                    currentState.kasOut = {};
-                    currentState.kasOutNotes = {};
-                    saveDB(); renderAll();
-                    showToast("Semua nominal di-reset ke 0.", 'success');
-                }
-            });
-        };
-
-        window.resetData = function() {
-            if(currentRole !== 'admin') return;
-
-            openUiModal({
-                title: 'HARD RESET SYSTEM?',
-                message: "PERINGATAN KERAS: Semua data akan DIHAPUS PERMANEN dan kembali ke kondisi awal Jan 2026. Tidak bisa dibatalkan!",
-                mode: 'input',
-                isDelete: true,
-                actionText: 'Hapus Semua Data',
-                onConfirm: () => {
-                    localStorage.removeItem(STORAGE_KEY);
-                    location.reload();
-                }
-            });
-        };
-
-        window.downloadBackup = function() {
-            if(currentRole !== 'admin') return;
-
-            const zip = new JSZip();
-            zip.file("data.json", JSON.stringify(db));
-            zip.file("meta.json", JSON.stringify({ app: "Manajemen Keuangan RT 02 / RW 19", version: "v2.2", backup_at: new Date().toLocaleString() }));
-            zip.file("README.txt", "Backup data keuangan RT 02/19.");
-            zip.generateAsync({type:"blob"}).then(function(content) { 
-                saveAs(content, "uranusfazry_v2_2.zip"); 
-                showToast("Backup berhasil di-download!", 'success');
-            });
-        };
-
-        window.triggerLoad = function() {
-            if(currentRole !== 'admin') return;
-            document.getElementById('file-input-backup').click();
-        };
-
-        window.handleLoadBackup = function(input) {
-            if(currentRole !== 'admin') return;
-
-            const file = input.files[0];
-            if(!file) return;
-
-            openUiModal({
-                title: 'Restore Backup?',
-                message: "PERHATIAN: Data saat ini akan DITIMPA dengan data dari file backup. Lanjutkan?",
-                mode: 'input',
-                actionText: 'Ya, Restore',
-                onConfirm: () => {
-                      JSZip.loadAsync(file).then(function(zip) {
-                        return zip.file("data.json").async("string");
-                    }).then(function(dataStr) {
-                        if(dataStr) {
-                            try {
-                                const newData = JSON.parse(dataStr);
-                                if(!newData[2026]) throw new Error("Struktur data tidak valid");
-                                db = newData;
-                                saveDB();
-                                showToast("Data berhasil dipulihkan!", 'success');
-                                setTimeout(() => location.reload(), 1000);
-                            } catch(e) { 
-                                showToast("Gagal load: " + e.message, 'error'); 
-                            }
-                        }
-                    }).catch(function(err) { 
-                        showToast("Error: " + err.message, 'error'); 
-                    });
-                }
-            });
-            input.value = '';
-        };
-
-        window.handleImageSubmit = function(e) {
-            e.preventDefault();
-            
-            if(currentRole !== 'admin') {
-                showToast('Hanya Admin yang bisa upload!', 'error');
-                return;
-            }
-
-            const date = document.getElementById('img-date').value;
-            const desc = document.getElementById('img-desc').value;
-            const category = document.getElementById('img-category').value;
-            const type = document.getElementById('img-type').value;
-            const url = document.getElementById('img-url').value;
-            const orientationElement = document.querySelector('input[name="img-orientation"]:checked');
-            const orientation = orientationElement ? orientationElement.value : 'auto';
-
-            const isValidDomain = url.includes('imghippo.com') || url.includes('catbox.moe');
-            const hasExtension = url.match(/\.(jpeg|jpg|gif|png|webp|mp4|webm)$/i);
-
-            if(!isValidDomain && !hasExtension) {
-                if(!confirm("URL ini sepertinya bukan dari ImgHippo/Catbox atau bukan file gambar/video. Tetap simpan?")) {
-                    return;
-                }
-            }
-
-            if(!currentState.images) currentState.images = [];
-            currentState.images.push({ 
-                date, 
-                desc, 
-                category, 
-                type, 
-                url, 
-                orientation, 
-                id: Date.now() 
-            });
-            
-            document.getElementById('img-desc').value = '';
-            document.getElementById('img-url').value = '';
-            
-            saveDB();
-            renderImages();
-            renderReport(); 
-            showToast('Dokumentasi berhasil disimpan!', 'success');
-        };
-
-        window.deleteImage = function(id) {
-            if(currentRole !== 'admin') return;
-
-            openUiModal({
-                title: 'Hapus Dokumentasi?',
-                isDelete: true,
-                mode: 'input',
-                actionText: 'Hapus',
-                onConfirm: () => {
-                    currentState.images = currentState.images.filter(img => img.id !== id);
-                    saveDB(); renderImages(); renderReport();
-                    showToast('Dokumentasi dihapus.', 'error');
-                }
-            });
-        };
-
-        window.changePeriod = function() {
-            const yearVal = parseInt(document.getElementById('sel-year').value);
-            const monthVal = parseInt(document.getElementById('sel-month').value);
-            currentYear = yearVal;
-            currentMonth = monthVal;
-
-            const badgeText = `${MONTH_NAMES[currentMonth].toUpperCase().substring(0,3)} ${currentYear}`;
-            document.getElementById('header-period-badge').innerText = badgeText;
-            document.getElementById('mobile-period-badge').innerText = badgeText;
-            document.getElementById('rpt-month-label').innerText = MONTH_NAMES[currentMonth];
-            document.getElementById('rpt-year-val').innerText = currentYear;
-            document.getElementById('rpt-print-period').innerText = `Periode: ${MONTH_NAMES[currentMonth]} ${currentYear}`;
-
-            if (!db[currentYear]) db[currentYear] = {};
-            if (!db[currentYear][currentMonth]) {
-                db[currentYear][currentMonth] = createBlankPeriod();
-                saveDB();
-            }
-
-            currentState = db[currentYear][currentMonth];
-            if(!currentState.kasOut) currentState.kasOut = {};
-            if(!currentState.kasOutNotes) currentState.kasOutNotes = {};
-            if(!currentState.images) currentState.images = [];
-            if(!currentState.generalNotes) currentState.generalNotes = '';
-            
-            // Re-render UI based on state and ROLE
-            renderAll();
-        };
-
-        window.switchTab = function(tabName) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`view-${tabName}`).classList.remove('hidden');
-            
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('bg-indigo-50', 'text-indigo-700', 'border-indigo-100', 'shadow-sm');
-                btn.classList.add('text-slate-500', 'border-transparent');
-            });
-            const btn = document.getElementById(`btn-${tabName}`);
-            if(btn) {
-                btn.classList.add('bg-indigo-50', 'text-indigo-700', 'border-indigo-100', 'shadow-sm');
-                btn.classList.remove('text-slate-500', 'border-transparent');
-            }
-
-            const mobileTitle = document.getElementById('mobile-page-title');
-            if(mobileTitle) {
-                if(tabName === 'tabungan') mobileTitle.innerText = "Tabungan";
-                else if(tabName === 'kas') mobileTitle.innerText = "Kas Harian";
-                else if(tabName === 'gambar') mobileTitle.innerText = "Dokumentasi";
-                else if(tabName === 'laporan') mobileTitle.innerText = "Laporan";
-                else if(tabName === 'catatan') mobileTitle.innerText = "Catatan";
-            }
-
-            if(window.innerWidth <= 768 && isMenuOpen) {
-                toggleMenu();
-            }
-        };
-
-        // --- HELPER FUNCTIONS ---
-
-        function init() {
-            // Init Role First
-            initRole();
-
-            const yearSel = document.getElementById('sel-year');
-            AVAILABLE_YEARS.forEach(y => {
-                const opt = document.createElement('option');
-                opt.value = y; opt.innerText = y; yearSel.appendChild(opt);
-            });
-
-            const monthSel = document.getElementById('sel-month');
-            MONTH_NAMES.forEach((m, idx) => {
-                const opt = document.createElement('option');
-                opt.value = idx; opt.innerText = m; monthSel.appendChild(opt);
-            });
-
-            const savedDB = localStorage.getItem(STORAGE_KEY);
-            if (savedDB) {
-                db = JSON.parse(savedDB);
+            // Action Button Logic
+            actionBtn.innerText = options.actionText || 'Simpan';
+            if(options.isDelete) {
+                actionBtn.className = "px-4 py-2 rounded-lg text-sm font-bold text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-200 transition-all hover:-translate-y-0.5";
             } else {
-                initDataJanuari();
+                actionBtn.className = "px-4 py-2 rounded-lg text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5";
             }
+            currentModalCallback = options.onConfirm;
+        }
 
-            yearSel.value = 2026;
-            monthSel.value = 0;
-            
-            changePeriod();
-            switchTab('tabungan');
-            
-            if(document.getElementById('img-date')) {
-                document.getElementById('img-date').valueAsDate = new Date();
+        // Show Modal
+        backdrop.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            backdrop.classList.remove('opacity-0');
+            panel.classList.remove('scale-95', 'opacity-0');
+            panel.classList.add('scale-100', 'opacity-100');
+        });
+    }
+
+    function setIncomeValue(val) {
+        const input = document.getElementById('ui-input-income');
+        const current = parseInt(input.value.replace(/\D/g,'')) || 0;
+        input.value = current + val;
+        input.focus();
+    }
+
+    function closeUiModal() {
+        const backdrop = document.getElementById('ui-modal-backdrop');
+        const panel = document.getElementById('ui-modal-panel');
+        
+        backdrop.classList.add('opacity-0');
+        panel.classList.remove('scale-100', 'opacity-100');
+        panel.classList.add('scale-95', 'opacity-0');
+
+        setTimeout(() => {
+            backdrop.classList.add('hidden');
+            currentModalCallback = null;
+            currentEditAction = null;
+            isCurrentModalDelete = false; // Reset flag
+        }, 200);
+    }
+
+    // Action Button Listeners
+    document.getElementById('ui-modal-action-btn').addEventListener('click', () => {
+        // ADDED: Validation for Delete actions
+        if (isCurrentModalDelete) {
+            const inputVal = document.getElementById('ui-modal-input').value.trim().toLowerCase();
+            if (inputVal !== 'lanjut') {
+                showToast("Ketik 'lanjut' untuk melanjutkan tindakan ini", 'error');
+                return;
             }
         }
 
-        function initDataJanuari() {
-            db = {};
-            AVAILABLE_YEARS.forEach(y => { db[y] = {}; });
+        const isDual = !document.getElementById('ui-dual-input-wrapper').classList.contains('hidden');
+        const noteVal = document.getElementById('ui-modal-note').value;
 
-            const jan2026Citizens = MASTER_CITIZENS.map(mc => {
-                const sRow = CSV_JAN_2026_TABUNGAN.find(x => x.no === mc.id);
-                const kRow = CSV_JAN_2026_KAS.find(x => x.no === mc.id);
-                return {
-                    id: mc.id,
-                    name: mc.name,
-                    savings: sRow ? sRow.s : {},
-                    kas: kRow ? kRow.k : {},
-                    savingsNotes: {},
-                    kasNotes: {}
-                };
+        if (isDual) {
+            const inc = document.getElementById('ui-input-income').value;
+            const exp = document.getElementById('ui-input-expense').value;
+            if(currentModalCallback) currentModalCallback({ income: inc, expense: exp, note: noteVal });
+        } else {
+            const val = document.getElementById('ui-modal-input').value;
+            if(currentModalCallback) currentModalCallback(val, noteVal);
+        }
+        closeUiModal();
+    });
+
+    document.getElementById('ui-modal-edit-btn').addEventListener('click', () => {
+        if(currentEditAction) currentEditAction(); // Trigger the edit function passed in options
+    });
+
+    // --- GLOBAL FUNCTIONS ---
+    
+    let isMenuOpen = false;
+
+    function toggleMenu() {
+        isMenuOpen = !isMenuOpen;
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobile-overlay');
+        const body = document.body;
+        
+        if (isMenuOpen) {
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+            body.classList.add('overflow-hidden');
+            setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+        } else {
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('opacity-0');
+            body.classList.remove('overflow-hidden');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        }
+    }
+
+    /* --- ROLE MANAGEMENT SYSTEM --- */
+    let currentRole = localStorage.getItem('userRole') || 'warga';
+
+    function initRole() {
+        // Update Body Class for CSS Rules
+        document.body.classList.remove('role-warga', 'role-admin');
+        document.body.classList.add(`role-${currentRole}`);
+        
+        // Update Sidebar UI
+        const btnText = document.getElementById('role-text');
+        const btnIcon = document.getElementById('role-icon');
+        const badge = document.getElementById('role-badge');
+        
+        // Handle LOAD BUTTON State (Allowed for both)
+        const btnLoad = document.getElementById('btn-load-database');
+        if(btnLoad) {
+            // Reset to default active state first
+            btnLoad.classList.remove('btn-disabled-warga');
+            btnLoad.title = "Load Database Backup (.zip)";
+            btnLoad.removeAttribute('disabled');
+        }
+
+        if(currentRole === 'admin') {
+            // Mode Admin
+            btnText.innerText = "Keluar Admin";
+            btnIcon.innerText = "🔓";
+            badge.innerText = "MODE: ADMIN (Full Access)";
+            badge.className = "mb-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700 border border-indigo-200";
+        } else {
+            // Mode Warga
+            btnText.innerText = "Masuk sebagai Admin";
+            btnIcon.innerText = "🔐";
+            badge.innerText = "MODE: WARGA (Read Only)";
+            badge.className = "mb-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200";
+            
+            // NOTE: Load button is NO LONGER disabled here based on requirements
+        }
+    }
+
+    function toggleRole() {
+        if(currentRole === 'admin') {
+            // Logout Process
+            openUiModal({
+                title: 'Keluar Admin',
+                message: 'Kembali ke mode Warga (Read-only)?',
+                mode: 'input',
+                isDelete: true, // Red button
+                actionText: 'Keluar',
+                onConfirm: () => {
+                    currentRole = 'warga';
+                    localStorage.setItem('userRole', 'warga');
+                    initRole();
+                    changePeriod(); 
+                    showToast('Anda sekarang dalam mode Warga');
+                }
             });
+        } else {
+            // Login Process
+            openUiModal({
+                title: 'Login Administrator',
+                subtitle: 'Akses penuh pengelolaan data',
+                mode: 'input',
+                inputType: 'password',
+                placeholder: 'Masukkan Password Admin',
+                actionText: 'Masuk',
+                onConfirm: (pass) => {
+                    if(pass === 'uranusfazry123') {
+                        currentRole = 'admin';
+                        localStorage.setItem('userRole', 'admin');
+                        initRole();
+                        changePeriod();
+                        showToast('Login Admin Berhasil!', 'success');
+                    } else {
+                        showToast('Password Salah! Akses Ditolak.', 'error');
+                    }
+                }
+            });
+        }
+    }
 
-            db[2026][0] = { citizens: jan2026Citizens, kasOut: {}, kasOutNotes: {}, images: [], generalNotes: '' };
+    // --- DATA MANAGEMENT (BACKUP & LOAD) ---
+
+    window.downloadBackup = function() {
+        if(currentRole !== 'admin') return; // Backup still restricted to Admin
+
+        const zip = new JSZip();
+        zip.file("data.json", JSON.stringify(db));
+        zip.file("meta.json", JSON.stringify({ app: "Manajemen Keuangan RT 02 / RW 19", version: "v2.2", backup_at: new Date().toLocaleString() }));
+        zip.file("README.txt", "Backup data keuangan RT 02/19.");
+        zip.generateAsync({type:"blob"}).then(function(content) { 
+            saveAs(content, "uranusfazry_backup.zip"); 
+            showToast("Backup berhasil di-download!", 'success');
+        });
+    };
+
+    window.triggerLoad = function() {
+        // FIX: Warga Allowed to Load
+        document.getElementById('file-input-backup').click();
+    };
+
+    window.handleLoadBackup = function(input) {
+        // FIX: Warga Allowed to Load
+        const file = input.files[0];
+        if(!file) return;
+
+        openUiModal({
+            title: 'Restore Backup?',
+            message: "PERHATIAN: Data saat ini akan DITIMPA dengan data dari file backup. Lanjutkan?",
+            mode: 'input',
+            isDelete: true, // ADDED: Enforce validation for restore
+            actionText: 'Ya, Restore',
+            onConfirm: () => {
+                  JSZip.loadAsync(file).then(function(zip) {
+                    return zip.file("data.json").async("string");
+                }).then(function(dataStr) {
+                    if(dataStr) {
+                        try {
+                            const newData = JSON.parse(dataStr);
+                            if(!newData[2026]) throw new Error("Struktur data tidak valid");
+                            db = newData;
+                            saveDB();
+                            showToast("Data berhasil dipulihkan!", 'success');
+                            setTimeout(() => location.reload(), 1000);
+                        } catch(e) { 
+                            showToast("Gagal load: " + e.message, 'error'); 
+                        }
+                    }
+                }).catch(function(err) { 
+                    showToast("Error: " + err.message, 'error'); 
+                });
+            }
+        });
+        input.value = '';
+    };
+
+    /* --- UPDATED MEDIA LOGIC FOR VIDEO/IMAGE & ORIENTATION --- */
+
+    function openImageModal(url, desc, date, orientation = 'auto', mediaType = 'image') {
+        const modal = document.getElementById('image-modal');
+        const img = document.getElementById('modal-img');
+        const video = document.getElementById('modal-video');
+        const wrapper = document.getElementById('modal-media-wrapper');
+        
+        const txtDesc = document.getElementById('modal-desc');
+        const txtDate = document.getElementById('modal-date');
+        const badge = document.getElementById('modal-badge');
+
+        // Reset Display
+        img.classList.add('hidden');
+        video.classList.add('hidden');
+        video.pause();
+        
+        // Set Text
+        txtDesc.innerText = desc;
+        txtDate.innerText = date;
+        
+        // Badge logic
+        const isVideo = mediaType === 'video' || url.match(/\.(mp4|webm)$/i);
+        badge.innerText = isVideo ? "VIDEO" : "FOTO";
+        badge.className = `inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mb-2 ${isVideo ? 'bg-red-500 text-white' : 'bg-indigo-500 text-white'}`;
+
+        // Orientation Classes
+        wrapper.className = "relative transition-all duration-300 flex items-center justify-center"; // Reset
+        if (orientation === 'portrait') {
+            wrapper.classList.add('h-[80vh]', 'w-[45vh]'); // approx 9:16
+        } else if (orientation === 'landscape') {
+            wrapper.classList.add('w-full', 'max-w-4xl', 'aspect-video');
+        } else {
+            // Auto: allow natural size but constrained
+            wrapper.classList.add('max-h-[85vh]', 'max-w-full');
+        }
+
+        if (isVideo) {
+            video.src = url;
+            video.classList.remove('hidden');
+            // Ensure orientation applies to video element style for object-fit
+            video.className = `max-h-[80vh] w-full h-full rounded-lg shadow-2xl border border-white/10 bg-black ${orientation === 'portrait' ? 'object-cover' : 'object-contain'}`;
+        } else {
+            img.src = url;
+            img.classList.remove('hidden');
+            img.className = `max-h-[80vh] w-full h-full rounded-lg shadow-2xl border border-white/10 ${orientation === 'portrait' ? 'object-cover' : 'object-contain'}`;
+        }
+
+        modal.classList.remove('hidden');
+        setTimeout(() => modal.classList.remove('opacity-0'), 10);
+    }
+
+    function closeImageModal() {
+        const modal = document.getElementById('image-modal');
+        const video = document.getElementById('modal-video');
+        
+        modal.classList.add('opacity-0');
+        video.pause(); // Stop audio
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            document.getElementById('modal-img').src = '';
+            video.src = '';
+        }, 300);
+    }
+
+    // Auto-detect Media Type on Input
+    if(document.getElementById('img-url')) {
+        document.getElementById('img-url').addEventListener('input', function(e) {
+            const val = e.target.value.toLowerCase();
+            const typeSelect = document.getElementById('img-type');
+            if (val.match(/\.(mp4|webm)$/) || val.includes('catbox.moe') && val.endsWith('.mp4')) {
+                typeSelect.value = 'video';
+            } else if (val.match(/\.(jpg|jpeg|png|webp)$/)) {
+                typeSelect.value = 'image';
+            }
+        });
+    }
+
+    // --- CONSTANTS ---
+    const AVAILABLE_YEARS = [2026, 2027, 2028, 2029, 2030];
+    const MONTH_NAMES = [
+        "Januari", "Februari", "Maret", "April", "Mei", "Juni", 
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+    const STORAGE_KEY = 'rtDataV10';
+
+    // --- MASTER DATA ---
+    const MASTER_CITIZENS = [
+        { id: 1, name: "WAWAN R" }, { id: 2, name: "SAKRI" }, { id: 3, name: "YAYAT H" }, 
+        { id: 4, name: "EDENG K" }, { id: 5, name: "SATIA P" },
+        { id: 6, name: "SAHIDI" }, { id: 7, name: "ADE JENI" }, { id: 8, name: "DANIL/REKA" }, { id: 9, name: "DODI/ANOY" }, { id: 10, name: "KUNDANG" },
+        { id: 11, name: "IDA DIANA" }, { id: 12, name: "TISNA" },
+        { id: 13, name: "JONIH" }, { id: 14, name: "AMUNG" }, { id: 15, name: "ENCU S" },
+        { id: 16, name: "SANA" }, { id: 17, name: "NURDIN" }, { id: 18, name: "A.AZIS" }, { id: 19, name: "PERMANA" }, { id: 20, name: "UHO" },
+        { id: 21, name: "DEDE R DANIEL" }, { id: 22, name: "DINDIN" },
+        { id: 22.1, name: "ALDILA" }, 
+        { id: 23, name: "TUTI W" }, { id: 24, name: "ERO S" }, { id: 25, name: "ACO Y" },
+        { id: 26, name: "DEDI" }, { id: 27, name: "ROHANA" }, { id: 28, name: "YEYET" }, { id: 29, name: "DIAH" },
+        { id: 30, name: "MAMAH" },
+        { id: 31, name: "DODI DWI P" }, { id: 32, name: "TETI M" }, { id: 33, name: "KUSNADI" },
+        { id: 34, name: "YANA S" }, { id: 35, name: "ENOK S" }, { id: 36, name: "HERI P" },
+        { id: 37, name: "NANDANG" }, { id: 38, name: "ENDANG D" }, { id: 39, name: "IRAWAN" }, { id: 40, name: "KARTI" },
+        { id: 41, name: "ANAH" }, { id: 42, name: "EMONG S" }, { id: 43, name: "GUGUM Y" }, { id: 44, name: "KUSWANTO" },
+        { id: 45, name: "ENCU /INA" },
+        { id: 46, name: "MAMAN S" }, { id: 47, name: "WARUNG IBU IIS" }, { id: 48, name: "(Kosong)" }, { id: 49, name: "(Kosong)" }, { id: 50, name: "(Kosong)" }
+    ];
+
+    // --- DATA SEED ---
+    const CSV_JAN_2026_TABUNGAN = [
+        { no: 1, s: {1: 1500, 2: 2000, 3: 3000, 4: 5000, 5: 3000} }, { no: 2, s: {1: 2000, 2: 2000, 3: 10000, 4: 10000, 5: 10000} }, { no: 3, s: {1: 4500, 2: 4500, 3: 4500, 4: 5000, 5: 5000} },
+        { no: 6, s: {1: 2000, 2: 2000, 3: 2000, 4: 2000, 5: 2000} }, { no: 7, s: {1: 2000, 2: 2000, 3: 2000, 4: 2000, 5: 2000} }, { no: 8, s: {1: 5000, 3: 10000} },
+        { no: 9, s: {1: 1500, 2: 4500, 3: 2000, 4: 3500, 5: 2000} }, { no: 10, s: {1: 1500, 2: 1500, 3: 1500, 5: 5500} }, { no: 11, s: {1: 1500, 2: 1500, 3: 1500, 4: 1500, 5: 1500} },
+        { no: 13, s: {1: 5500, 2: 4500, 3: 5500, 5: 9500} }, { no: 14, s: {1: 1500, 2: 5000, 3: 2000, 4: 1500, 5: 1500} }, { no: 15, s: {1: 1500, 2: 1500, 3: 1500, 4: 4500, 5: 1500} },
+        { no: 16, s: {1: 1500, 2: 2000, 3: 2000, 4: 5000, 5: 2000} }, { no: 17, s: {1: 500, 2: 2500, 3: 500, 4: 500, 5: 1500} }, { no: 18, s: {4: 1000, 5: 2000} },
+        { no: 19, s: {3: 2000, 4: 2000, 5: 4500} }, { no: 20, s: {1: 2000, 2: 1500, 3: 2000, 4: 1500, 5: 1500} }, { no: 21, s: {1: 1000, 2: 1000, 3: 1000, 4: 1000, 5: 1500} },
+        { no: 22, s: {1: 1500, 2: 1000, 3: 2000, 4: 1000, 5: 1500} }, { no: 22.1, s: {3: 1000, 4: 1000, 5: 5000} }, { no: 23, s: {1: 1500, 2: 500, 3: 1500, 4: 1500, 5: 1500} }, { no: 24, s: {1: 2000, 2: 2500, 3: 500, 4: 5000, 5: 2000} },
+        { no: 26, s: {1: 500, 2: 1000, 3: 3000, 4: 3500, 5: 5000} }, { no: 27, s: {1: 2000, 2: 2000, 3: 5000, 4: 5000, 5: 5000} }, { no: 28, s: {1: 2000, 2: 2000, 3: 2000, 4: 2500, 5: 2000} },
+        { no: 29, s: {3: 1000, 4: 1000, 5: 5000} }, { no: 30, s: {1: 1500, 2: 500, 3: 1500, 4: 1500, 5: 1500} }, { no: 31, s: {1: 500, 2: 500, 3: 1000, 4: 1000, 5: 1000} },
+        { no: 32, s: {1: 500, 2: 500, 3: 1000, 4: 1000, 5: 1000} }, { no: 34, s: {1: 1500, 2: 1500, 3: 1500, 4: 1500, 5: 1500} }, 
+        { no: 36, s: {5: 10000} },
+        { no: 37, s: {1: 1500, 2: 4500, 3: 4500, 4: 4500, 5: 4500} }
+    ];
+
+    const CSV_JAN_2026_KAS = [
+        { no: 1, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 2, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 3, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+        { no: 4, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 5, k: {} },
+        { no: 6, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 7, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+        { no: 8, k: {1:500, 2:500, 3:500, 5:500} }, { no: 9, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 10, k: {1:500, 2:500, 3:500, 5:500} },
+        { no: 11, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 12, k: {} },
+        { no: 13, k: {1:500, 2:500, 3:500, 5:500} }, { no: 14, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+        { no: 15, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 16, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 17, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+        { no: 18, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 19, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 20, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+        { no: 21, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 22, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 23, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+        { no: 24, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 25, k: {} },
+        { no: 26, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 27, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+        { no: 28, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 29, k: {} },
+        { no: 30, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 31, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+        { no: 32, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 33, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+        { no: 34, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 35, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+        { no: 36, k: {5:500} }, { no: 37, k: {1:500, 2:500, 3:500, 4:500, 5:500} },
+        { no: 38, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 39, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 40, k: {2:500, 3:500, 4:500, 5:500} },
+        { no: 41, k: {} }, { no: 42, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 43, k: {1:500, 2:500, 3:500, 4:500} }, { no: 44, k: {} },
+        { no: 46, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 47, k: {1:500, 2:500, 3:500, 4:500, 5:500} }
+    ];
+
+    // --- GLOBAL STATE ---
+    let db = {};
+    let currentYear = 2026;
+    let currentMonth = 0;
+    let currentState = { citizens: [], kasOut: {}, images: [], generalNotes: '' };
+
+    // --- REFACTORED ACTION FUNCTIONS (PREVIEW FIRST) ---
+    
+    window.editSaving = function(id, date, forceEdit = false) {
+        const citizen = currentState.citizens.find(c => c.id === id);
+        
+        // Extract Data
+        let currentData = citizen.savings[date];
+        let income = 0;
+        let expense = 0;
+        let note = '';
+        let net = 0;
+
+        if (typeof currentData === 'object' && currentData !== null) {
+            income = currentData.income || 0;
+            expense = currentData.expense || 0;
+            note = currentData.note || '';
+            net = currentData.net || (income - expense);
+        } else if (typeof currentData === 'number') {
+            if (currentData > 0) income = currentData;
+            else if (currentData < 0) expense = Math.abs(currentData);
+            net = currentData;
+        }
+
+        // --- ROLE CHECK: WARGA ---
+        if (currentRole !== 'admin') {
+            // Jika data kosong, warga tidak bisa klik/input
+            if (net === 0) return;
+
+            // Jika ada data, warga hanya bisa melihat (Preview Mode)
+            openUiModal({
+                title: 'Detail Transaksi',
+                subtitle: `Tabungan ${citizen.name} (Read Only)`,
+                mode: 'preview',
+                previewData: {
+                    net: net,
+                    dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
+                    note: note
+                },
+                onEdit: null // Disable edit button
+            });
+            return;
+        }
+
+        // --- ROLE CHECK: ADMIN (Normal Flow) ---
+
+        // DECISION: Preview or Edit?
+        if (!forceEdit && net !== 0) {
+            // Show Preview if data exists
+            openUiModal({
+                title: 'Detail Transaksi',
+                subtitle: `Tabungan ${citizen.name}`,
+                mode: 'preview',
+                previewData: {
+                    net: net,
+                    dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
+                    note: note
+                },
+                onEdit: () => {
+                    window.editSaving(id, date, true); // Force edit mode
+                }
+            });
+            return;
+        }
+        
+        // Show Input (Edit Mode)
+        openUiModal({
+            title: `Tabungan: ${citizen.name}`,
+            subtitle: `Input transaksi Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
+            mode: 'input',
+            inputType: 'number',
+            dualInput: true,
+            initialIncome: income,
+            initialExpense: expense,
+            initialNote: note,
+            quickAmounts: [1000, 2000, 5000, 10000],
+            showNoteInput: true,
+            onConfirm: (data) => {
+                const inc = parseInt(data.income.toString().replace(/\D/g,'')) || 0;
+                const exp = parseInt(data.expense.toString().replace(/\D/g,'')) || 0;
+                const newNet = inc - exp;
+
+                citizen.savings[date] = {
+                    income: inc,
+                    expense: exp,
+                    net: newNet,
+                    note: data.note
+                };
+
+                saveDB(); renderAll();
+                showToast(`Transaksi ${citizen.name} disimpan!`, 'success');
+            }
+        });
+    };
+
+    window.editKas = function(id, date, forceEdit = false) {
+        const citizen = currentState.citizens.find(c => c.id === id);
+        
+        let currentData = citizen.kas[date];
+        let income = 0;
+        let expense = 0;
+        let note = '';
+        let net = 0;
+
+        if (typeof currentData === 'object' && currentData !== null) {
+            income = currentData.income || 0;
+            expense = currentData.expense || 0;
+            note = currentData.note || '';
+            net = currentData.net || (income - expense);
+        } else if (typeof currentData === 'number') {
+            if (currentData > 0) income = currentData;
+            else if (currentData < 0) expense = Math.abs(currentData);
+            net = currentData;
+        }
+        
+        // --- ROLE CHECK: WARGA ---
+        if (currentRole !== 'admin') {
+            if (net === 0) return; // Warga cannot input new data
+            
+            openUiModal({
+                title: 'Detail Transaksi',
+                subtitle: `Kas Operasional ${citizen.name} (Read Only)`,
+                mode: 'preview',
+                previewData: {
+                    net: net,
+                    dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
+                    note: note
+                },
+                onEdit: null
+            });
+            return;
+        }
+
+        // --- ROLE CHECK: ADMIN ---
+
+        if (!forceEdit && net !== 0) {
+            openUiModal({
+                title: 'Detail Transaksi',
+                subtitle: `Kas Operasional ${citizen.name}`,
+                mode: 'preview',
+                previewData: {
+                    net: net,
+                    dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
+                    note: note
+                },
+                onEdit: () => {
+                    window.editKas(id, date, true);
+                }
+            });
+            return;
+        }
+
+        openUiModal({
+            title: `Kas: ${citizen.name}`,
+            subtitle: `Input Kas Operasional Tgl ${date}`,
+            mode: 'input',
+            inputType: 'number',
+            dualInput: true,
+            initialIncome: income,
+            initialExpense: expense,
+            initialNote: note,
+            quickAmounts: [500, 1000, 2000, 5000],
+            showNoteInput: true,
+            onConfirm: (data) => {
+                const inc = parseInt(data.income.toString().replace(/\D/g,'')) || 0;
+                const exp = parseInt(data.expense.toString().replace(/\D/g,'')) || 0;
+                const newNet = inc - exp;
+
+                citizen.kas[date] = {
+                    income: inc,
+                    expense: exp,
+                    net: newNet,
+                    note: data.note
+                };
+
+                saveDB(); renderAll();
+                showToast(`Kas ${citizen.name} disimpan!`, 'success');
+            }
+        });
+    };
+window.editKasOut = function(date) {
+        // ADMIN ONLY
+        if(currentRole !== 'admin') {
+            showToast('Hanya Admin yang bisa edit pengeluaran!', 'error');
+            return;
+        }
+
+        const currentVal = currentState.kasOut[date] || 0;
+        const currentNote = currentState.kasOutNotes ? currentState.kasOutNotes[date] : '';
+        
+        openUiModal({
+            title: 'Pengeluaran Kas Ops',
+            subtitle: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
+            mode: 'input',
+            inputType: 'number',
+            initialValue: currentVal,
+            placeholder: "15000",
+            showNoteInput: true,
+            initialNote: currentNote,
+            onConfirm: (val, note) => {
+                let amount = parseInt(val.toString().replace(/[^0-9]/g, ''));
+                if (isNaN(amount)) amount = 0;
+                currentState.kasOut[date] = amount;
+                
+                if(!currentState.kasOutNotes) currentState.kasOutNotes = {};
+                currentState.kasOutNotes[date] = note;
+
+                saveDB(); renderAll();
+                showToast('Pengeluaran disimpan', 'success');
+            }
+        });
+    };
+
+    window.saveGeneralNotes = function() {
+        if(currentRole !== 'admin') return;
+
+        const text = document.getElementById('general-notes-area').value;
+        currentState.generalNotes = text;
+        saveDB();
+        renderReport(); 
+        showToast('Catatan umum tersimpan!', 'success');
+    };
+
+    window.addCitizen = function() {
+        if(currentRole !== 'admin') return;
+
+        openUiModal({
+            title: 'Tambah Warga Baru',
+            mode: 'input',
+            inputType: 'text',
+            actionText: 'Tambah',
+            onConfirm: (name) => {
+                if(!name) return;
+                const maxId = currentState.citizens.reduce((max, c) => Math.max(max, typeof c.id === 'number' ? c.id : 0), 0);
+                const newId = maxId + 1;
+                currentState.citizens.push({ id: newId, name: name, savings: {}, kas: {}, savingsNotes: {}, kasNotes: {} });
+                saveDB(); renderAll();
+                showToast(`Warga "${name}" berhasil ditambahkan!`, 'success');
+            }
+        });
+    };
+
+    window.deleteCitizen = function(id, name) {
+        if(currentRole !== 'admin') return;
+
+        openUiModal({
+            title: 'Hapus Warga?',
+            message: `Yakin ingin menghapus warga "${name}"? Data tabungan/kas mereka di bulan ini akan HILANG PERMANEN.`,
+            mode: 'input',
+            isDelete: true, // Requires "lanjut" validation
+            actionText: 'Ya, Hapus',
+            onConfirm: () => {
+                currentState.citizens = currentState.citizens.filter(c => c.id !== id);
+                saveDB(); renderAll();
+                showToast(`Warga "${name}" dihapus.`, 'error');
+            }
+        });
+    };
+
+    window.resetValuesOnly = function() {
+        if(currentRole !== 'admin') return;
+
+        openUiModal({
+            title: 'Reset Nominal Bulan Ini?',
+            message: "Ini akan me-RESET semua uang menjadi 0 untuk bulan ini saja. Nama warga TETAP ADA.",
+            mode: 'input',
+            isDelete: true, // Requires "lanjut" validation
+            actionText: 'Ya, Reset 0',
+            onConfirm: () => {
+                currentState.citizens.forEach(c => { 
+                    c.savings = {}; c.kas = {}; c.savingsNotes = {}; c.kasNotes = {}; 
+                });
+                currentState.kasOut = {};
+                currentState.kasOutNotes = {};
+                saveDB(); renderAll();
+                showToast("Semua nominal di-reset ke 0.", 'success');
+            }
+        });
+    };
+
+    window.resetData = function() {
+        if(currentRole !== 'admin') return;
+
+        openUiModal({
+            title: 'HARD RESET SYSTEM?',
+            message: "PERINGATAN KERAS: Semua data akan DIHAPUS PERMANEN dan kembali ke kondisi awal Jan 2026. Tidak bisa dibatalkan!",
+            mode: 'input',
+            isDelete: true, // Requires "lanjut" validation
+            actionText: 'Hapus Semua Data',
+            onConfirm: () => {
+                localStorage.removeItem(STORAGE_KEY);
+                location.reload();
+            }
+        });
+    };
+
+    window.handleImageSubmit = function(e) {
+        e.preventDefault();
+        
+        if(currentRole !== 'admin') {
+            showToast('Hanya Admin yang bisa upload!', 'error');
+            return;
+        }
+
+        const date = document.getElementById('img-date').value;
+        const desc = document.getElementById('img-desc').value;
+        const category = document.getElementById('img-category').value;
+        const type = document.getElementById('img-type').value;
+        const url = document.getElementById('img-url').value;
+        const orientationElement = document.querySelector('input[name="img-orientation"]:checked');
+        const orientation = orientationElement ? orientationElement.value : 'auto';
+
+        const isValidDomain = url.includes('imghippo.com') || url.includes('catbox.moe');
+        const hasExtension = url.match(/\.(jpeg|jpg|gif|png|webp|mp4|webm)$/i);
+
+        if(!isValidDomain && !hasExtension) {
+            if(!confirm("URL ini sepertinya bukan dari ImgHippo/Catbox atau bukan file gambar/video. Tetap simpan?")) {
+                return;
+            }
+        }
+
+        if(!currentState.images) currentState.images = [];
+        currentState.images.push({ 
+            date, 
+            desc, 
+            category, 
+            type, 
+            url, 
+            orientation, 
+            id: Date.now() 
+        });
+        
+        document.getElementById('img-desc').value = '';
+        document.getElementById('img-url').value = '';
+        
+        saveDB();
+        renderImages();
+        renderReport(); 
+        showToast('Dokumentasi berhasil disimpan!', 'success');
+    };
+
+    window.deleteImage = function(id) {
+        if(currentRole !== 'admin') return;
+
+        openUiModal({
+            title: 'Hapus Dokumentasi?',
+            isDelete: true, // Requires "lanjut" validation
+            mode: 'input',
+            actionText: 'Hapus',
+            onConfirm: () => {
+                currentState.images = currentState.images.filter(img => img.id !== id);
+                saveDB(); renderImages(); renderReport();
+                showToast('Dokumentasi dihapus.', 'error');
+            }
+        });
+    };
+
+    window.changePeriod = function() {
+        const yearVal = parseInt(document.getElementById('sel-year').value);
+        const monthVal = parseInt(document.getElementById('sel-month').value);
+        currentYear = yearVal;
+        currentMonth = monthVal;
+
+        const badgeText = `${MONTH_NAMES[currentMonth].toUpperCase().substring(0,3)} ${currentYear}`;
+        document.getElementById('header-period-badge').innerText = badgeText;
+        document.getElementById('mobile-period-badge').innerText = badgeText;
+        document.getElementById('rpt-month-label').innerText = MONTH_NAMES[currentMonth];
+        document.getElementById('rpt-year-val').innerText = currentYear;
+        document.getElementById('rpt-print-period').innerText = `Periode: ${MONTH_NAMES[currentMonth]} ${currentYear}`;
+
+        if (!db[currentYear]) db[currentYear] = {};
+        if (!db[currentYear][currentMonth]) {
+            db[currentYear][currentMonth] = createBlankPeriod();
             saveDB();
         }
 
-        function createBlankPeriod() {
-            const blankCitizens = MASTER_CITIZENS.map(mc => ({
+        currentState = db[currentYear][currentMonth];
+        if(!currentState.kasOut) currentState.kasOut = {};
+        if(!currentState.kasOutNotes) currentState.kasOutNotes = {};
+        if(!currentState.images) currentState.images = [];
+        if(!currentState.generalNotes) currentState.generalNotes = '';
+        
+        // Re-render UI based on state and ROLE
+        renderAll();
+    };
+
+    window.switchTab = function(tabName) {
+        document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+        document.getElementById(`view-${tabName}`).classList.remove('hidden');
+        
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('bg-indigo-50', 'text-indigo-700', 'border-indigo-100', 'shadow-sm');
+            btn.classList.add('text-slate-500', 'border-transparent');
+        });
+        const btn = document.getElementById(`btn-${tabName}`);
+        if(btn) {
+            btn.classList.add('bg-indigo-50', 'text-indigo-700', 'border-indigo-100', 'shadow-sm');
+            btn.classList.remove('text-slate-500', 'border-transparent');
+        }
+
+        const mobileTitle = document.getElementById('mobile-page-title');
+        if(mobileTitle) {
+            if(tabName === 'tabungan') mobileTitle.innerText = "Tabungan";
+            else if(tabName === 'kas') mobileTitle.innerText = "Kas Harian";
+            else if(tabName === 'gambar') mobileTitle.innerText = "Dokumentasi";
+            else if(tabName === 'laporan') mobileTitle.innerText = "Laporan";
+            else if(tabName === 'catatan') mobileTitle.innerText = "Catatan";
+        }
+
+        if(window.innerWidth <= 768 && isMenuOpen) {
+            toggleMenu();
+        }
+    };
+
+    // --- HELPER FUNCTIONS ---
+
+    function init() {
+        // Init Role First
+        initRole();
+
+        const yearSel = document.getElementById('sel-year');
+        AVAILABLE_YEARS.forEach(y => {
+            const opt = document.createElement('option');
+            opt.value = y; opt.innerText = y; yearSel.appendChild(opt);
+        });
+
+        const monthSel = document.getElementById('sel-month');
+        MONTH_NAMES.forEach((m, idx) => {
+            const opt = document.createElement('option');
+            opt.value = idx; opt.innerText = m; monthSel.appendChild(opt);
+        });
+
+        const savedDB = localStorage.getItem(STORAGE_KEY);
+        if (savedDB) {
+            db = JSON.parse(savedDB);
+        } else {
+            initDataJanuari();
+        }
+
+        yearSel.value = 2026;
+        monthSel.value = 0;
+        
+        changePeriod();
+        switchTab('tabungan');
+        
+        if(document.getElementById('img-date')) {
+            document.getElementById('img-date').valueAsDate = new Date();
+        }
+    }
+
+    function initDataJanuari() {
+        db = {};
+        AVAILABLE_YEARS.forEach(y => { db[y] = {}; });
+
+        const jan2026Citizens = MASTER_CITIZENS.map(mc => {
+            const sRow = CSV_JAN_2026_TABUNGAN.find(x => x.no === mc.id);
+            const kRow = CSV_JAN_2026_KAS.find(x => x.no === mc.id);
+            return {
                 id: mc.id,
                 name: mc.name,
-                savings: {},
-                kas: {},
+                savings: sRow ? sRow.s : {},
+                kas: kRow ? kRow.k : {},
                 savingsNotes: {},
                 kasNotes: {}
-            }));
-            return { citizens: blankCitizens, kasOut: {}, kasOutNotes: {}, images: [], generalNotes: '' };
-        }
+            };
+        });
 
-        function saveDB() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
-        }
+        db[2026][0] = { citizens: jan2026Citizens, kasOut: {}, kasOutNotes: {}, images: [], generalNotes: '' };
+        saveDB();
+    }
 
-        const formatRupiahStrict = (num) => {
-            if (!num && num !== 0) return '-';
-            const isNegative = num < 0;
-            let valStr = Math.abs(num).toString();
-            let reverse = valStr.split('').reverse().join(''),
-            ribuan = reverse.match(/\d{1,3}/g);
-            ribuan = ribuan.join('.').split('').reverse().join('');
-            return (isNegative ? '-' : '') + 'Rp.' + ribuan;
-        }
+    function createBlankPeriod() {
+        const blankCitizens = MASTER_CITIZENS.map(mc => ({
+            id: mc.id,
+            name: mc.name,
+            savings: {},
+            kas: {},
+            savingsNotes: {},
+            kasNotes: {}
+        }));
+        return { citizens: blankCitizens, kasOut: {}, kasOutNotes: {}, images: [], generalNotes: '' };
+    }
 
-        // New Helper to parse value from either Number or Object
-        const getNetValue = (data) => {
-            if (typeof data === 'number') return data;
-            if (typeof data === 'object' && data !== null) return data.net || 0;
-            return 0;
-        };
+    function saveDB() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+    }
 
-        const getNoteValue = (data) => {
-            if (typeof data === 'object' && data !== null) return data.note || '';
-            return '';
-        }
+    const formatRupiahStrict = (num) => {
+        if (!num && num !== 0) return '-';
+        const isNegative = num < 0;
+        let valStr = Math.abs(num).toString();
+        let reverse = valStr.split('').reverse().join(''),
+        ribuan = reverse.match(/\d{1,3}/g);
+        ribuan = ribuan.join('.').split('').reverse().join('');
+        return (isNegative ? '-' : '') + 'Rp.' + ribuan;
+    }
 
-        function renderAll() {
-            renderTabungan();
-            renderKas();
-            renderReport();
-            renderImages();
-            
-            // Handle General Notes Readonly State
-            const notesArea = document.getElementById('general-notes-area');
-            if(notesArea) {
-                notesArea.value = currentState.generalNotes || '';
-                notesArea.readOnly = (currentRole !== 'admin');
-                if(currentRole !== 'admin') {
-                    notesArea.classList.add('bg-slate-100', 'cursor-not-allowed');
-                    notesArea.classList.remove('bg-white');
-                } else {
-                    notesArea.classList.remove('bg-slate-100', 'cursor-not-allowed');
-                    notesArea.classList.add('bg-white');
-                }
+    const getNetValue = (data) => {
+        if (typeof data === 'number') return data;
+        if (typeof data === 'object' && data !== null) return data.net || 0;
+        return 0;
+    };
+
+    const getNoteValue = (data) => {
+        if (typeof data === 'object' && data !== null) return data.note || '';
+        return '';
+    }
+
+    function renderAll() {
+        renderTabungan();
+        renderKas();
+        renderReport();
+        renderImages();
+        
+        // Handle General Notes Readonly State
+        const notesArea = document.getElementById('general-notes-area');
+        if(notesArea) {
+            notesArea.value = currentState.generalNotes || '';
+            notesArea.readOnly = (currentRole !== 'admin');
+            if(currentRole !== 'admin') {
+                notesArea.classList.add('bg-slate-100', 'cursor-not-allowed');
+                notesArea.classList.remove('bg-white');
+            } else {
+                notesArea.classList.remove('bg-slate-100', 'cursor-not-allowed');
+                notesArea.classList.add('bg-white');
             }
         }
+    }
 
-        function renderTabungan() {
-            const tbody = document.getElementById('table-tabungan-body');
-            tbody.innerHTML = '';
-            let totalsPerDate = {};
-            let grandTotal = 0;
+    function renderTabungan() {
+        const tbody = document.getElementById('table-tabungan-body');
+        tbody.innerHTML = '';
+        let totalsPerDate = {};
+        let grandTotal = 0;
 
-            currentState.citizens.forEach((c, index) => {
-                let totalRow = 0;
-                let rowHtml = `<tr class="bg-white hover:bg-slate-50 transition-colors group">
-                    <td class="px-3 py-3 text-center font-medium text-slate-500 border-b border-r col-sticky-1 bg-white group-hover:bg-slate-50">${index + 1}</td>
-                    <td class="px-4 py-3 font-medium text-slate-800 border-b col-sticky-2 whitespace-nowrap bg-white group-hover:bg-slate-50 text-left flex justify-between items-center group">
-                        <span>${c.name}</span>
-                        <!-- Delete button only for admin (handled via css class admin-only, but strict JS check in onclick too) -->
-                        <button onclick="deleteCitizen(${c.id}, '${c.name}')" class="admin-only text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" title="Hapus Warga">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </button>
-                    </td>`;
-
-                for(let i=1; i<=31; i++) {
-                    const rawData = c.savings[i];
-                    const val = getNetValue(rawData);
-                    const note = getNoteValue(rawData);
-                    
-                    totalRow += val;
-                    if(!totalsPerDate[i]) totalsPerDate[i] = 0;
-                    totalsPerDate[i] += val;
-
-                    let display = '';
-                    // Style determination
-                    let baseClass = 'relative px-1 py-1 text-center border-b border-r transition-colors select-none min-w-[70px]';
-                    let activeClass = (currentRole === 'admin') 
-                        ? 'text-slate-300 hover:bg-slate-50 cursor-pointer' 
-                        : 'text-slate-200 cursor-default'; // Warga default empty
-
-                    if (val !== 0) {
-                        // Data exists: Warga gets cursor-pointer for preview
-                        activeClass = 'cursor-pointer '; 
-                    } else {
-                        // Empty: Warga gets default cursor
-                        if(currentRole !== 'admin') activeClass = 'text-slate-200 cursor-default';
-                    }
-
-                    let isSplit = false;
-                    let splitHtml = '';
-
-                    // Display Logic
-                    if (typeof rawData === 'object' && rawData !== null && (rawData.income > 0 || rawData.expense > 0)) {
-                        if (rawData.income > 0 && rawData.expense > 0) {
-                            isSplit = true;
-                            splitHtml = `
-                                <div class="flex flex-col text-[10px] leading-tight">
-                                    <span class="text-emerald-600 font-bold">+${formatRupiahStrict(rawData.income).replace('Rp.','')}</span>
-                                    <span class="text-red-500 font-bold">-${formatRupiahStrict(rawData.expense).replace('Rp.','')}</span>
-                                </div>
-                            `;
-                            activeClass += 'bg-slate-50 hover:bg-slate-100';
-                        } else if (rawData.income > 0) {
-                            display = formatRupiahStrict(rawData.income);
-                            activeClass += 'text-emerald-700 font-bold bg-emerald-50/50 hover:bg-emerald-100';
-                        } else if (rawData.expense > 0) {
-                            display = `-${formatRupiahStrict(rawData.expense)}`;
-                            activeClass += 'text-red-600 font-bold bg-red-50 hover:bg-red-100';
-                        }
-                    } else if (typeof rawData === 'number' && rawData !== 0) {
-                        display = formatRupiahStrict(rawData);
-                        activeClass += rawData < 0 
-                            ? 'text-red-600 font-bold bg-red-50 hover:bg-red-100' 
-                            : 'text-emerald-700 font-bold bg-emerald-50/50 hover:bg-emerald-100';
-                    } else {
-                        display = ''; 
-                    }
-
-                    // Add note indicator
-                    let noteIndicator = '';
-                    if(note) {
-                        noteIndicator = `<span class="absolute top-0 right-0 text-[8px] leading-none p-0.5">📝</span>`;
-                    }
-                    
-                    // Onclick logic inside HTML string
-                    const clickAttr = (val !== 0 || currentRole === 'admin') ? `onclick="editSaving(${c.id}, ${i})"` : '';
-
-                    rowHtml += `<td ${clickAttr} class="${baseClass} ${activeClass}" title="${note || ''}">
-                            ${isSplit ? splitHtml : display}
-                            ${noteIndicator}
-                        </td>`;
-                }
-                grandTotal += totalRow;
-                
-                const rowClass = totalRow < 0 ? 'text-red-700 bg-red-50' : 'text-emerald-700 bg-emerald-50';
-                rowHtml += `<td class="px-4 py-3 text-right font-bold ${rowClass} border-b col-sticky-right">${formatRupiahStrict(totalRow)}</td></tr>`;
-                tbody.innerHTML += rowHtml;
-            });
+        currentState.citizens.forEach((c, index) => {
+            let totalRow = 0;
+            let rowHtml = `<tr class="bg-white hover:bg-slate-50 transition-colors group">
+                <td class="px-3 py-3 text-center font-medium text-slate-500 border-b border-r col-sticky-1 bg-white group-hover:bg-slate-50">${index + 1}</td>
+                <td class="px-4 py-3 font-medium text-slate-800 border-b col-sticky-2 whitespace-nowrap bg-white group-hover:bg-slate-50 text-left flex justify-between items-center group">
+                    <span>${c.name}</span>
+                    <button onclick="deleteCitizen(${c.id}, '${c.name}')" class="admin-only text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" title="Hapus Warga">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </td>`;
 
             for(let i=1; i<=31; i++) {
-                const tf = document.getElementById(`tf-tab-${i}`);
-                if(tf) {
-                    const val = totalsPerDate[i] || 0;
-                    tf.innerText = val !== 0 ? formatRupiahStrict(val) : '-';
-                    if(val < 0) tf.className = "px-1 py-3 text-center text-[10px] text-red-500 font-bold border-r min-w-[70px]";
-                    else tf.className = "px-1 py-3 text-center text-[10px] text-slate-500 border-r min-w-[70px]";
-                }
-            }
-            document.getElementById('tf-tab-total').innerText = formatRupiahStrict(grandTotal);
-        }
+                const rawData = c.savings[i];
+                const val = getNetValue(rawData);
+                const note = getNoteValue(rawData);
+                
+                totalRow += val;
+                if(!totalsPerDate[i]) totalsPerDate[i] = 0;
+                totalsPerDate[i] += val;
 
-        function renderKas() {
-            const tbody = document.getElementById('table-kas-body');
-            tbody.innerHTML = '';
-            let totalsPerDateIn = {};
-            let grandTotalIn = 0;
+                let display = '';
+                let baseClass = 'relative px-1 py-1 text-center border-b border-r transition-colors select-none min-w-[70px]';
+                let activeClass = (currentRole === 'admin') 
+                    ? 'text-slate-300 hover:bg-slate-50 cursor-pointer' 
+                    : 'text-slate-200 cursor-default'; 
 
-            currentState.citizens.forEach((c, index) => {
-                let totalRow = 0;
-                let rowHtml = `<tr class="bg-white hover:bg-slate-50 transition-colors group">
-                    <td class="px-3 py-3 text-center font-medium text-slate-500 border-b border-r col-sticky-1 bg-white group-hover:bg-slate-50">${index + 1}</td>
-                    <td class="px-4 py-3 font-medium text-slate-800 border-b col-sticky-2 whitespace-nowrap bg-white group-hover:bg-slate-50 text-left flex justify-between items-center group">
-                        <span>${c.name}</span>
-                        <button onclick="deleteCitizen(${c.id}, '${c.name}')" class="admin-only text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" title="Hapus Warga">
-                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </button>
-                    </td>`;
+                if (val !== 0) activeClass = 'cursor-pointer '; 
+                else if(currentRole !== 'admin') activeClass = 'text-slate-200 cursor-default';
 
-                for(let i=1; i<=31; i++) {
-                    const rawData = c.kas[i];
-                    const val = getNetValue(rawData);
-                    const note = getNoteValue(rawData);
-                    
-                    totalRow += val;
-                    if(!totalsPerDateIn[i]) totalsPerDateIn[i] = 0;
-                    totalsPerDateIn[i] += val;
+                let isSplit = false;
+                let splitHtml = '';
 
-                    let display = '';
-                    let baseClass = 'relative px-1 py-1 text-center border-b border-r transition-colors select-none min-w-[70px]';
-                    let activeClass = (currentRole === 'admin') 
-                        ? 'text-slate-300 hover:bg-slate-50 cursor-pointer' 
-                        : 'text-slate-200 cursor-default';
-
-                    if (val !== 0) activeClass = 'cursor-pointer '; 
-                    else if(currentRole !== 'admin') activeClass = 'text-slate-200 cursor-default';
-
-                    let isSplit = false;
-                    let splitHtml = '';
-
-                    if (typeof rawData === 'object' && rawData !== null && (rawData.income > 0 || rawData.expense > 0)) {
-                        if (rawData.income > 0 && rawData.expense > 0) {
-                            isSplit = true;
-                            splitHtml = `
-                                <div class="flex flex-col text-[10px] leading-tight">
-                                    <span class="text-blue-600 font-bold">+${formatRupiahStrict(rawData.income).replace('Rp.','')}</span>
-                                    <span class="text-red-500 font-bold">-${formatRupiahStrict(rawData.expense).replace('Rp.','')}</span>
-                                </div>
-                            `;
-                            activeClass += 'bg-slate-50 hover:bg-slate-100';
-                        } else if (rawData.income > 0) {
-                            display = formatRupiahStrict(rawData.income);
-                            activeClass += 'text-blue-700 font-bold bg-blue-50 hover:bg-blue-100';
-                        } else if (rawData.expense > 0) {
-                            display = `-${formatRupiahStrict(rawData.expense)}`;
-                            activeClass += 'text-red-600 font-bold bg-red-50 hover:bg-red-100';
-                        }
-                    } else if (typeof rawData === 'number' && rawData !== 0) {
-                        display = formatRupiahStrict(rawData);
-                        activeClass += rawData > 0 
-                            ? 'text-blue-700 font-bold bg-blue-50 hover:bg-blue-100' 
-                            : 'text-red-600 font-bold bg-red-50 hover:bg-red-100';
+                if (typeof rawData === 'object' && rawData !== null && (rawData.income > 0 || rawData.expense > 0)) {
+                    if (rawData.income > 0 && rawData.expense > 0) {
+                        isSplit = true;
+                        splitHtml = `
+                            <div class="flex flex-col text-[10px] leading-tight">
+                                <span class="text-emerald-600 font-bold">+${formatRupiahStrict(rawData.income).replace('Rp.','')}</span>
+                                <span class="text-red-500 font-bold">-${formatRupiahStrict(rawData.expense).replace('Rp.','')}</span>
+                            </div>
+                        `;
+                        activeClass += 'bg-slate-50 hover:bg-slate-100';
+                    } else if (rawData.income > 0) {
+                        display = formatRupiahStrict(rawData.income);
+                        activeClass += 'text-emerald-700 font-bold bg-emerald-50/50 hover:bg-emerald-100';
+                    } else if (rawData.expense > 0) {
+                        display = `-${formatRupiahStrict(rawData.expense)}`;
+                        activeClass += 'text-red-600 font-bold bg-red-50 hover:bg-red-100';
                     }
-
-                    let noteIndicator = '';
-                    if(note) {
-                        noteIndicator = `<span class="absolute top-0 right-0 text-[8px] leading-none p-0.5">📝</span>`;
-                    }
-
-                    const clickAttr = (val !== 0 || currentRole === 'admin') ? `onclick="editKas(${c.id}, ${i})"` : '';
-
-                    rowHtml += `<td ${clickAttr} class="${baseClass} ${activeClass}" title="${note || ''}">
-                            ${isSplit ? splitHtml : display}
-                            ${noteIndicator}
-                        </td>`;
+                } else if (typeof rawData === 'number' && rawData !== 0) {
+                    display = formatRupiahStrict(rawData);
+                    activeClass += rawData < 0 
+                        ? 'text-red-600 font-bold bg-red-50 hover:bg-red-100' 
+                        : 'text-emerald-700 font-bold bg-emerald-50/50 hover:bg-emerald-100';
                 }
-                grandTotalIn += totalRow;
-                rowHtml += `<td class="px-4 py-3 text-right font-bold text-blue-700 bg-blue-50 border-b col-sticky-right">${formatRupiahStrict(totalRow)}</td></tr>`;
-                tbody.innerHTML += rowHtml;
-            });
 
-            let totalExpenseRow = 0;
-            let expenseHtml = `<tr class="bg-rose-50/50 hover:bg-rose-50 transition-colors group border-t-2 border-slate-200">
-                <td class="px-3 py-3 text-center font-bold text-rose-500 border-b border-r col-sticky-1 bg-rose-50/50">OUT</td>
-                <td class="px-4 py-3 font-bold text-rose-700 border-b col-sticky-2 whitespace-nowrap bg-rose-50/50 text-left">PENGELUARAN (OPS)</td>`;
-            
-            for(let i=1; i<=31; i++) {
-                const val = currentState.kasOut[i] || 0;
-                const hasNote = currentState.kasOutNotes && currentState.kasOutNotes[i];
-                totalExpenseRow += val;
-                
-                const display = val > 0 ? `-${formatRupiahStrict(val).replace('Rp.','')}` : '-';
-                
-                // Admin vs Warga for Expenses
-                let activeClass = '';
-                let clickAttr = '';
-                
-                if (currentRole === 'admin') {
-                     activeClass = val > 0 ? 'text-rose-600 font-bold bg-rose-100 hover:bg-rose-200 cursor-pointer' : 'text-slate-400 hover:bg-slate-100 cursor-pointer';
-                     clickAttr = `onclick="editKasOut(${i})"`;
-                } else {
-                     // Warga Read Only
-                     activeClass = val > 0 ? 'text-rose-600 font-bold bg-rose-100 cursor-default' : 'text-slate-200 cursor-default';
-                     // No onclick for Warga on expense row (or could show preview if needed, but req says "DISABLE")
-                }
-                
                 let noteIndicator = '';
-                if(hasNote) {
+                if(note) {
+                    noteIndicator = `<span class="absolute top-0 right-0 text-[8px] leading-none p-0.5">📝</span>`;
+                }
+                
+                const clickAttr = (val !== 0 || currentRole === 'admin') ? `onclick="editSaving(${c.id}, ${i})"` : '';
+
+                rowHtml += `<td ${clickAttr} class="${baseClass} ${activeClass}" title="${note || ''}">
+                        ${isSplit ? splitHtml : display}
+                        ${noteIndicator}
+                    </td>`;
+            }
+            grandTotal += totalRow;
+            
+            const rowClass = totalRow < 0 ? 'text-red-700 bg-red-50' : 'text-emerald-700 bg-emerald-50';
+            rowHtml += `<td class="px-4 py-3 text-right font-bold ${rowClass} border-b col-sticky-right">${formatRupiahStrict(totalRow)}</td></tr>`;
+            tbody.innerHTML += rowHtml;
+        });
+
+        for(let i=1; i<=31; i++) {
+            const tf = document.getElementById(`tf-tab-${i}`);
+            if(tf) {
+                const val = totalsPerDate[i] || 0;
+                tf.innerText = val !== 0 ? formatRupiahStrict(val) : '-';
+                if(val < 0) tf.className = "px-1 py-3 text-center text-[10px] text-red-500 font-bold border-r min-w-[70px]";
+                else tf.className = "px-1 py-3 text-center text-[10px] text-slate-500 border-r min-w-[70px]";
+            }
+        }
+        document.getElementById('tf-tab-total').innerText = formatRupiahStrict(grandTotal);
+    }
+
+    function renderKas() {
+        const tbody = document.getElementById('table-kas-body');
+        tbody.innerHTML = '';
+        let totalsPerDateIn = {};
+        let grandTotalIn = 0;
+
+        currentState.citizens.forEach((c, index) => {
+            let totalRow = 0;
+            let rowHtml = `<tr class="bg-white hover:bg-slate-50 transition-colors group">
+                <td class="px-3 py-3 text-center font-medium text-slate-500 border-b border-r col-sticky-1 bg-white group-hover:bg-slate-50">${index + 1}</td>
+                <td class="px-4 py-3 font-medium text-slate-800 border-b col-sticky-2 whitespace-nowrap bg-white group-hover:bg-slate-50 text-left flex justify-between items-center group">
+                    <span>${c.name}</span>
+                    <button onclick="deleteCitizen(${c.id}, '${c.name}')" class="admin-only text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" title="Hapus Warga">
+                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </td>`;
+
+            for(let i=1; i<=31; i++) {
+                const rawData = c.kas[i];
+                const val = getNetValue(rawData);
+                const note = getNoteValue(rawData);
+                
+                totalRow += val;
+                if(!totalsPerDateIn[i]) totalsPerDateIn[i] = 0;
+                totalsPerDateIn[i] += val;
+
+                let display = '';
+                let baseClass = 'relative px-1 py-1 text-center border-b border-r transition-colors select-none min-w-[70px]';
+                let activeClass = (currentRole === 'admin') 
+                    ? 'text-slate-300 hover:bg-slate-50 cursor-pointer' 
+                    : 'text-slate-200 cursor-default';
+
+                if (val !== 0) activeClass = 'cursor-pointer '; 
+                else if(currentRole !== 'admin') activeClass = 'text-slate-200 cursor-default';
+
+                let isSplit = false;
+                let splitHtml = '';
+
+                if (typeof rawData === 'object' && rawData !== null && (rawData.income > 0 || rawData.expense > 0)) {
+                    if (rawData.income > 0 && rawData.expense > 0) {
+                        isSplit = true;
+                        splitHtml = `
+                            <div class="flex flex-col text-[10px] leading-tight">
+                                <span class="text-blue-600 font-bold">+${formatRupiahStrict(rawData.income).replace('Rp.','')}</span>
+                                <span class="text-red-500 font-bold">-${formatRupiahStrict(rawData.expense).replace('Rp.','')}</span>
+                            </div>
+                        `;
+                        activeClass += 'bg-slate-50 hover:bg-slate-100';
+                    } else if (rawData.income > 0) {
+                        display = formatRupiahStrict(rawData.income);
+                        activeClass += 'text-blue-700 font-bold bg-blue-50 hover:bg-blue-100';
+                    } else if (rawData.expense > 0) {
+                        display = `-${formatRupiahStrict(rawData.expense)}`;
+                        activeClass += 'text-red-600 font-bold bg-red-50 hover:bg-red-100';
+                    }
+                } else if (typeof rawData === 'number' && rawData !== 0) {
+                    display = formatRupiahStrict(rawData);
+                    activeClass += rawData > 0 
+                        ? 'text-blue-700 font-bold bg-blue-50 hover:bg-blue-100' 
+                        : 'text-red-600 font-bold bg-red-50 hover:bg-red-100';
+                }
+
+                let noteIndicator = '';
+                if(note) {
                     noteIndicator = `<span class="absolute top-0 right-0 text-[8px] leading-none p-0.5">📝</span>`;
                 }
 
-                expenseHtml += `<td ${clickAttr} class="relative px-1 py-3 text-center border-b border-r border-rose-200 transition-colors ${activeClass} text-[10px] whitespace-nowrap select-none min-w-[70px]" title="${hasNote || ''}">
-                    ${display}
-                    ${noteIndicator}
-                </td>`;
-            }
-            expenseHtml += `<td class="px-4 py-3 text-right font-bold text-rose-700 bg-rose-100 border-b col-sticky-right">-${formatRupiahStrict(totalExpenseRow)}</td></tr>`;
-            tbody.innerHTML += expenseHtml;
+                const clickAttr = (val !== 0 || currentRole === 'admin') ? `onclick="editKas(${c.id}, ${i})"` : '';
 
-            let grandNet = grandTotalIn - totalExpenseRow;
-            for(let i=1; i<=31; i++) {
-                const tf = document.getElementById(`tf-kas-${i}`);
-                const net = (totalsPerDateIn[i] || 0) - (currentState.kasOut[i] || 0);
-                if(tf) {
-                    tf.innerText = formatRupiahStrict(net).replace('Rp.','');
-                    tf.className = `px-1 py-3 text-center text-[10px] border-r border-slate-600 ${net < 0 ? 'text-rose-400 font-bold' : 'text-slate-300'} min-w-[70px]`;
-                }
+                rowHtml += `<td ${clickAttr} class="${baseClass} ${activeClass}" title="${note || ''}">
+                        ${isSplit ? splitHtml : display}
+                        ${noteIndicator}
+                    </td>`;
             }
-            document.getElementById('tf-kas-total').innerText = formatRupiahStrict(grandNet);
-        }
+            grandTotalIn += totalRow;
+            rowHtml += `<td class="px-4 py-3 text-right font-bold text-blue-700 bg-blue-50 border-b col-sticky-right">${formatRupiahStrict(totalRow)}</td></tr>`;
+            tbody.innerHTML += rowHtml;
+        });
 
-        function renderImages() {
-            const grid = document.getElementById('gallery-grid');
-            const empty = document.getElementById('empty-gallery');
-            const count = document.getElementById('gallery-count');
+        let totalExpenseRow = 0;
+        let expenseHtml = `<tr class="bg-rose-50/50 hover:bg-rose-50 transition-colors group border-t-2 border-slate-200">
+            <td class="px-3 py-3 text-center font-bold text-rose-500 border-b border-r col-sticky-1 bg-rose-50/50">OUT</td>
+            <td class="px-4 py-3 font-bold text-rose-700 border-b col-sticky-2 whitespace-nowrap bg-rose-50/50 text-left">PENGELUARAN (OPS)</td>`;
+        
+        for(let i=1; i<=31; i++) {
+            const val = currentState.kasOut[i] || 0;
+            const hasNote = currentState.kasOutNotes && currentState.kasOutNotes[i];
+            totalExpenseRow += val;
             
-            const images = currentState.images || [];
-            if(count) count.innerText = `${images.length} File`;
-
-            if(images.length === 0) {
-                if(grid) grid.innerHTML = '';
-                if(empty) empty.classList.remove('hidden');
-                return;
-            }
-
-            if(empty) empty.classList.add('hidden');
-            if(grid) {
-                grid.innerHTML = images.map(img => {
-                    const isVideo = img.type === 'video' || img.url.match(/\.(mp4|webm)$/i);
-                    const aspectClass = img.orientation === 'portrait' ? 'aspect-[9/16]' : (img.orientation === 'landscape' ? 'aspect-video' : 'aspect-square');
-                    
-                    return `
-                    <div class="group relative bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300">
-                        <div class="${aspectClass} w-full overflow-hidden bg-slate-100 cursor-pointer relative" onclick="openImageModal('${img.url}', '${img.desc}', '${img.date}', '${img.orientation || 'auto'}', '${img.type}')">
-                            ${isVideo 
-                                ? `<video src="${img.url}#t=0.1" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500" preload="metadata" muted></video>
-                                   <div class="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/20">
-                                        <div class="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-                                            <svg class="w-5 h-5 text-indigo-600 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                                        </div>
-                                   </div>`
-                                : `<img src="${img.url}" alt="${img.desc}" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" onerror="this.src='https://via.placeholder.com/300?text=Error+Load'">`
-                            }
-                            
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                            
-                            <!-- Delete Button (Hover) - ADMIN ONLY -->
-                            <button onclick="event.stopPropagation(); deleteImage(${img.id})" class="admin-only absolute top-2 right-2 p-1.5 bg-white/90 text-red-500 rounded-full shadow-sm opacity-0 group-hover:opacity-100 hover:bg-red-50 transition-all transform hover:scale-110 z-10" title="Hapus">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
-                        </div>
-                        <div class="p-3">
-                            <div class="flex justify-between items-start mb-1.5">
-                                <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm ${getTypeColor(img.category || 'Lainnya')}">${img.category || 'Umum'}</span>
-                                ${isVideo ? '<span class="text-[9px] font-bold bg-slate-800 text-white px-1.5 rounded">VIDEO</span>' : ''}
-                            </div>
-                            <p class="text-xs font-semibold text-slate-700 line-clamp-2 leading-snug mb-1" title="${img.desc}">${img.desc}</p>
-                            <p class="text-[10px] text-slate-400 flex items-center">
-                                <svg class="w-2.5 h-2.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                ${img.date}
-                            </p>
-                        </div>
-                    </div>
-                `}).join('');
-            }
-        }
-
-        function getTypeColor(type) {
-            if(type === 'Kas') return 'bg-blue-100 text-blue-700';
-            if(type === 'Tabungan') return 'bg-emerald-100 text-emerald-700';
-            return 'bg-slate-100 text-slate-600';
-        }
-
-        function renderReport() {
-            let mTab = 0, mKasIn = 0, mKasOut = 0;
+            const display = val > 0 ? `-${formatRupiahStrict(val).replace('Rp.','')}` : '-';
             
-            // Calculate Active Month Stats
-            if (currentState && currentState.citizens) {
-                currentState.citizens.forEach(c => {
-                    // TABUNGAN
-                    Object.values(c.savings || {}).forEach(v => {
-                        mTab += getNetValue(v);
-                    });
-                    // KAS
-                    Object.values(c.kas || {}).forEach(v => {
-                        mKasIn += getNetValue(v);
-                    });
-                });
+            let activeClass = '';
+            let clickAttr = '';
+            
+            if (currentRole === 'admin') {
+                 activeClass = val > 0 ? 'text-rose-600 font-bold bg-rose-100 hover:bg-rose-200 cursor-pointer' : 'text-slate-400 hover:bg-slate-100 cursor-pointer';
+                 clickAttr = `onclick="editKasOut(${i})"`;
+            } else {
+                 activeClass = val > 0 ? 'text-rose-600 font-bold bg-rose-100 cursor-default' : 'text-slate-200 cursor-default';
             }
             
-            if (currentState && currentState.kasOut) {
-                Object.values(currentState.kasOut).forEach(v => mKasOut += (v || 0));
+            let noteIndicator = '';
+            if(hasNote) {
+                noteIndicator = `<span class="absolute top-0 right-0 text-[8px] leading-none p-0.5">📝</span>`;
             }
 
-            const mSaldo = mTab + mKasIn - mKasOut;
+            expenseHtml += `<td ${clickAttr} class="relative px-1 py-3 text-center border-b border-r border-rose-200 transition-colors ${activeClass} text-[10px] whitespace-nowrap select-none min-w-[70px]" title="${hasNote || ''}">
+                ${display}
+                ${noteIndicator}
+            </td>`;
+        }
+        expenseHtml += `<td class="px-4 py-3 text-right font-bold text-rose-700 bg-rose-100 border-b col-sticky-right">-${formatRupiahStrict(totalExpenseRow)}</td></tr>`;
+        tbody.innerHTML += expenseHtml;
 
-            // Update Summary Cards
-            const elSaldo = document.getElementById('rpt-saldo');
-            const elTab = document.getElementById('rpt-tabungan');
-            const elKas = document.getElementById('rpt-kas');
-            const elOut = document.getElementById('rpt-out');
-            const elDocs = document.getElementById('rpt-docs-count');
-            const elNotes = document.getElementById('rpt-general-notes');
+        let grandNet = grandTotalIn - totalExpenseRow;
+        for(let i=1; i<=31; i++) {
+            const tf = document.getElementById(`tf-kas-${i}`);
+            const net = (totalsPerDateIn[i] || 0) - (currentState.kasOut[i] || 0);
+            if(tf) {
+                tf.innerText = formatRupiahStrict(net).replace('Rp.','');
+                tf.className = `px-1 py-3 text-center text-[10px] border-r border-slate-600 ${net < 0 ? 'text-rose-400 font-bold' : 'text-slate-300'} min-w-[70px]`;
+            }
+        }
+        document.getElementById('tf-kas-total').innerText = formatRupiahStrict(grandNet);
+    }
 
-            if(elSaldo) elSaldo.innerText = formatRupiahStrict(mSaldo);
-            if(elTab) elTab.innerText = formatRupiahStrict(mTab);
-            if(elKas) elKas.innerText = formatRupiahStrict(mKasIn);
-            if(elOut) elOut.innerText = `-${formatRupiahStrict(mKasOut)}`;
-            if(elDocs) elDocs.innerText = (currentState.images || []).length;
-            if(elNotes) elNotes.innerText = currentState.generalNotes || 'Tidak ada catatan.';
+    function renderImages() {
+        const grid = document.getElementById('gallery-grid');
+        const empty = document.getElementById('empty-gallery');
+        const count = document.getElementById('gallery-count');
+        
+        const images = currentState.images || [];
+        if(count) count.innerText = `${images.length} File`;
 
-            // Update Yearly Recap Table
-            const tbody = document.getElementById('table-rekap-body');
-            if (tbody) {
-                tbody.innerHTML = '';
+        if(images.length === 0) {
+            if(grid) grid.innerHTML = '';
+            if(empty) empty.classList.remove('hidden');
+            return;
+        }
+
+        if(empty) empty.classList.add('hidden');
+        if(grid) {
+            grid.innerHTML = images.map(img => {
+                const isVideo = img.type === 'video' || img.url.match(/\.(mp4|webm)$/i);
+                const aspectClass = img.orientation === 'portrait' ? 'aspect-[9/16]' : (img.orientation === 'landscape' ? 'aspect-video' : 'aspect-square');
                 
-                let yTab = 0, yKasIn = 0, yKasOut = 0;
+                return `
+                <div class="group relative bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300">
+                    <div class="${aspectClass} w-full overflow-hidden bg-slate-100 cursor-pointer relative" onclick="openImageModal('${img.url}', '${img.desc}', '${img.date}', '${img.orientation || 'auto'}', '${img.type}')">
+                        ${isVideo 
+                            ? `<video src="${img.url}#t=0.1" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500" preload="metadata" muted></video>
+                               <div class="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/20">
+                                            <div class="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                                                <svg class="w-5 h-5 text-indigo-600 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                            </div>
+                                       </div>`
+                            : `<img src="${img.url}" alt="${img.desc}" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" onerror="this.src='https://via.placeholder.com/300?text=Error+Load'">`
+                        }
+                        
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        
+                        <!-- Delete Button (Hover) - ADMIN ONLY -->
+                        <button onclick="event.stopPropagation(); deleteImage(${img.id})" class="admin-only absolute top-2 right-2 p-1.5 bg-white/90 text-red-500 rounded-full shadow-sm opacity-0 group-hover:opacity-100 hover:bg-red-50 transition-all transform hover:scale-110 z-10" title="Hapus">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                    <div class="p-3">
+                        <div class="flex justify-between items-start mb-1.5">
+                            <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm ${getTypeColor(img.category || 'Lainnya')}">${img.category || 'Umum'}</span>
+                            ${isVideo ? '<span class="text-[9px] font-bold bg-slate-800 text-white px-1.5 rounded">VIDEO</span>' : ''}
+                        </div>
+                        <p class="text-xs font-semibold text-slate-700 line-clamp-2 leading-snug mb-1" title="${img.desc}">${img.desc}</p>
+                        <p class="text-[10px] text-slate-400 flex items-center">
+                            <svg class="w-2.5 h-2.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            ${img.date}
+                        </p>
+                    </div>
+                </div>
+            `}).join('');
+        }
+    }
 
-                for(let m=0; m<12; m++) {
-                    const monthData = db[currentYear] ? db[currentYear][m] : null;
-                    let rowHtml = '';
+    function getTypeColor(type) {
+        if(type === 'Kas') return 'bg-blue-100 text-blue-700';
+        if(type === 'Tabungan') return 'bg-emerald-100 text-emerald-700';
+        return 'bg-slate-100 text-slate-600';
+    }
+
+    // === LOGIKA LAPORAN BARU (TAMBAHAN) ===
+    function getSafeValue(data, type) {
+        if (typeof data === 'number') {
+            if (type === 'income') return data > 0 ? data : 0;
+            if (type === 'expense') return data < 0 ? Math.abs(data) : 0;
+        }
+        if (typeof data === 'object' && data !== null) {
+            return data[type] || 0;
+        }
+        return 0;
+    }
+
+    function calculateReportSummary() {
+        let totalSavingsIncome = 0;
+        let totalSavingsExpense = 0;
+        let totalKasIncome = 0;
+        let totalKasExpense = 0; 
+        let totalKasOutOps = 0;
+
+        if (currentState && currentState.citizens) {
+            currentState.citizens.forEach(c => {
+                // Tabungan
+                Object.values(c.savings || {}).forEach(v => {
+                    totalSavingsIncome += getSafeValue(v, 'income');
+                    totalSavingsExpense += getSafeValue(v, 'expense');
+                });
+                // Kas
+                Object.values(c.kas || {}).forEach(v => {
+                    totalKasIncome += getSafeValue(v, 'income');
+                    totalKasExpense += getSafeValue(v, 'expense');
+                });
+            });
+        }
+
+        if (currentState && currentState.kasOut) {
+            Object.values(currentState.kasOut).forEach(v => totalKasOutOps += (v || 0));
+        }
+
+        const totalIncome = totalSavingsIncome + totalKasIncome;
+        const totalExpense = totalSavingsExpense + totalKasExpense + totalKasOutOps;
+        const finalBalance = totalIncome - totalExpense;
+
+        return {
+            savingsIncome: totalSavingsIncome,
+            savingsExpense: totalSavingsExpense,
+            kasIncome: totalKasIncome,
+            kasExpense: totalKasExpense,
+            opsExpense: totalKasOutOps,
+            totalIncome,
+            totalExpense,
+            finalBalance
+        };
+    }
+
+    function renderReport() {
+        // === GUNAKAN LOGIKA BARU ===
+        const summary = calculateReportSummary();
+
+        const elSaldo = document.getElementById('rpt-saldo');
+        const elTab = document.getElementById('rpt-tabungan');
+        const elKas = document.getElementById('rpt-kas');
+        const elOut = document.getElementById('rpt-out');
+        const elDocs = document.getElementById('rpt-docs-count');
+        const elNotes = document.getElementById('rpt-general-notes');
+
+        // Update UI dengan nilai baru
+        if(elSaldo) elSaldo.innerText = formatRupiahStrict(summary.finalBalance);
+        if(elTab) elTab.innerText = formatRupiahStrict(summary.savingsIncome); // Tampilkan Pemasukan Tabungan
+        if(elKas) elKas.innerText = formatRupiahStrict(summary.kasIncome); // Tampilkan Pemasukan Kas
+        if(elOut) elOut.innerText = `-${formatRupiahStrict(summary.totalExpense)}`; // Tampilkan Total Keluar
+        
+        if(elDocs) elDocs.innerText = (currentState.images || []).length;
+        if(elNotes) elNotes.innerText = currentState.generalNotes || 'Tidak ada catatan.';
+
+        // Update Yearly Recap Table
+        const tbody = document.getElementById('table-rekap-body');
+        if (tbody) {
+            tbody.innerHTML = '';
+            let yTab = 0, yKasIn = 0, yKasOut = 0;
+
+            for(let m=0; m<12; m++) {
+                const monthData = db[currentYear] ? db[currentYear][m] : null;
+                let rowHtml = '';
+                
+                if (monthData) {
+                    let rTab = 0, rKasIn = 0, rKasOut = 0;
                     
-                    if (monthData) {
-                        let rTab = 0, rKasIn = 0, rKasOut = 0;
-                        
-                        if(monthData.citizens) {
-                            monthData.citizens.forEach(c => {
-                                Object.values(c.savings || {}).forEach(v => rTab += getNetValue(v));
-                                Object.values(c.kas || {}).forEach(v => rKasIn += getNetValue(v));
-                            });
-                        }
-                        
-                        if(monthData.kasOut) {
-                            Object.values(monthData.kasOut).forEach(v => rKasOut += (v || 0));
-                        }
-
-                        const rSaldo = rTab + rKasIn - rKasOut;
-                        yTab += rTab; yKasIn += rKasIn; yKasOut += rKasOut;
-
-                        const isCurrent = m === currentMonth;
-                        const bgClass = isCurrent ? 'bg-indigo-50 border-l-4 border-indigo-500' : 'bg-white';
-                        const labelClass = isCurrent ? 'font-bold text-indigo-700' : 'text-slate-700 font-medium';
-
-                        rowHtml = `<tr class="${bgClass} hover:bg-slate-50 transition-colors">
-                            <td class="px-3 py-3 md:px-4 md:py-4 ${labelClass}">${MONTH_NAMES[m]}</td>
-                            <td class="px-3 py-3 md:px-4 md:py-4 text-right text-emerald-600 font-medium">${formatRupiahStrict(rTab)}</td>
-                            <td class="px-3 py-3 md:px-4 md:py-4 text-right text-blue-600 font-medium">${formatRupiahStrict(rKasIn)}</td>
-                            <td class="px-3 py-3 md:px-4 md:py-4 text-right text-rose-500">${rKasOut > 0 ? '-' + formatRupiahStrict(rKasOut) : '-'}</td>
-                            <td class="px-3 py-3 md:px-4 md:py-4 text-right font-bold text-slate-800">${formatRupiahStrict(rSaldo)}</td>
-                        </tr>`;
-                    } else {
-                        rowHtml = `<tr class="bg-white opacity-40">
-                            <td class="px-3 py-3 md:px-4 md:py-4 text-slate-400 italic">${MONTH_NAMES[m]}</td>
-                            <td class="px-3 py-3 md:px-4 md:py-4 text-right text-xs">-</td>
-                            <td class="px-3 py-3 md:px-4 md:py-4 text-right text-xs">-</td>
-                            <td class="px-3 py-3 md:px-4 md:py-4 text-right text-xs">-</td>
-                            <td class="px-3 py-3 md:px-4 md:py-4 text-right text-xs">-</td>
-                        </tr>`;
+                    // Simple Net calculation for RECAP table (still using old logic for recap simplicity, or update if needed)
+                    // Requirement said "HANYA di menu Laporan Keuangan" which usually means the detail cards.
+                    // For consistency, let's keep Recap as Net flow for now to avoid complexity or update?
+                    // Let's use getNetValue for consistency with table data in recap
+                    if(monthData.citizens) {
+                        monthData.citizens.forEach(c => {
+                            Object.values(c.savings || {}).forEach(v => rTab += getNetValue(v));
+                            Object.values(c.kas || {}).forEach(v => rKasIn += getNetValue(v));
+                        });
                     }
-                    tbody.innerHTML += rowHtml;
-                }
+                    
+                    if(monthData.kasOut) {
+                        Object.values(monthData.kasOut).forEach(v => rKasOut += (v || 0));
+                    }
 
-                // Update Footer Totals
-                const ySaldo = yTab + yKasIn - yKasOut;
-                const tfoot = document.getElementById('table-rekap-footer');
-                if(tfoot) {
-                    tfoot.innerHTML = `
-                        <td class="px-3 py-3 md:px-4 md:py-4 uppercase tracking-wider">TOTAL ${currentYear}</td>
-                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-emerald-300">${formatRupiahStrict(yTab)}</td>
-                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-blue-300">${formatRupiahStrict(yKasIn)}</td>
-                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-rose-300">-${formatRupiahStrict(yKasOut)}</td>
-                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-amber-400 font-extrabold text-sm md:text-lg bg-slate-700/50">${formatRupiahStrict(ySaldo)}</td>
-                    `;
+                    const rSaldo = rTab + rKasIn - rKasOut;
+                    yTab += rTab; yKasIn += rKasIn; yKasOut += rKasOut;
+
+                    const isCurrent = m === currentMonth;
+                    const bgClass = isCurrent ? 'bg-indigo-50 border-l-4 border-indigo-500' : 'bg-white';
+                    const labelClass = isCurrent ? 'font-bold text-indigo-700' : 'text-slate-700 font-medium';
+
+                    rowHtml = `<tr class="${bgClass} hover:bg-slate-50 transition-colors">
+                        <td class="px-3 py-3 md:px-4 md:py-4 ${labelClass}">${MONTH_NAMES[m]}</td>
+                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-emerald-600 font-medium">${formatRupiahStrict(rTab)}</td>
+                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-blue-600 font-medium">${formatRupiahStrict(rKasIn)}</td>
+                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-rose-500">${rKasOut > 0 ? '-' + formatRupiahStrict(rKasOut) : '-'}</td>
+                        <td class="px-3 py-3 md:px-4 md:py-4 text-right font-bold text-slate-800">${formatRupiahStrict(rSaldo)}</td>
+                    </tr>`;
+                } else {
+                    rowHtml = `<tr class="bg-white opacity-40">
+                        <td class="px-3 py-3 md:px-4 md:py-4 text-slate-400 italic">${MONTH_NAMES[m]}</td>
+                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-xs">-</td>
+                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-xs">-</td>
+                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-xs">-</td>
+                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-xs">-</td>
+                    </tr>`;
                 }
+                tbody.innerHTML += rowHtml;
+            }
+
+            const ySaldo = yTab + yKasIn - yKasOut;
+            const tfoot = document.getElementById('table-rekap-footer');
+            if(tfoot) {
+                tfoot.innerHTML = `
+                    <td class="px-3 py-3 md:px-4 md:py-4 uppercase tracking-wider">TOTAL ${currentYear}</td>
+                    <td class="px-3 py-3 md:px-4 md:py-4 text-right text-emerald-300">${formatRupiahStrict(yTab)}</td>
+                    <td class="px-3 py-3 md:px-4 md:py-4 text-right text-blue-300">${formatRupiahStrict(yKasIn)}</td>
+                    <td class="px-3 py-3 md:px-4 md:py-4 text-right text-rose-300">-${formatRupiahStrict(yKasOut)}</td>
+                    <td class="px-3 py-3 md:px-4 md:py-4 text-right text-amber-400 font-extrabold text-sm md:text-lg bg-slate-700/50">${formatRupiahStrict(ySaldo)}</td>
+                `;
+            }
+        }
+    }
+
+    // --- PDF GENERATION LOGIC (PROFESSIONAL F4) ---
+    window.downloadPDF = function() {
+        const { jsPDF } = window.jspdf;
+        // F4 size approx 215mm x 330mm (Landscape and Portrait handling)
+        const doc = new jsPDF('p', 'mm', [215, 330]);
+        const currentMonthName = MONTH_NAMES[currentMonth];
+        const periodStr = `${currentMonthName} ${currentYear}`;
+        
+        // --- PAGE 1: COVER (Portrait) ---
+        // Header Line
+        doc.setLineWidth(0.5);
+        doc.line(20, 20, 195, 20);
+        doc.setLineWidth(0.2);
+        doc.line(20, 22, 195, 22);
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(24);
+        doc.text("LAPORAN KEUANGAN", 107.5, 100, { align: "center" });
+        doc.setFontSize(18);
+        doc.text("RT 02 / RW 19", 107.5, 112, { align: "center" });
+        
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "italic");
+        doc.text("Laporan Resmi Keuangan Bulanan", 107.5, 122, { align: "center" });
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(14);
+        doc.text(`Periode: ${periodStr}`, 107.5, 140, { align: "center" });
+        
+        doc.setFontSize(12);
+        doc.text("Lokasi: Lingk. Panatasan", 107.5, 250, { align: "center" });
+        
+        // Footer Cover
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text("Sistem Manajemen Keuangan Digital RT 02 / RW 19", 107.5, 310, { align: "center" });
+        doc.setTextColor(0);
+
+        // --- PAGE 2: RINGKASAN (Landscape F4: 330x215) ---
+        doc.addPage([330, 215], 'l'); 
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.text("RINGKASAN KEUANGAN BULANAN", 14, 15);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Periode: ${periodStr}`, 14, 21);
+        doc.text(`Digenerate pada: ${new Date().toLocaleDateString('id-ID')}`, 14, 26);
+
+        // --- USE NEW LOGIC FOR PDF ---
+        const summary = calculateReportSummary();
+        const mTab = summary.savingsIncome;
+        const mKasIn = summary.kasIncome;
+        const mKasOut = summary.totalExpense; // Total Expense used for Summary
+        const mSaldo = summary.finalBalance;
+
+        // Draw Cards
+        // Card 1: Saldo Bersih
+        doc.setFillColor(79, 70, 229); // Indigo
+        doc.rect(14, 35, 70, 40, 'F');
+        doc.setTextColor(255);
+        doc.setFontSize(10);
+        doc.text("Saldo Bersih", 20, 45);
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.text(formatRupiahStrict(mSaldo), 20, 60);
+
+        // Card 2: Tabungan (Income)
+        doc.setFillColor(16, 185, 129); // Emerald
+        doc.rect(90, 35, 70, 40, 'F');
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text("Pemasukan Tabungan", 96, 45);
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.text(formatRupiahStrict(mTab), 96, 60);
+
+        // Card 3: Kas Masuk
+        doc.setFillColor(59, 130, 246); // Blue
+        doc.rect(166, 35, 70, 40, 'F');
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text("Total Kas Masuk", 172, 45);
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.text(formatRupiahStrict(mKasIn), 172, 60);
+
+        // Card 4: Pengeluaran
+        doc.setFillColor(244, 63, 94); // Rose
+        doc.rect(242, 35, 70, 40, 'F');
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text("Total Pengeluaran", 248, 45);
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.text("-" + formatRupiahStrict(mKasOut).replace('Rp.','Rp. '), 248, 60);
+        
+        doc.setTextColor(0); // Reset color
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "italic");
+        doc.text("Keterangan Rumus: Saldo Bersih = (Tabungan Masuk + Kas Masuk) - (Tarik Tabungan + Tarik Kas + Ops)", 14, 85);
+
+        // Footer Page 2
+        doc.setFontSize(8);
+        doc.text("Halaman 2", 310, 205, { align: "right" });
+
+        // --- PAGE 3 & 4: TABUNGAN HARIAN (Split) ---
+        const tabunganHead = [['No', 'Nama', ...Array.from({length:31}, (_, i)=>i+1), 'Total']];
+        let totalTabunganKeseluruhan = 0;
+
+        const tabunganBody = currentState.citizens.map((c, i) => {
+            let rowTotal = 0;
+            const dates = Array.from({length:31}, (_, d) => {
+                const val = getNetValue(c.savings[d+1]) || 0;
+                rowTotal += val;
+                return val !== 0 ? val.toLocaleString('id-ID') : '';
+            });
+            totalTabunganKeseluruhan += rowTotal;
+            return [i+1, c.name, ...dates, rowTotal.toLocaleString('id-ID')];
+        });
+
+        // MASALAH 1 FIXED: Add Footer Row with Total Tabungan
+        // Column index 33 is the last column (Total per user). 
+        // We will make a footer that spans and shows the grand total.
+        const tabunganFooterData = ['', 'TOTAL TABUNGAN BULAN INI', ...Array(31).fill(''), totalTabunganKeseluruhan.toLocaleString('id-ID')];
+
+        // Part A: 1-25
+        doc.addPage([330, 215], 'l');
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text("TABUNGAN HARIAN (1-25)", 14, 15);
+        
+        doc.autoTable({
+            head: tabunganHead,
+            body: tabunganBody.slice(0, 25),
+            startY: 20,
+            theme: 'grid',
+            styles: { fontSize: 6, cellPadding: 1, overflow: 'linebreak' },
+            headStyles: { fillColor: [16, 185, 129], textColor: 255, halign: 'center' },
+            columnStyles: { 
+                0: { cellWidth: 8 }, 
+                1: { cellWidth: 25 },
+                33: { cellWidth: 20, fontStyle: 'bold', halign: 'right', fillColor: [240, 253, 244] }
+            },
+            didParseCell: function(data) {
+                if (data.section === 'body' && data.column.index > 1 && data.column.index < 33) {
+                    data.cell.styles.halign = 'center';
+                }
+            }
+        });
+        doc.text("Tabungan Harian - Halaman 1 dari 2", 165, 205, { align: "center" });
+        doc.text("Halaman 3", 310, 205, { align: "right" });
+
+        // Part B: 26-End with TOTAL FOOTER
+        doc.addPage([330, 215], 'l');
+        doc.setFontSize(14);
+        doc.text("TABUNGAN HARIAN (26-Selesai)", 14, 15);
+        
+        doc.autoTable({
+            head: tabunganHead,
+            body: [...tabunganBody.slice(25), tabunganFooterData], // Append Footer Row
+            startY: 20,
+            theme: 'grid',
+            styles: { fontSize: 6, cellPadding: 1 },
+            headStyles: { fillColor: [16, 185, 129], textColor: 255, halign: 'center' },
+            columnStyles: { 
+                0: { cellWidth: 8 }, 
+                1: { cellWidth: 25 },
+                33: { cellWidth: 20, fontStyle: 'bold', halign: 'right', fillColor: [240, 253, 244] }
+            },
+            didParseCell: function(data) {
+                if (data.section === 'body' && data.column.index > 1 && data.column.index < 33) {
+                    data.cell.styles.halign = 'center';
+                }
+                // Highlight Total Row (Last Row)
+                if (data.row.index === (tabunganBody.slice(25).length)) {
+                    data.cell.styles.fontStyle = 'bold';
+                    data.cell.styles.fillColor = [209, 250, 229]; // Light Emerald
+                    data.cell.styles.textColor = [6, 95, 70]; // Dark Emerald
+                }
+            }
+        });
+        doc.text("Tabungan Harian - Halaman 2 dari 2", 165, 205, { align: "center" });
+        doc.text("Halaman 4", 310, 205, { align: "right" });
+
+        // --- PAGE 5: KAS OPERASIONAL (MASUK) (Landscape) ---
+        doc.addPage([330, 215], 'l');
+        doc.setFontSize(14);
+        doc.text("KAS OPERASIONAL - PEMASUKAN WARGA", 14, 15);
+
+        const kasBody = currentState.citizens.map((c, i) => {
+            let rowTotal = 0;
+            const dates = Array.from({length:31}, (_, d) => {
+                const val = getNetValue(c.kas[d+1]) || 0;
+                rowTotal += val;
+                return val !== 0 ? val.toLocaleString('id-ID') : '';
+            });
+            return [i+1, c.name, ...dates, rowTotal.toLocaleString('id-ID')];
+        });
+
+        // Add Total Row for Kas
+        let grandTotalKas = 0;
+        currentState.citizens.forEach(c => {
+             Object.values(c.kas || {}).forEach(v => grandTotalKas += getNetValue(v));
+        });
+        
+        const totalRowData = ['', 'TOTAL KAS MASUK BULAN INI', ...Array(31).fill(''), grandTotalKas.toLocaleString('id-ID')];
+
+        doc.autoTable({
+            head: tabunganHead, // Reuse headers
+            body: [...kasBody, totalRowData],
+            startY: 20,
+            theme: 'grid',
+            styles: { fontSize: 6, cellPadding: 1 },
+            headStyles: { fillColor: [59, 130, 246], textColor: 255, halign: 'center' },
+            columnStyles: { 
+                0: { cellWidth: 8 }, 
+                1: { cellWidth: 25 },
+                33: { cellWidth: 20, fontStyle: 'bold', halign: 'right', fillColor: [239, 246, 255] }
+            },
+            didParseCell: function(data) {
+                if (data.section === 'body' && data.column.index > 1 && data.column.index < 33) {
+                    data.cell.styles.halign = 'center';
+                }
+                // Highlight last row
+                if (data.row.index === kasBody.length) {
+                    data.cell.styles.fontStyle = 'bold';
+                    data.cell.styles.fillColor = [219, 234, 254];
+                }
+            }
+        });
+        doc.text("Halaman 5", 310, 205, { align: "right" });
+
+
+        // --- PAGE 7: CATATAN TRANSAKSI (Portrait F4: 215x330) ---
+        doc.addPage([215, 330], 'p');
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text("CATATAN TRANSAKSI", 14, 20);
+        
+        let yPos = 30;
+        doc.setFontSize(10);
+        let hasNotes = false;
+
+        // General Note
+        if(currentState.generalNotes) {
+            hasNotes = true;
+            doc.setFont("helvetica", "bold");
+            doc.text("Catatan Umum:", 14, yPos);
+            yPos += 6;
+            doc.setFont("helvetica", "normal");
+            const splitNote = doc.splitTextToSize(currentState.generalNotes, 180);
+            doc.text(splitNote, 14, yPos);
+            yPos += (splitNote.length * 5) + 10;
+        }
+
+        for(let i=1; i<=31; i++) {
+            let dayNotes = [];
+            
+            // Check Kas Out Note
+            if(currentState.kasOutNotes[i]) {
+                dayNotes.push(`• Pengeluaran: ${currentState.kasOutNotes[i]} (Rp ${currentState.kasOut[i]?.toLocaleString('id-ID')})`);
+            }
+
+            // Check Citizens Notes
+            currentState.citizens.forEach(c => {
+                if(c.savings[i] && typeof c.savings[i] === 'object' && c.savings[i].note) {
+                    dayNotes.push(`• Tabungan ${c.name}: ${c.savings[i].note}`);
+                }
+                if(c.kas[i] && typeof c.kas[i] === 'object' && c.kas[i].note) {
+                    dayNotes.push(`• Kas ${c.name}: ${c.kas[i].note}`);
+                }
+            });
+
+            if(dayNotes.length > 0) {
+                hasNotes = true;
+                if(yPos > 300) { doc.addPage([215, 330], 'p'); yPos = 20; }
+                doc.setFont("helvetica", "bold");
+                doc.text(`Tanggal ${i} ${currentMonthName}:`, 14, yPos);
+                yPos += 5;
+                doc.setFont("helvetica", "normal");
+                dayNotes.forEach(note => {
+                    doc.text(note, 20, yPos);
+                    yPos += 5;
+                });
+                yPos += 3;
             }
         }
 
-        // Start Application
-        init();
+        if(!hasNotes) {
+            doc.setFont("helvetica", "italic");
+            doc.setTextColor(100);
+            doc.text("Tidak terdapat catatan transaksi pada periode ini.", 14, 30);
+        }
+        
+        doc.setTextColor(0);
+        doc.text("Halaman 6", 195, 310, { align: "right" });
 
-    </script>
+        // --- PAGE 8: REKAPITULASI (Landscape) ---
+        doc.addPage([330, 215], 'l');
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text(`REKAPITULASI TAHUN ${currentYear}`, 14, 15);
+
+        const rekapBody = [];
+        for(let m=0; m<12; m++) {
+            const md = db[currentYear] ? db[currentYear][m] : null;
+            if(md) {
+                let rTab = 0, rKasIn = 0, rKasOut = 0;
+                if(md.citizens) {
+                    md.citizens.forEach(c => {
+                        Object.values(c.savings || {}).forEach(v => rTab += getNetValue(v));
+                        Object.values(c.kas || {}).forEach(v => rKasIn += getNetValue(v));
+                    });
+                }
+                if(md.kasOut) Object.values(md.kasOut).forEach(v => rKasOut += (v || 0));
+                const rSaldo = rTab + rKasIn - rKasOut;
+                rekapBody.push([MONTH_NAMES[m], rTab.toLocaleString(), rKasIn.toLocaleString(), rKasOut.toLocaleString(), rSaldo.toLocaleString()]);
+            } else {
+                rekapBody.push([MONTH_NAMES[m], '-', '-', '-', '-']);
+            }
+        }
+
+        doc.autoTable({
+            head: [['Bulan', 'Total Saldo Tabungan', 'Total Saldo Kas', 'Abaikan', 'Saldo Akhir']],
+            body: rekapBody,
+            startY: 20,
+            theme: 'grid',
+            headStyles: { fillColor: [50, 50, 50] },
+            columnStyles: { 
+                1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 
+                4: { halign: 'right', fontStyle: 'bold' } 
+            },
+            didParseCell: function(data) {
+                if (data.row.index === currentMonth && data.section === 'body') {
+                    data.cell.styles.fillColor = [224, 231, 255]; // Highlight active month
+                    data.cell.styles.fontStyle = 'bold';
+                }
+            }
+        });
+        
+        doc.setFontSize(10);
+        doc.text("Rekap Tahunan Keuangan RT", 165, 205, { align: "center" });
+        doc.text("Halaman 7", 310, 205, { align: "right" });
+
+        // --- PAGE 9: PENGESAHAN (Portrait) ---
+        doc.addPage([215, 330], 'p');
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("PENGESAHAN", 107.5, 40, { align: 'center' });
+        
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Disahkan pada tanggal: .......................................`, 107.5, 55, { align: 'center' });
+
+        doc.text("Mengetahui,", 50, 90, { align: 'center' });
+        doc.setFont("helvetica", "bold");
+        doc.text("Ketua RT 02 / RW 19", 50, 96, { align: 'center' });
+        
+        doc.setFont("helvetica", "normal");
+        doc.text("Dibuat Oleh,", 165, 90, { align: 'center' });
+        doc.setFont("helvetica", "bold");
+        doc.text("Bendahara", 165, 96, { align: 'center' });
+
+        doc.setLineWidth(0.5);
+        doc.line(30, 140, 70, 140); // Line RT
+        doc.setFont("helvetica", "normal");
+        doc.text("( ........................ )", 50, 145, { align: 'center' });
+
+        doc.line(145, 140, 185, 140); // Line Bendahara
+        doc.text("( ........................ )", 165, 145, { align: 'center' });
+        
+        doc.text("Halaman 8", 195, 310, { align: "right" });
+
+        // Save
+        const filename = `Laporan_Resmi_RT02_RW19_${currentMonthName}_${currentYear}.pdf`;
+        doc.save(filename);
+        showToast("PDF Resmi Berhasil di-generate!", 'success');
+    };
+
+    // Start Application
+    init();
+
+</script>
 </body>
 </html>
