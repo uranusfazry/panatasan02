@@ -1656,10 +1656,11 @@
             let totalsPerDate = {};
             let grandTotal = 0;
 
-            currentState.citizens.forEach(c => {
+            currentState.citizens.forEach((c, index) => {
                 let totalRow = 0;
+                // UPDATE: Menggunakan (index + 1) untuk tampilan No, bukan c.id
                 let rowHtml = `<tr class="bg-white hover:bg-slate-50 transition-colors group">
-                    <td class="px-3 py-3 text-center font-medium text-slate-500 border-b border-r col-sticky-1 bg-white group-hover:bg-slate-50">${c.id}</td>
+                    <td class="px-3 py-3 text-center font-medium text-slate-500 border-b border-r col-sticky-1 bg-white group-hover:bg-slate-50">${index + 1}</td>
                     <td class="px-4 py-3 font-medium text-slate-800 border-b col-sticky-2 whitespace-nowrap bg-white group-hover:bg-slate-50 text-left flex justify-between items-center group">
                         <span>${c.name}</span>
                         <button onclick="deleteCitizen(${c.id}, '${c.name}')" class="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" title="Hapus Warga">
@@ -1755,10 +1756,11 @@
             let totalsPerDateIn = {};
             let grandTotalIn = 0;
 
-            currentState.citizens.forEach(c => {
+            currentState.citizens.forEach((c, index) => {
                 let totalRow = 0;
+                // UPDATE: Menggunakan (index + 1) untuk tampilan No, bukan c.id
                 let rowHtml = `<tr class="bg-white hover:bg-slate-50 transition-colors group">
-                    <td class="px-3 py-3 text-center font-medium text-slate-500 border-b border-r col-sticky-1 bg-white group-hover:bg-slate-50">${c.id}</td>
+                    <td class="px-3 py-3 text-center font-medium text-slate-500 border-b border-r col-sticky-1 bg-white group-hover:bg-slate-50">${index + 1}</td>
                     <td class="px-4 py-3 font-medium text-slate-800 border-b col-sticky-2 whitespace-nowrap bg-white group-hover:bg-slate-50 text-left flex justify-between items-center group">
                         <span>${c.name}</span>
                         <button onclick="deleteCitizen(${c.id}, '${c.name}')" class="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" title="Hapus Warga">
