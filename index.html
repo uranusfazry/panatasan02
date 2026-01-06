@@ -571,9 +571,10 @@
 
     <!-- 4. JAVASCRIPT LOGIC -->
     <script>
-        // --- MOBILE MENU LOGIC ---
-        let isMenuOpen = false;
+        // GLOBAL FUNCTIONS FIRST (Important for inline onclick handlers)
         
+        let isMenuOpen = false;
+
         function toggleMenu() {
             isMenuOpen = !isMenuOpen;
             const sidebar = document.getElementById('sidebar');
@@ -593,7 +594,6 @@
             }
         }
 
-        // --- IMAGE MODAL LOGIC ---
         function openImageModal(url, desc, date) {
             const modal = document.getElementById('image-modal');
             const img = document.getElementById('modal-img');
@@ -617,14 +617,15 @@
             }, 300);
         }
 
+        // --- CONSTANTS ---
         const AVAILABLE_YEARS = [2026, 2027, 2028, 2029, 2030];
         const MONTH_NAMES = [
             "Januari", "Februari", "Maret", "April", "Mei", "Juni", 
             "Juli", "Agustus", "September", "Oktober", "November", "Desember"
         ];
-        const STORAGE_KEY = 'rtDataV8';
+        const STORAGE_KEY = 'rtDataV10';
 
-        // --- MASTER DATA CITIZENS ---
+        // --- MASTER DATA ---
         const MASTER_CITIZENS = [
             { id: 1, name: "WAWAN R" }, { id: 2, name: "SAKRI" }, { id: 3, name: "YAYAT H" }, 
             { id: 4, name: "EDENG K" }, { id: 5, name: "SATIA P" },
@@ -645,7 +646,7 @@
             { id: 46, name: "MAMAN S" }, { id: 47, name: "WARUNG IBU IIS" }, { id: 48, name: "(Kosong)" }, { id: 49, name: "(Kosong)" }, { id: 50, name: "(Kosong)" }
         ];
 
-        // --- DATA SEED JANUARI 2026 ---
+        // --- DATA SEED ---
         const CSV_JAN_2026_TABUNGAN = [
             { no: 1, s: {1: 1500, 2: 2000, 3: 3000, 4: 5000, 5: 3000} }, { no: 2, s: {1: 2000, 2: 2000, 3: 10000, 4: 10000, 5: 10000} }, { no: 3, s: {1: 4500, 2: 4500, 3: 4500, 4: 5000, 5: 5000} },
             { no: 6, s: {1: 2000, 2: 2000, 3: 2000, 4: 2000, 5: 2000} }, { no: 7, s: {1: 2000, 2: 2000, 3: 2000, 4: 2000, 5: 2000} }, { no: 8, s: {1: 5000, 3: 10000} },
@@ -683,74 +684,148 @@
             { no: 46, k: {1:500, 2:500, 3:500, 4:500, 5:500} }, { no: 47, k: {1:500, 2:500, 3:500, 4:500, 5:500} }
         ];
 
+        // --- GLOBAL STATE ---
         let db = {};
         let currentYear = 2026;
         let currentMonth = 0;
         let currentState = { citizens: [], kasOut: {}, images: [] };
 
-        function init() {
-            const yearSel = document.getElementById('sel-year');
-            AVAILABLE_YEARS.forEach(y => {
-                const opt = document.createElement('option');
-                opt.value = y;
-                opt.innerText = y;
-                yearSel.appendChild(opt);
-            });
+        // --- ACTION FUNCTIONS (Defined globally to fix ReferenceError) ---
 
-            const monthSel = document.getElementById('sel-month');
-            MONTH_NAMES.forEach((m, idx) => {
-                const opt = document.createElement('option');
-                opt.value = idx;
-                opt.innerText = m;
-                monthSel.appendChild(opt);
-            });
+        window.editSaving = function(id, date) {
+            const citizen = currentState.citizens.find(c => c.id === id);
+            const currentVal = citizen.savings[date] || 0;
+            const input = prompt(`Tabungan ${citizen.name} (Tgl ${date} ${MONTH_NAMES[currentMonth]}):\nMasukkan nominal:`, currentVal === 0 ? '' : currentVal);
+            if (input !== null) {
+                const amount = parseInt(input.replace(/\D/g,''));
+                if (!isNaN(amount)) citizen.savings[date] = amount;
+                else if (input === "") citizen.savings[date] = 0;
+                saveDB(); renderAll();
+            }
+        };
 
-            const savedDB = localStorage.getItem(STORAGE_KEY);
-            if (savedDB) {
-                db = JSON.parse(savedDB);
-            } else {
-                initDataJanuari(); // Explicitly call data init function
+        window.editKas = function(id, date) {
+            const citizen = currentState.citizens.find(c => c.id === id);
+            const currentVal = citizen.kas[date] || 0;
+            const input = prompt(`Kas ${citizen.name} (Tgl ${date} ${MONTH_NAMES[currentMonth]}):\n0 atau 500?`, currentVal === 0 ? '500' : currentVal);
+            if (input !== null) {
+                const amount = parseInt(input.replace(/\D/g,''));
+                if (!isNaN(amount)) citizen.kas[date] = amount;
+                else if (input === "") citizen.kas[date] = 0;
+                saveDB(); renderAll();
+            }
+        };
+
+        window.editKasOut = function(date) {
+            const currentVal = currentState.kasOut[date] || 0;
+            const input = prompt(`PENGELUARAN Operasional (Tgl ${date} ${MONTH_NAMES[currentMonth]}):\nMasukkan nominal pengeluaran (Contoh: 15000):`, currentVal === 0 ? '' : currentVal);
+            if (input !== null) {
+                const amount = parseInt(input.replace(/\D/g,''));
+                if (!isNaN(amount)) currentState.kasOut[date] = amount;
+                else if (input === "") currentState.kasOut[date] = 0;
+                saveDB(); renderAll();
+            }
+        };
+
+        window.addCitizen = function() {
+            const name = prompt("Masukkan Nama Warga Baru:");
+            if(!name) return;
+
+            const maxId = currentState.citizens.reduce((max, c) => Math.max(max, typeof c.id === 'number' ? c.id : 0), 0);
+            const newId = maxId + 1;
+
+            currentState.citizens.push({ id: newId, name: name, savings: {}, kas: {} });
+            saveDB(); renderAll();
+            alert(`Warga "${name}" berhasil ditambahkan!`);
+        };
+
+        window.deleteCitizen = function(id, name) {
+            if(confirm(`Yakin ingin menghapus warga "${name}"? Data tabungan/kas mereka di bulan ini akan hilang.`)) {
+                currentState.citizens = currentState.citizens.filter(c => c.id !== id);
+                saveDB(); renderAll();
+            }
+        };
+
+        window.resetValuesOnly = function() {
+            if(!confirm("PERINGATAN: Ini akan me-RESET semua nominal (Uang) menjadi 0 untuk bulan ini.\n\nNama warga dan struktur tanggal TETAP ADA.\n\nLanjutkan?")) return;
+            currentState.citizens.forEach(c => { c.savings = {}; c.kas = {}; });
+            currentState.kasOut = {};
+            saveDB(); renderAll();
+            alert("Nominal berhasil di-reset ke 0.");
+        };
+
+        window.resetData = function() {
+            if(confirm("PERINGATAN KERAS: Semua data akan DIHAPUS PERMANEN dan kembali ke kondisi awal Jan 2026.\n\nLanjutkan?")) {
+                localStorage.removeItem(STORAGE_KEY);
+                location.reload();
+            }
+        };
+
+        window.downloadBackup = function() {
+            const zip = new JSZip();
+            zip.file("data.json", JSON.stringify(db));
+            zip.file("meta.json", JSON.stringify({ app: "Manajemen Keuangan RT 02 / RW 19", version: "v2.0", backup_at: new Date().toLocaleString() }));
+            zip.file("README.txt", "Backup data keuangan RT 02/19.");
+            zip.generateAsync({type:"blob"}).then(function(content) { saveAs(content, "uranusfazry.zip"); });
+        };
+
+        window.triggerLoad = function() {
+            document.getElementById('file-input-backup').click();
+        };
+
+        window.handleLoadBackup = function(input) {
+            const file = input.files[0];
+            if(!file) return;
+            if(!confirm("PERHATIAN: Load data akan MENIMPA seluruh data saat ini. Lanjutkan?")) { input.value = ''; return; }
+            
+            JSZip.loadAsync(file).then(function(zip) {
+                return zip.file("data.json").async("string");
+            }).then(function(dataStr) {
+                if(dataStr) {
+                    try {
+                        const newData = JSON.parse(dataStr);
+                        if(!newData[2026]) throw new Error("Struktur data tidak valid");
+                        db = newData;
+                        saveDB();
+                        alert("Data berhasil dipulihkan!");
+                        location.reload();
+                    } catch(e) { alert("Gagal: " + e.message); }
+                }
+            }).catch(function(err) { alert("Error: " + err.message); });
+            input.value = '';
+        };
+
+        window.handleImageSubmit = function(e) {
+            e.preventDefault();
+            const date = document.getElementById('img-date').value;
+            const desc = document.getElementById('img-desc').value;
+            const type = document.getElementById('img-type').value;
+            const url = document.getElementById('img-url').value;
+
+            if(!url.match(/\.(jpeg|jpg|gif|png|webp)$/) && !url.includes('imghippo')) {
+                if(!confirm("URL sepertinya bukan gambar langsung (.jpg/.png). Tetap simpan?")) return;
             }
 
-            yearSel.value = 2026;
-            monthSel.value = 0;
+            if(!currentState.images) currentState.images = [];
+            currentState.images.push({ date, desc, type, url, id: Date.now() });
             
-            changePeriod();
-            switchTab('tabungan');
+            document.getElementById('img-desc').value = '';
+            document.getElementById('img-url').value = '';
             
-            // Set Default Date for Image Form
-            if(document.getElementById('img-date')) {
-                document.getElementById('img-date').valueAsDate = new Date();
-            }
-        }
-
-        // 3️⃣ PENGISIAN DATA (Refactored to single function as requested)
-        function initDataJanuari() {
-            db = {};
-            AVAILABLE_YEARS.forEach(y => { db[y] = {}; });
-
-            // Generate Data from CSV Constants
-            const jan2026Citizens = MASTER_CITIZENS.map(mc => {
-                const sRow = CSV_JAN_2026_TABUNGAN.find(x => x.no === mc.id);
-                const kRow = CSV_JAN_2026_KAS.find(x => x.no === mc.id);
-                return {
-                    id: mc.id,
-                    name: mc.name,
-                    savings: sRow ? sRow.s : {},
-                    kas: kRow ? kRow.k : {}
-                };
-            });
-
-            // Initialize with kasOut & images array
-            db[2026][0] = { citizens: jan2026Citizens, kasOut: {}, images: [] };
             saveDB();
-        }
+            renderImages();
+            renderReport(); 
+            alert('Dokumentasi berhasil disimpan!');
+        };
 
-        function saveDB() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
-        }
+        window.deleteImage = function(id) {
+            if(confirm("Hapus dokumentasi ini?")) {
+                currentState.images = currentState.images.filter(img => img.id !== id);
+                saveDB(); renderImages(); renderReport();
+            }
+        };
 
-        function changePeriod() {
+        window.changePeriod = function() {
             const yearVal = parseInt(document.getElementById('sel-year').value);
             const monthVal = parseInt(document.getElementById('sel-month').value);
             currentYear = yearVal;
@@ -774,6 +849,85 @@
             if(!currentState.images) currentState.images = [];
             
             renderAll();
+        };
+
+        window.switchTab = function(tabName) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-50', 'text-indigo-700', 'border-indigo-100', 'shadow-sm');
+                btn.classList.add('text-slate-500', 'border-transparent');
+            });
+            const btn = document.getElementById(`btn-${tabName}`);
+            if(btn) {
+                btn.classList.add('bg-indigo-50', 'text-indigo-700', 'border-indigo-100', 'shadow-sm');
+                btn.classList.remove('text-slate-500', 'border-transparent');
+            }
+
+            const mobileTitle = document.getElementById('mobile-page-title');
+            if(mobileTitle) {
+                if(tabName === 'tabungan') mobileTitle.innerText = "Tabungan";
+                else if(tabName === 'kas') mobileTitle.innerText = "Kas Harian";
+                else if(tabName === 'gambar') mobileTitle.innerText = "Dokumentasi";
+                else if(tabName === 'laporan') mobileTitle.innerText = "Laporan";
+            }
+
+            if(window.innerWidth <= 768 && isMenuOpen) {
+                toggleMenu();
+            }
+        };
+
+        // --- HELPER FUNCTIONS ---
+
+        function init() {
+            const yearSel = document.getElementById('sel-year');
+            AVAILABLE_YEARS.forEach(y => {
+                const opt = document.createElement('option');
+                opt.value = y; opt.innerText = y; yearSel.appendChild(opt);
+            });
+
+            const monthSel = document.getElementById('sel-month');
+            MONTH_NAMES.forEach((m, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx; opt.innerText = m; monthSel.appendChild(opt);
+            });
+
+            const savedDB = localStorage.getItem(STORAGE_KEY);
+            if (savedDB) {
+                db = JSON.parse(savedDB);
+            } else {
+                initDataJanuari();
+            }
+
+            yearSel.value = 2026;
+            monthSel.value = 0;
+            
+            changePeriod();
+            switchTab('tabungan');
+            
+            if(document.getElementById('img-date')) {
+                document.getElementById('img-date').valueAsDate = new Date();
+            }
+        }
+
+        function initDataJanuari() {
+            db = {};
+            AVAILABLE_YEARS.forEach(y => { db[y] = {}; });
+
+            const jan2026Citizens = MASTER_CITIZENS.map(mc => {
+                const sRow = CSV_JAN_2026_TABUNGAN.find(x => x.no === mc.id);
+                const kRow = CSV_JAN_2026_KAS.find(x => x.no === mc.id);
+                return {
+                    id: mc.id,
+                    name: mc.name,
+                    savings: sRow ? sRow.s : {},
+                    kas: kRow ? kRow.k : {}
+                };
+            });
+
+            db[2026][0] = { citizens: jan2026Citizens, kasOut: {}, images: [] };
+            saveDB();
         }
 
         function createBlankPeriod() {
@@ -786,110 +940,8 @@
             return { citizens: blankCitizens, kasOut: {}, images: [] };
         }
 
-        function resetData() {
-            if(confirm("PERINGATAN KERAS: Semua data (Warga, Uang, Gambar) akan DIHAPUS PERMANEN dan kembali ke kondisi awal Jan 2026.\n\nLanjutkan?")) {
-                localStorage.removeItem(STORAGE_KEY);
-                location.reload();
-            }
-        }
-
-        function addCitizen() {
-            const name = prompt("Masukkan Nama Warga Baru:");
-            if(!name) return;
-
-            // Generate new ID (Max ID + 1)
-            const maxId = currentState.citizens.reduce((max, c) => Math.max(max, typeof c.id === 'number' ? c.id : 0), 0);
-            const newId = maxId + 1;
-
-            currentState.citizens.push({
-                id: newId,
-                name: name,
-                savings: {},
-                kas: {}
-            });
-            
-            saveDB();
-            renderAll();
-            alert(`Warga "${name}" berhasil ditambahkan!`);
-        }
-
-        function deleteCitizen(id, name) {
-            if(confirm(`Yakin ingin menghapus warga "${name}"? Data tabungan/kas mereka di bulan ini akan hilang.`)) {
-                currentState.citizens = currentState.citizens.filter(c => c.id !== id);
-                saveDB();
-                renderAll();
-            }
-        }
-
-        function resetValuesOnly() {
-            if(!confirm("PERINGATAN: Ini akan me-RESET semua nominal (Uang) menjadi 0 untuk bulan ini.\n\nNama warga dan struktur tanggal TETAP ADA.\n\nLanjutkan?")) return;
-
-            currentState.citizens.forEach(c => {
-                c.savings = {};
-                c.kas = {};
-            });
-            currentState.kasOut = {};
-            
-            saveDB();
-            renderAll();
-            alert("Nominal berhasil di-reset ke 0.");
-        }
-
-        function downloadBackup() {
-            const zip = new JSZip();
-            zip.file("data.json", JSON.stringify(db));
-            zip.file("meta.json", JSON.stringify({
-                app: "Manajemen Keuangan RT 02 / RW 19",
-                author: "uranusfazry",
-                version: "v2.0",
-                backup_at: new Date().toLocaleString()
-            }));
-            zip.file("README.txt", "Backup data keuangan RT 02/19. Berisi data.json (database) dan meta.json (informasi backup).");
-            
-            zip.generateAsync({type:"blob"})
-            .then(function(content) {
-                saveAs(content, "uranusfazry.zip");
-            });
-        }
-
-        function triggerLoad() {
-            document.getElementById('file-input-backup').click();
-        }
-
-        function handleLoadBackup(input) {
-            const file = input.files[0];
-            if(!file) return;
-
-            if(!confirm("PERHATIAN: Load data akan MENIMPA seluruh data saat ini dengan data dari file backup. Lanjutkan?")) {
-                input.value = ''; 
-                return;
-            }
-
-            JSZip.loadAsync(file).then(function(zip) {
-                if(!zip.file("data.json")) {
-                    alert("File ZIP tidak valid! Tidak ditemukan data.json.");
-                    return;
-                }
-                return zip.file("data.json").async("string");
-            }).then(function(dataStr) {
-                if(dataStr) {
-                    try {
-                        const newData = JSON.parse(dataStr);
-                        if(!newData[2026]) throw new Error("Struktur data tidak valid");
-                        
-                        db = newData;
-                        saveDB();
-                        alert("Data berhasil dipulihkan!");
-                        location.reload();
-                    } catch(e) {
-                        alert("Gagal memproses data: " + e.message);
-                    }
-                }
-            }).catch(function(err) {
-                alert("Terjadi kesalahan saat membaca file: " + err.message);
-            });
-            
-            input.value = ''; 
+        function saveDB() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
         }
 
         const formatRupiahStrict = (num) => {
@@ -1007,39 +1059,6 @@
                 }
             }
             document.getElementById('tf-kas-total').innerText = formatRupiahStrict(grandNet);
-        }
-
-        // --- IMAGE GALLERY FUNCTIONS ---
-        function handleImageSubmit(e) {
-            e.preventDefault();
-            const date = document.getElementById('img-date').value;
-            const desc = document.getElementById('img-desc').value;
-            const type = document.getElementById('img-type').value;
-            const url = document.getElementById('img-url').value;
-
-            if(!url.match(/\.(jpeg|jpg|gif|png|webp)$/) && !url.includes('imghippo')) {
-                if(!confirm("URL sepertinya bukan gambar langsung (.jpg/.png). Tetap simpan?")) return;
-            }
-
-            if(!currentState.images) currentState.images = [];
-            currentState.images.push({ date, desc, type, url, id: Date.now() });
-            
-            document.getElementById('img-desc').value = '';
-            document.getElementById('img-url').value = '';
-            
-            saveDB();
-            renderImages();
-            renderReport(); 
-            alert('Dokumentasi berhasil disimpan!');
-        }
-
-        function deleteImage(id) {
-            if(confirm("Hapus dokumentasi ini?")) {
-                currentState.images = currentState.images.filter(img => img.id !== id);
-                saveDB();
-                renderImages();
-                renderReport();
-            }
         }
 
         function renderImages() {
@@ -1177,33 +1196,9 @@
             }
         }
 
-        function switchTab(tabName) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`view-${tabName}`).classList.remove('hidden');
-            
-            // Sidebar buttons active state
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('bg-indigo-50', 'text-indigo-700', 'border-indigo-100', 'shadow-sm');
-                btn.classList.add('text-slate-500', 'border-transparent');
-            });
-            const btn = document.getElementById(`btn-${tabName}`);
-            btn.classList.add('bg-indigo-50', 'text-indigo-700', 'border-indigo-100', 'shadow-sm');
-            btn.classList.remove('text-slate-500', 'border-transparent');
-
-            const mobileTitle = document.getElementById('mobile-page-title');
-            if(mobileTitle) {
-                if(tabName === 'tabungan') mobileTitle.innerText = "Tabungan";
-                else if(tabName === 'kas') mobileTitle.innerText = "Kas Harian";
-                else if(tabName === 'gambar') mobileTitle.innerText = "Dokumentasi";
-                else if(tabName === 'laporan') mobileTitle.innerText = "Laporan";
-            }
-
-            if(window.innerWidth <= 768 && isMenuOpen) {
-                toggleMenu();
-            }
-        }
-
+        // Start Application
         init();
+
     </script>
 </body>
 </html>
