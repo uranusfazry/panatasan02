@@ -12,6 +12,10 @@
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- JSZip & FileSaver for Backup/Restore -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     
     <!-- Config -->
     <script>
@@ -58,52 +62,48 @@
         .table-container { position: relative; overflow: auto; max-height: 70vh; border-radius: 0.75rem; isolation: isolate; }
         table { border-collapse: separate; border-spacing: 0; }
         th, td { white-space: nowrap; }
-        
-        /* Header tidak sticky vertikal */
         thead th { position: static; top: auto; z-index: auto; border-bottom: 1px solid #e2e8f0; }
-        
-        /* Sticky Columns (Horizontal) */
         .col-sticky-1 { position: sticky; left: 0; z-index: 30; background-color: #f8fafc; border-right: 1px solid #e2e8f0; }
         .col-sticky-2 { position: sticky; left: 48px; z-index: 30; background-color: #f8fafc; border-right: 1px solid #e2e8f0; box-shadow: 4px 0 8px -4px rgba(0,0,0,0.1); }
         .col-sticky-right { position: sticky; right: 0; z-index: 30; border-left: 1px solid #e2e8f0; box-shadow: -4px 0 8px -4px rgba(0,0,0,0.05); }
-        
-        /* Z-Index Hierarchy */
         thead th.col-sticky-1, thead th.col-sticky-2, thead th.col-sticky-right { z-index: 30; }
         tfoot td.col-sticky-1, tfoot td.col-sticky-right { z-index: 50; }
 
         .select-modern { appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236366f1'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e"); background-position: right 0.75rem center; background-repeat: no-repeat; background-size: 1rem; }
 
-        /* --- MOBILE SPECIFIC RULES (Perbaikan UI Mobile Tabungan) --- */
+        /* Mobile Adjustments */
         @media (max-width: 768px) {
             .col-sticky-1 { width: 40px; min-width: 40px; }
             .col-sticky-2 { left: 40px; width: 140px; min-width: 140px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
             
-            /* Sembunyikan kolom ke-6 dst (Tgl 4 - Total) KHUSUS di view-tabungan */
+            /* Mobile View Logic */
             #view-tabungan .table-container table th:nth-child(n+6),
-            #view-tabungan .table-container table td:nth-child(n+6) {
+            #view-tabungan .table-container table td:nth-child(n+6),
+            #view-kas .table-container table th:nth-child(n+6),
+            #view-kas .table-container table td:nth-child(n+6) {
                 display: none;
             }
 
-            /* Styling Khusus Kolom Tgl 1, 2, 3 di Mobile */
             #view-tabungan .table-container table td:nth-child(3),
             #view-tabungan .table-container table td:nth-child(4),
             #view-tabungan .table-container table td:nth-child(5) {
-                background-color: #ecfdf5; /* bg-emerald-50 */
-                color: #047857; /* text-emerald-700 */
-                font-weight: 700; /* font-bold */
-                font-size: 0.85rem; /* text-sm/xs */
-                padding: 12px 8px; /* Spasi sentuh diperbesar */
-                text-align: center;
-                border-right: 1px solid #d1fae5;
+                background-color: #ecfdf5; color: #047857; font-weight: 700; font-size: 0.85rem; padding: 12px 8px; text-align: center; border-right: 1px solid #d1fae5;
             }
-
-            /* Styling Header Tgl 1, 2, 3 Mobile */
             #view-tabungan .table-container table th:nth-child(3),
             #view-tabungan .table-container table th:nth-child(4),
             #view-tabungan .table-container table th:nth-child(5) {
-                background-color: #f0fdf4;
-                color: #15803d;
-                font-weight: 800;
+                background-color: #f0fdf4; color: #15803d; font-weight: 800;
+            }
+
+            #view-kas .table-container table td:nth-child(3),
+            #view-kas .table-container table td:nth-child(4),
+            #view-kas .table-container table td:nth-child(5) {
+                background-color: #eff6ff; color: #1d4ed8; font-weight: 700; font-size: 0.85rem; padding: 12px 8px; text-align: center; border-right: 1px solid #dbeafe;
+            }
+            #view-kas .table-container table th:nth-child(3),
+            #view-kas .table-container table th:nth-child(4),
+            #view-kas .table-container table th:nth-child(5) {
+                background-color: #eff6ff; color: #1e40af; font-weight: 800;
             }
         }
 
@@ -118,11 +118,10 @@
             th, td { border: 1px solid #000 !important; padding: 2px 4px; white-space: normal; }
             .col-sticky-1, .col-sticky-2, .col-sticky-right { position: static; box-shadow: none; border: 1px solid #000; }
             #sidebar, #mobile-header, #mobile-overlay, #btn-print-floating { display: none !important; }
-            /* Pastikan semua kolom tampil saat print */
             #view-tabungan .table-container table th:nth-child(n+6),
-            #view-tabungan .table-container table td:nth-child(n+6) {
-                display: table-cell;
-            }
+            #view-tabungan .table-container table td:nth-child(n+6),
+            #view-kas .table-container table th:nth-child(n+6),
+            #view-kas .table-container table td:nth-child(n+6) { display: table-cell; }
         }
 
         .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -134,6 +133,9 @@
     </style>
 </head>
 <body class="bg-brand-bg text-brand-dark font-sans h-screen flex flex-col md:flex-row overflow-hidden selection:bg-indigo-100 selection:text-indigo-700">
+
+    <!-- 0. HIDDEN FILE INPUT FOR LOADING BACKUP -->
+    <input type="file" id="file-input-backup" accept=".zip" class="hidden" onchange="handleLoadBackup(this)">
 
     <!-- 0. IMAGE MODAL PREVIEW -->
     <div id="image-modal" class="fixed inset-0 z-modal hidden bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300 opacity-0" onclick="closeImageModal()">
@@ -215,12 +217,36 @@
                 Laporan Keuangan
             </button>
         </div>
-        <div class="p-4 border-t border-slate-100 bg-slate-50/50">
-            <button onclick="resetData()" class="text-xs text-red-400 hover:text-red-600 font-medium flex items-center justify-center w-full py-2.5 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100">
-                <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                Reset Data System
+        
+        <!-- SYSTEM ACTIONS -->
+        <div class="p-4 border-t border-slate-100 bg-slate-50/50 space-y-2">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Manajemen Data</p>
+            
+            <!-- NEW: Tambah Warga -->
+            <button onclick="addCitizen()" class="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center w-full py-2 hover:bg-blue-50 rounded-lg transition-colors">
+                <span class="mr-2 text-base">➕</span> Tambah Warga
             </button>
-            <div class="mt-3 text-[10px] text-center text-slate-400 font-mono">
+
+             <!-- NEW: Reset Values Only -->
+             <button onclick="resetValuesOnly()" class="text-xs text-orange-600 hover:text-orange-800 font-medium flex items-center w-full py-2 hover:bg-orange-50 rounded-lg transition-colors">
+                <span class="mr-2 text-base">🔄</span> Reset Nominal (0)
+            </button>
+
+            <div class="h-px bg-slate-200 my-1"></div>
+
+            <button onclick="downloadBackup()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center w-full py-2 hover:bg-indigo-50 rounded-lg transition-colors">
+                <span class="mr-2 text-base">📦</span> Backup Data (ZIP)
+            </button>
+
+            <button onclick="triggerLoad()" class="text-xs text-emerald-600 hover:text-emerald-800 font-medium flex items-center w-full py-2 hover:bg-emerald-50 rounded-lg transition-colors">
+                <span class="mr-2 text-base">♻️</span> Load Data (ZIP)
+            </button>
+
+            <button onclick="resetData()" class="text-xs text-red-400 hover:text-red-600 font-medium flex items-center w-full py-2 hover:bg-red-50 rounded-lg transition-colors mt-2 border-t border-slate-200">
+                <span class="mr-2 text-base">🗑️</span> Hard Reset System
+            </button>
+            
+            <div class="mt-2 text-[10px] text-center text-slate-400 font-mono">
                 <p>RT 02 / RW 19 &copy; 2026</p>
             </div>
         </div>
@@ -583,7 +609,7 @@
             "Januari", "Februari", "Maret", "April", "Mei", "Juni", 
             "Juli", "Agustus", "September", "Oktober", "November", "Desember"
         ];
-        const STORAGE_KEY = 'rtDataV8';
+        const STORAGE_KEY = 'rtDataV9'; // Updated Key for Persistence
 
         // --- MASTER DATA CITIZENS ---
         const MASTER_CITIZENS = [
@@ -685,12 +711,10 @@
             }
         }
 
-        // 3️⃣ PENGISIAN DATA (Refactored to single function as requested)
         function initDataJanuari() {
             db = {};
             AVAILABLE_YEARS.forEach(y => { db[y] = {}; });
 
-            // Generate Data from CSV Constants
             const jan2026Citizens = MASTER_CITIZENS.map(mc => {
                 const sRow = CSV_JAN_2026_TABUNGAN.find(x => x.no === mc.id);
                 const kRow = CSV_JAN_2026_KAS.find(x => x.no === mc.id);
@@ -702,7 +726,6 @@
                 };
             });
 
-            // Initialize with kasOut & images array
             db[2026][0] = { citizens: jan2026Citizens, kasOut: {}, images: [] };
             saveDB();
         }
@@ -726,6 +749,9 @@
 
             if (!db[currentYear]) db[currentYear] = {};
             if (!db[currentYear][currentMonth]) {
+                // Check if previous month exists to carry over citizens structure? 
+                // For simplicity, we create from Master, but ideally should copy previous month's structure.
+                // Let's create from Master for consistency with current logic.
                 db[currentYear][currentMonth] = createBlankPeriod();
                 saveDB();
             }
@@ -738,7 +764,28 @@
         }
 
         function createBlankPeriod() {
-            const blankCitizens = MASTER_CITIZENS.map(mc => ({
+            // Should respect any added citizens from previous state if possible, 
+            // but for simplicity in this request, we reset structure to master.
+            // Requirement 2: "Tambah & Hapus Baris" should persist.
+            // Better strategy: Use the citizens list from the current active state if available, or Master.
+            
+            let templateCitizens = MASTER_CITIZENS;
+            
+            // Try to find ANY existing period to copy citizen structure from
+            // (Simplification: just use Master for new blank periods for now, 
+            // but if user adds row in Jan, it won't auto-appear in Feb unless we implementing carrying over).
+            // Per requirement 2, changes must persist.
+            // If we are in Jan 2026 and add a row, it's saved in Jan 2026. 
+            // If we switch to Feb, it creates new from Master. 
+            // To properly persist rows across periods, we should probably store a global 'currentCitizensList'
+            // or copy from the *latest* available period.
+            // Let's implement copying from current active state to new state if possible.
+            
+            if(currentState && currentState.citizens && currentState.citizens.length > 0) {
+                 templateCitizens = currentState.citizens.map(c => ({id: c.id, name: c.name}));
+            }
+
+            const blankCitizens = templateCitizens.map(mc => ({
                 id: mc.id,
                 name: mc.name,
                 savings: {},
@@ -747,8 +794,110 @@
             return { citizens: blankCitizens, kasOut: {}, images: [] };
         }
 
+        // --- NEW FEATURES: DATA MANAGEMENT ---
+
+        function addCitizen() {
+            const name = prompt("Masukkan Nama Warga Baru:");
+            if(!name) return;
+
+            // Generate new ID (Max ID + 1)
+            const maxId = currentState.citizens.reduce((max, c) => Math.max(max, typeof c.id === 'number' ? c.id : 0), 0);
+            const newId = maxId + 1;
+
+            currentState.citizens.push({
+                id: newId,
+                name: name,
+                savings: {},
+                kas: {}
+            });
+            
+            saveDB();
+            renderAll();
+            alert(`Warga "${name}" berhasil ditambahkan!`);
+        }
+
+        function deleteCitizen(id, name) {
+            if(confirm(`Yakin ingin menghapus warga "${name}"? Data tabungan/kas mereka di bulan ini akan hilang.`)) {
+                currentState.citizens = currentState.citizens.filter(c => c.id !== id);
+                saveDB();
+                renderAll();
+            }
+        }
+
+        function resetValuesOnly() {
+            if(!confirm("PERINGATAN: Ini akan me-RESET semua nominal (Uang) menjadi 0 untuk bulan ini.\n\nNama warga dan struktur tanggal TETAP ADA.\n\nLanjutkan?")) return;
+
+            currentState.citizens.forEach(c => {
+                c.savings = {};
+                c.kas = {};
+            });
+            currentState.kasOut = {};
+            
+            saveDB();
+            renderAll();
+            alert("Nominal berhasil di-reset ke 0.");
+        }
+
+        // --- BACKUP & LOAD LOGIC ---
+        function downloadBackup() {
+            const zip = new JSZip();
+            zip.file("data.json", JSON.stringify(db));
+            zip.file("meta.json", JSON.stringify({
+                app: "Manajemen Keuangan RT 02 / RW 19",
+                author: "uranusfazry",
+                version: "v2.0",
+                backup_at: new Date().toLocaleString()
+            }));
+            zip.file("README.txt", "Backup data keuangan RT 02/19. Berisi data.json (database) dan meta.json (informasi backup).");
+            
+            zip.generateAsync({type:"blob"})
+            .then(function(content) {
+                saveAs(content, "uranusfazry.zip");
+            });
+        }
+
+        function triggerLoad() {
+            document.getElementById('file-input-backup').click();
+        }
+
+        function handleLoadBackup(input) {
+            const file = input.files[0];
+            if(!file) return;
+
+            if(!confirm("PERHATIAN: Load data akan MENIMPA seluruh data saat ini dengan data dari file backup. Lanjutkan?")) {
+                input.value = ''; // Reset input
+                return;
+            }
+
+            JSZip.loadAsync(file).then(function(zip) {
+                if(!zip.file("data.json")) {
+                    alert("File ZIP tidak valid! Tidak ditemukan data.json.");
+                    return;
+                }
+                return zip.file("data.json").async("string");
+            }).then(function(dataStr) {
+                if(dataStr) {
+                    try {
+                        const newData = JSON.parse(dataStr);
+                        if(!newData[2026]) throw new Error("Struktur data tidak valid");
+                        
+                        db = newData;
+                        saveDB();
+                        alert("Data berhasil dipulihkan!");
+                        location.reload();
+                    } catch(e) {
+                        alert("Gagal memproses data: " + e.message);
+                    }
+                }
+            }).catch(function(err) {
+                alert("Terjadi kesalahan saat membaca file: " + err.message);
+            });
+            
+            input.value = ''; // Reset input
+        }
+
         function resetData() {
-            if(confirm("PERINGATAN: Semua data akan dihapus dan kembali ke kondisi awal Jan 2026. Lanjutkan?")) {
+            if(confirm("PERINGATAN KERAS: Semua data (Warga, Uang, Gambar) akan DIHAPUS PERMANEN dan kembali ke kondisi awal Jan 2026.\n\nLanjutkan?")) {
                 localStorage.removeItem(STORAGE_KEY);
                 location.reload();
             }
@@ -779,7 +928,12 @@
                 let totalRow = 0;
                 let rowHtml = `<tr class="bg-white hover:bg-slate-50 transition-colors group">
                     <td class="px-3 py-3 text-center font-medium text-slate-500 border-b border-r col-sticky-1 bg-white group-hover:bg-slate-50">${c.id}</td>
-                    <td class="px-4 py-3 font-medium text-slate-800 border-b col-sticky-2 whitespace-nowrap bg-white group-hover:bg-slate-50 text-left">${c.name}</td>`;
+                    <td class="px-4 py-3 font-medium text-slate-800 border-b col-sticky-2 whitespace-nowrap bg-white group-hover:bg-slate-50 text-left flex justify-between items-center group">
+                        <span>${c.name}</span>
+                        <button onclick="deleteCitizen(${c.id}, '${c.name}')" class="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" title="Hapus Warga">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </td>`;
 
                 for(let i=1; i<=31; i++) {
                     const val = c.savings[i] || 0;
@@ -814,7 +968,12 @@
                 let totalRow = 0;
                 let rowHtml = `<tr class="bg-white hover:bg-slate-50 transition-colors group">
                     <td class="px-3 py-3 text-center font-medium text-slate-500 border-b border-r col-sticky-1 bg-white group-hover:bg-slate-50">${c.id}</td>
-                    <td class="px-4 py-3 font-medium text-slate-800 border-b col-sticky-2 whitespace-nowrap bg-white group-hover:bg-slate-50 text-left">${c.name}</td>`;
+                    <td class="px-4 py-3 font-medium text-slate-800 border-b col-sticky-2 whitespace-nowrap bg-white group-hover:bg-slate-50 text-left flex justify-between items-center group">
+                        <span>${c.name}</span>
+                        <button onclick="deleteCitizen(${c.id}, '${c.name}')" class="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" title="Hapus Warga">
+                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </td>`;
 
                 for(let i=1; i<=31; i++) {
                     const val = c.kas[i] || 0;
