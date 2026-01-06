@@ -41,7 +41,8 @@
                         '80': '80',
                         '90': '90',
                         '100': '100', 
-                        'modal': '150',
+                        'modal': '200',
+                        'toast': '300'
                     }
                 }
             }
@@ -113,7 +114,7 @@
             table { width: 100%; font-size: 9px; }
             th, td { border: 1px solid #000 !important; padding: 2px 4px; white-space: normal; }
             .col-sticky-1, .col-sticky-2, .col-sticky-right { position: static; box-shadow: none; border: 1px solid #000; }
-            #sidebar, #mobile-header, #mobile-overlay, #btn-print-floating { display: none !important; }
+            #sidebar, #mobile-header, #mobile-overlay, #btn-print-floating, #toast-container { display: none !important; }
             #view-tabungan .table-container table th:nth-child(n+6),
             #view-tabungan .table-container table td:nth-child(n+6),
             #view-kas .table-container table th:nth-child(n+6),
@@ -126,23 +127,147 @@
         
         .aspect-square { aspect-ratio: 1 / 1; }
         .line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+
+        /* Custom Modal Animations */
+        .modal-enter { opacity: 0; transform: scale(0.95); }
+        .modal-enter-active { opacity: 1; transform: scale(1); transition: opacity 0.2s, transform 0.2s; }
+        .modal-exit { opacity: 1; transform: scale(1); }
+        .modal-exit-active { opacity: 0; transform: scale(0.95); transition: opacity 0.2s, transform 0.2s; }
     </style>
 </head>
 <body class="bg-brand-bg text-brand-dark font-sans h-screen flex flex-col md:flex-row overflow-hidden selection:bg-indigo-100 selection:text-indigo-700">
 
-    <!-- 0. IMAGE MODAL PREVIEW -->
-    <div id="image-modal" class="fixed inset-0 z-modal hidden bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300 opacity-0" onclick="closeImageModal()">
-        <div class="relative max-w-4xl w-full max-h-screen flex flex-col items-center" onclick="event.stopPropagation()">
-            <img id="modal-img" src="" alt="Preview" class="max-h-[80vh] w-auto rounded-lg shadow-2xl border border-white/10">
-            <div class="mt-4 text-center">
-                <p id="modal-desc" class="text-white font-medium text-lg"></p>
-                <p id="modal-date" class="text-slate-400 text-sm"></p>
+    <!-- 0. MEDIA PREVIEW MODAL (Video & Image Support) -->
+    <div id="image-modal" class="fixed inset-0 z-modal hidden bg-black/95 backdrop-blur-md flex items-center justify-center p-4 transition-opacity duration-300 opacity-0" onclick="closeImageModal()">
+        <div class="relative w-full h-full flex flex-col items-center justify-center" onclick="event.stopPropagation()">
+            
+            <!-- Media Container -->
+            <div id="modal-media-wrapper" class="relative transition-all duration-300 flex items-center justify-center max-h-[85vh] max-w-full">
+                <!-- Image Tag -->
+                <img id="modal-img" src="" alt="Preview" class="hidden max-h-[80vh] w-auto rounded-lg shadow-2xl border border-white/10 object-contain">
+                
+                <!-- Video Tag -->
+                <video id="modal-video" controls class="hidden max-h-[80vh] w-auto rounded-lg shadow-2xl border border-white/10 bg-black">
+                    Your browser does not support the video tag.
+                </video>
             </div>
-            <button onclick="closeImageModal()" class="absolute -top-12 right-0 text-white hover:text-red-400 transition p-2">
+
+            <!-- Caption -->
+            <div class="mt-4 text-center z-10">
+                <span id="modal-badge" class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mb-2"></span>
+                <p id="modal-desc" class="text-white font-medium text-lg leading-tight"></p>
+                <p id="modal-date" class="text-slate-400 text-sm mt-1"></p>
+            </div>
+
+            <!-- Close Button -->
+            <button onclick="closeImageModal()" class="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition z-50">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>
     </div>
+
+    <!-- 0. UI SYSTEM MODALS (REPLACING BROWSER ALERTS) -->
+    
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-toast flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Generic Input/Confirm Modal -->
+    <div id="ui-modal-backdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-modal hidden transition-opacity duration-200 opacity-0 flex items-center justify-center p-4">
+        <div id="ui-modal-panel" class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all scale-95 opacity-0 overflow-hidden flex flex-col max-h-[90vh]">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 flex-shrink-0">
+                <div>
+                    <h3 id="ui-modal-title" class="text-lg font-bold text-slate-800">Judul Modal</h3>
+                    <p id="ui-modal-subtitle" class="text-xs text-slate-500 font-medium"></p>
+                </div>
+                <button onclick="closeUiModal()" class="text-slate-400 hover:text-red-500 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <!-- Modal Body (Scrollable) -->
+            <div class="p-6 overflow-y-auto custom-scrollbar">
+                <p id="ui-modal-message" class="text-slate-600 mb-4 text-sm leading-relaxed hidden"></p>
+                
+                <!-- PREVIEW CONTAINER (Read Only) -->
+                <div id="ui-modal-preview-container" class="hidden space-y-4">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Nominal Transaksi</p>
+                        <h2 id="ui-preview-amount" class="text-3xl font-extrabold text-slate-800">Rp 0</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                        <div class="bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
+                            <p class="text-[10px] text-slate-400 uppercase font-bold">Jenis</p>
+                            <p id="ui-preview-type" class="font-semibold text-slate-700">-</p>
+                        </div>
+                        <div class="bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
+                            <p class="text-[10px] text-slate-400 uppercase font-bold">Tanggal</p>
+                            <p id="ui-preview-date" class="font-semibold text-slate-700">-</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold mb-1">Catatan</p>
+                        <p id="ui-preview-note" class="text-slate-600 italic">-</p>
+                    </div>
+                </div>
+
+                <!-- INPUT CONTAINER (Edit Mode) -->
+                <div id="ui-modal-input-container" class="hidden space-y-5">
+                    
+                    <!-- Single Input (Text/Simple) -->
+                    <div id="ui-single-input-wrapper" class="hidden">
+                        <label id="ui-modal-input-label" class="block text-xs font-bold uppercase text-slate-400 tracking-wider mb-2">Input</label>
+                        <input type="text" id="ui-modal-input" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-slate-700">
+                    </div>
+
+                    <!-- Dual Input (Income/Expense) -->
+                    <div id="ui-dual-input-wrapper" class="hidden space-y-4">
+                        <!-- Pemasukan -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-emerald-600 tracking-wider mb-1 flex items-center">
+                                <span class="mr-1">➕</span> Pemasukan (Setor)
+                            </label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500 font-bold">Rp</span>
+                                <input type="tel" id="ui-input-income" class="w-full pl-10 pr-4 py-3 bg-emerald-50/50 border border-emerald-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-emerald-700 text-lg transition-all" placeholder="0">
+                            </div>
+                            <!-- Quick Buttons for Income -->
+                            <div class="flex gap-2 mt-2" id="ui-income-quick-actions">
+                                <!-- JS Injected -->
+                            </div>
+                        </div>
+
+                        <!-- Pengeluaran -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-rose-600 tracking-wider mb-1 flex items-center">
+                                <span class="mr-1">➖</span> Pengeluaran (Tarik)
+                            </label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-rose-500 font-bold">Rp</span>
+                                <input type="tel" id="ui-input-expense" class="w-full pl-10 pr-4 py-3 bg-rose-50/50 border border-rose-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 font-bold text-rose-700 text-lg transition-all" placeholder="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Note Input (Shared) -->
+                    <div id="ui-modal-note-container" class="hidden pt-2 border-t border-slate-100">
+                        <label class="block text-xs font-bold uppercase text-slate-400 tracking-wider mb-2">Catatan Transaksi (Opsional)</label>
+                        <textarea id="ui-modal-note" rows="2" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm text-slate-600 placeholder-slate-300" placeholder="Contoh: Setor rutin + tarik konsumsi..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 bg-slate-50 flex justify-end gap-3 flex-shrink-0">
+                <button onclick="closeUiModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">Tutup</button>
+                <button id="ui-modal-edit-btn" class="hidden px-4 py-2 rounded-lg text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all">✏️ Edit Data</button>
+                <button id="ui-modal-action-btn" class="hidden px-4 py-2 rounded-lg text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5">Simpan</button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- 0. HIDDEN FILE INPUT FOR LOADING BACKUP -->
     <input type="file" id="file-input-backup" accept=".zip" class="hidden" onchange="handleLoadBackup(this)">
@@ -219,7 +344,12 @@
                 
                 <button onclick="switchTab('gambar')" id="btn-gambar" class="tab-btn w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all group border border-transparent">
                     <span class="w-8 h-8 rounded-md bg-violet-100 text-violet-600 flex items-center justify-center mr-3 group-hover:scale-105 transition-transform flex-shrink-0 text-lg shadow-sm">🖼️</span>
-                    Gambar / Dokumen
+                    Gambar / Dokumentasi
+                </button>
+
+                <button onclick="switchTab('catatan')" id="btn-catatan" class="tab-btn w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all group border border-transparent">
+                    <span class="w-8 h-8 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center mr-3 group-hover:scale-105 transition-transform flex-shrink-0 text-lg shadow-sm">📝</span>
+                    Catatan Umum
                 </button>
 
                 <button onclick="switchTab('laporan')" id="btn-laporan" class="tab-btn w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all group border border-transparent">
@@ -384,87 +514,166 @@
 
             <!-- === VIEW: GAMBAR (NEW) === -->
             <div id="view-gambar" class="view-section fade-in hidden">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+                <div class="flex flex-col lg:flex-row gap-6 md:gap-8 items-start">
                     
-                    <!-- FORM INPUT -->
-                    <div class="lg:col-span-1 order-1 no-print">
-                        <div class="bg-white rounded-xl shadow-soft border border-slate-200 p-5 md:p-6 sticky top-4">
-                            <h3 class="font-bold text-lg text-slate-800 mb-4 flex items-center">
-                                <span class="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center mr-2 text-violet-600">📷</span>
-                                Upload Dokumentasi
-                            </h3>
-                            
-                            <form onsubmit="handleImageSubmit(event)" class="space-y-4">
+                    <!-- COLUMN 1: FORM INPUT (40% Desktop) -->
+                    <div class="w-full lg:w-2/5 flex-shrink-0 order-1">
+                        <div class="bg-white rounded-xl shadow-soft border border-slate-200 p-5 md:p-6 sticky top-24">
+                            <!-- Header -->
+                            <div class="flex items-center gap-4 mb-6">
+                                <div class="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-2xl shadow-sm border border-indigo-100 text-indigo-600">
+                                    🖼️
+                                </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Tanggal</label>
-                                    <input type="date" id="img-date" required class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all">
+                                    <h3 class="font-bold text-lg text-slate-800 leading-tight">Upload Dokumentasi</h3>
+                                    <p class="text-xs text-slate-500 font-medium">Foto & Video Kegiatan</p>
+                                </div>
+                            </div>
+                            
+                            <form onsubmit="handleImageSubmit(event)" class="space-y-5">
+                                <!-- Date Input -->
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Tanggal</label>
+                                    <div class="relative">
+                                        <input type="date" id="img-date" required class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all font-medium text-sm shadow-sm">
+                                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">📅</span>
+                                    </div>
                                 </div>
                                 
+                                <!-- Title Input -->
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Judul / Keterangan</label>
-                                    <input type="text" id="img-desc" placeholder="Contoh: Nota Konsumsi Rapat" required class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Judul / Keterangan</label>
+                                    <input type="text" id="img-desc" placeholder="Contoh: Video Kerja Bakti" required class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-sm shadow-sm">
                                 </div>
 
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Kategori</label>
-                                    <select id="img-type" class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all">
-                                        <option value="Kas">Kas Operasional</option>
-                                        <option value="Tabungan">Tabungan</option>
-                                        <option value="Lainnya">Lainnya</option>
-                                    </select>
+                                <!-- Category & Media Type -->
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Kategori</label>
+                                        <select id="img-category" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-3 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm appearance-none shadow-sm cursor-pointer">
+                                            <option value="Kas">Kas Operasional</option>
+                                            <option value="Tabungan">Tabungan</option>
+                                            <option value="Lainnya">Lainnya</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Tipe Media</label>
+                                        <select id="img-type" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-3 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm appearance-none shadow-sm cursor-pointer">
+                                            <option value="image">📷 Gambar</option>
+                                            <option value="video">🎬 Video</option>
+                                        </select>
+                                    </div>
                                 </div>
 
+                                <!-- URL Input -->
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">URL Gambar (Link)</label>
-                                    <input type="url" id="img-url" placeholder="https://imghippo.com/..." required class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all text-sm font-mono">
-                                    <p class="text-[10px] text-slate-400 mt-1">Gunakan link langsung (.jpg, .png) dari ImgHippo atau hosting lain.</p>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">URL Media (Link)</label>
+                                    <input type="url" id="img-url" placeholder="https://..." required class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-sm font-mono shadow-sm">
+                                    <p class="text-[10px] text-slate-400 mt-1.5">
+                                        Mendukung ImgHippo (Gambar) & Catbox.moe (Video/Gambar)
+                                    </p>
                                 </div>
 
-                                <button type="submit" class="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-violet-200 hover:shadow-violet-300 active:scale-95 transition-all duration-200">
-                                    Simpan Dokumentasi
+                                <!-- Orientation Selector -->
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Orientasi Tampilan</label>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <label class="cursor-pointer">
+                                            <input type="radio" name="img-orientation" value="auto" checked class="peer sr-only">
+                                            <div class="text-center py-2 px-1 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 peer-checked:bg-indigo-50 peer-checked:border-indigo-200 peer-checked:text-indigo-700 transition-all hover:bg-slate-50">
+                                                🔘 Auto
+                                            </div>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input type="radio" name="img-orientation" value="portrait" class="peer sr-only">
+                                            <div class="text-center py-2 px-1 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 peer-checked:bg-indigo-50 peer-checked:border-indigo-200 peer-checked:text-indigo-700 transition-all hover:bg-slate-50">
+                                                📱 Portrait
+                                            </div>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input type="radio" name="img-orientation" value="landscape" class="peer sr-only">
+                                            <div class="text-center py-2 px-1 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 peer-checked:bg-indigo-50 peer-checked:border-indigo-200 peer-checked:text-indigo-700 transition-all hover:bg-slate-50">
+                                                💻 Landscape
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-200 hover:shadow-indigo-300 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2">
+                                    <span>💾</span> Simpan Media
                                 </button>
                             </form>
                         </div>
                     </div>
 
-                    <!-- GALLERY GRID -->
-                    <div class="lg:col-span-2 order-2">
+                    <!-- COLUMN 2: DISPLAY (60% Desktop) -->
+                    <div class="w-full lg:w-3/5 flex flex-col gap-6 order-2">
                         
-                        <!-- STATIC IMAGE BLOCK -->
-                        <div class="bg-white rounded-xl shadow-soft border border-slate-200 overflow-hidden mb-6">
-                            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
-                                <h3 class="font-bold text-slate-700">Dokumentasi Utama</h3>
+                        <!-- Main Documentation Card -->
+                        <div class="bg-white rounded-xl shadow-soft border border-slate-200 overflow-hidden">
+                            <div class="px-5 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                                <h3 class="font-bold text-slate-700 text-sm md:text-base">Dokumentasi Utama</h3>
+                                <span class="text-[10px] bg-slate-200 text-slate-600 px-2 py-1 rounded font-medium">Permanen</span>
                             </div>
-                            <div class="p-4">
-                                <img 
-                                  src="https://www.imghippo.com/i/FRU2373pU.jpg"
-                                  alt="Dokumentasi Keuangan RT 02 RW 19"
-                                  loading="lazy"
-                                  referrerpolicy="no-referrer"
-                                  class="rounded-xl shadow-md w-full h-auto object-cover hover:opacity-95 transition-opacity cursor-pointer"
-                                  onclick="openImageModal(this.src, 'Dokumentasi Utama RT 02/19', 'Permanen')"
-                                />
-                                <p class="text-xs text-slate-500 mt-2 text-center">Dokumentasi Utama: Kegiatan RT 02 / RW 19</p>
+                            <div class="p-5">
+                                <div class="relative group rounded-xl overflow-hidden shadow-sm border border-slate-100 cursor-pointer bg-slate-100 aspect-video" onclick="openImageModal(this.querySelector('img').src, 'Dokumentasi Utama RT 02/19', 'Permanen')">
+                                    <img 
+                                      src="https://www.imghippo.com/i/FRU2373pU.jpg"
+                                      alt="Dokumentasi Keuangan RT 02 RW 19"
+                                      loading="lazy"
+                                      class="w-full h-full object-cover hover:opacity-95 transition-opacity duration-300"
+                                      onerror="this.src='https://via.placeholder.com/800x400?text=Gambar+Utama+Tidak+Tersedia'"
+                                    />
+                                    <div class="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/10 transition-colors">
+                                        <span class="opacity-0 group-hover:opacity-100 bg-black/60 text-white text-xs px-3 py-1.5 rounded-full backdrop-blur-sm transition-opacity">🔍 Perbesar</span>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-3 text-center italic">Dokumentasi Utama: Kegiatan RT 02 / RW 19</p>
                             </div>
                         </div>
 
-                        <div class="bg-white rounded-xl shadow-soft border border-slate-200 overflow-hidden">
-                            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                                <h3 class="font-bold text-slate-700">Galeri Bukti & Laporan</h3>
-                                <span class="text-xs text-slate-400 bg-white border border-slate-200 px-2 py-1 rounded" id="gallery-count">0 File</span>
-                            </div>
-                            
-                            <div id="gallery-grid" class="p-4 grid grid-cols-2 md:grid-cols-3 gap-4">
-                                <!-- Populated by JS -->
-                            </div>
-                            
-                            <div id="empty-gallery" class="hidden py-12 flex flex-col items-center justify-center text-center">
-                                <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3">
-                                    <span class="text-2xl opacity-50">📁</span>
+                        <!-- Gallery Card -->
+                        <div class="bg-white rounded-xl shadow-soft border border-slate-200 overflow-hidden flex-1">
+                            <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="font-bold text-slate-700 text-sm md:text-base">Galeri Bukti & Laporan</h3>
                                 </div>
-                                <p class="text-slate-400 font-medium">Belum ada dokumentasi bulan ini.</p>
+                                <span class="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full" id="gallery-count">0 File</span>
+                            </div>
+                            
+                            <div class="p-5">
+                                <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
+                                    <!-- Populated by JS -->
+                                </div>
+                                
+                                <div id="empty-gallery" class="hidden py-16 flex flex-col items-center justify-center text-center">
+                                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3 border border-slate-100">
+                                        <span class="text-3xl opacity-30 grayscale">📂</span>
+                                    </div>
+                                    <p class="text-slate-400 font-medium text-sm">Belum ada dokumentasi bulan ini.</p>
+                                </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- === VIEW: CATATAN (NEW) === -->
+            <div id="view-catatan" class="view-section fade-in hidden">
+                <div class="bg-white rounded-xl shadow-soft border border-slate-200 overflow-hidden max-w-4xl mx-auto">
+                    <div class="px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">📝</span>
+                            <div>
+                                <h3 class="font-bold text-slate-800">Catatan Umum Bulan Ini</h3>
+                                <p class="text-xs text-slate-500">Catatan untuk keperluan laporan atau pengingat.</p>
+                            </div>
+                        </div>
+                        <button onclick="saveGeneralNotes()" class="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-slate-700 transition">Simpan Catatan</button>
+                    </div>
+                    <div class="p-6">
+                        <textarea id="general-notes-area" class="w-full h-64 p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 text-slate-700 leading-relaxed resize-none" placeholder="Tulis catatan di sini... Contoh:&#10;- Dana iuran dipakai untuk konsumsi rapat tanggal 12.&#10;- Pak Budi iuran dobel bulan depan."></textarea>
                     </div>
                 </div>
             </div>
@@ -526,6 +735,12 @@
                     </div>
                 </div>
 
+                <!-- General Notes Display in Report -->
+                <div class="mb-8 bg-slate-50 rounded-xl border border-slate-200 p-6">
+                    <h4 class="font-bold text-slate-700 text-sm mb-2 uppercase tracking-wide">Catatan Bulan Ini</h4>
+                    <p id="rpt-general-notes" class="text-sm text-slate-600 italic whitespace-pre-line">Tidak ada catatan.</p>
+                </div>
+
                 <div class="mb-4 flex items-center justify-between mt-8 md:mt-10">
                     <h3 class="font-bold text-slate-800 text-base md:text-lg border-l-4 border-emerald-500 pl-3">Rekapitulasi Tahun <span id="rpt-year-val">2026</span></h3>
                 </div>
@@ -571,7 +786,200 @@
 
     <!-- 4. JAVASCRIPT LOGIC -->
     <script>
-        // GLOBAL FUNCTIONS FIRST (Important for inline onclick handlers)
+        // --- 0. PROFESSIONAL UI SYSTEM (TOAST & MODALS) ---
+
+        // Show Toast Notification
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const colors = type === 'success' 
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                : (type === 'error' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-blue-50 text-blue-700 border-blue-200');
+            const icon = type === 'success' ? '✅' : (type === 'error' ? '⚠️' : 'ℹ️');
+
+            toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg transform transition-all duration-300 translate-x-8 opacity-0 pointer-events-auto max-w-sm ${colors}`;
+            toast.innerHTML = `
+                <span class="text-lg">${icon}</span>
+                <p class="text-sm font-semibold">${message}</p>
+            `;
+
+            container.appendChild(toast);
+
+            // Animate In
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-x-8', 'opacity-0');
+            });
+
+            // Remove after 3s
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-[-10px]');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Internal vars for modal callbacks
+        let currentModalCallback = null;
+        let currentEditAction = null; // Stores the function to call when "Edit" is clicked in preview
+
+        function openUiModal(options) {
+            const backdrop = document.getElementById('ui-modal-backdrop');
+            const panel = document.getElementById('ui-modal-panel');
+            
+            // Set content
+            document.getElementById('ui-modal-title').innerText = options.title || 'Konfirmasi';
+            document.getElementById('ui-modal-subtitle').innerText = options.subtitle || '';
+            
+            const msgEl = document.getElementById('ui-modal-message');
+            if(options.message) {
+                msgEl.innerText = options.message;
+                msgEl.classList.remove('hidden');
+            } else {
+                msgEl.classList.add('hidden');
+            }
+
+            // Container Logic
+            const inputContainer = document.getElementById('ui-modal-input-container');
+            const previewContainer = document.getElementById('ui-modal-preview-container');
+            const actionBtn = document.getElementById('ui-modal-action-btn');
+            const editBtn = document.getElementById('ui-modal-edit-btn');
+
+            if (options.mode === 'preview') {
+                // PREVIEW MODE
+                inputContainer.classList.add('hidden');
+                previewContainer.classList.remove('hidden');
+                actionBtn.classList.add('hidden');
+                editBtn.classList.remove('hidden');
+
+                // Populate Preview Data
+                const data = options.previewData;
+                const net = data.net || 0;
+                const isExpense = net < 0;
+                
+                const amountEl = document.getElementById('ui-preview-amount');
+                amountEl.innerText = formatRupiahStrict(net);
+                amountEl.className = `text-3xl font-extrabold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}`;
+
+                document.getElementById('ui-preview-type').innerText = isExpense ? 'Pengeluaran (Tarik)' : 'Pemasukan (Setor)';
+                document.getElementById('ui-preview-date').innerText = data.dateLabel;
+                document.getElementById('ui-preview-note').innerText = data.note || 'Tidak ada catatan';
+
+                currentEditAction = options.onEdit; // Store the edit function
+
+            } else {
+                // INPUT MODE
+                previewContainer.classList.add('hidden');
+                inputContainer.classList.remove('hidden');
+                actionBtn.classList.remove('hidden');
+                editBtn.classList.add('hidden');
+
+                // Input Logic (Existing)
+                const noteContainer = document.getElementById('ui-modal-note-container');
+                const singleInputWrapper = document.getElementById('ui-single-input-wrapper');
+                const dualInputWrapper = document.getElementById('ui-dual-input-wrapper');
+                const incomeInput = document.getElementById('ui-input-income');
+                const expenseInput = document.getElementById('ui-input-expense');
+                const incomeQuickActions = document.getElementById('ui-income-quick-actions');
+
+                if(options.showNoteInput) {
+                    noteContainer.classList.remove('hidden');
+                    document.getElementById('ui-modal-note').value = options.initialNote || '';
+                } else {
+                    noteContainer.classList.add('hidden');
+                }
+
+                if(options.dualInput) {
+                    singleInputWrapper.classList.add('hidden');
+                    dualInputWrapper.classList.remove('hidden');
+                    
+                    incomeInput.value = options.initialIncome > 0 ? options.initialIncome : '';
+                    expenseInput.value = options.initialExpense > 0 ? options.initialExpense : '';
+
+                    if(options.quickAmounts) {
+                        incomeQuickActions.innerHTML = options.quickAmounts.map(amt => 
+                            `<button onclick="setIncomeValue(${amt})" class="flex-1 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded text-xs font-bold transition border border-emerald-200">+${amt/1000}k</button>`
+                        ).join('');
+                    } else {
+                        incomeQuickActions.innerHTML = '';
+                    }
+                    setTimeout(() => incomeInput.focus(), 100);
+                } else {
+                    dualInputWrapper.classList.add('hidden');
+                    singleInputWrapper.classList.remove('hidden');
+                    
+                    const inputField = document.getElementById('ui-modal-input');
+                    inputField.value = options.initialValue || '';
+                    inputField.placeholder = options.placeholder || '';
+                    
+                    if(options.inputType === 'number') inputField.type = 'tel';
+                    else inputField.type = 'text';
+                    
+                    setTimeout(() => inputField.focus(), 100);
+                }
+
+                // Action Button Logic
+                actionBtn.innerText = options.actionText || 'Simpan';
+                if(options.isDelete) {
+                    actionBtn.className = "px-4 py-2 rounded-lg text-sm font-bold text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-200 transition-all hover:-translate-y-0.5";
+                } else {
+                    actionBtn.className = "px-4 py-2 rounded-lg text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5";
+                }
+                currentModalCallback = options.onConfirm;
+            }
+
+            // Show Modal
+            backdrop.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                backdrop.classList.remove('opacity-0');
+                panel.classList.remove('scale-95', 'opacity-0');
+                panel.classList.add('scale-100', 'opacity-100');
+            });
+        }
+
+        function setIncomeValue(val) {
+            const input = document.getElementById('ui-input-income');
+            const current = parseInt(input.value.replace(/\D/g,'')) || 0;
+            input.value = current + val;
+            input.focus();
+        }
+
+        function closeUiModal() {
+            const backdrop = document.getElementById('ui-modal-backdrop');
+            const panel = document.getElementById('ui-modal-panel');
+            
+            backdrop.classList.add('opacity-0');
+            panel.classList.remove('scale-100', 'opacity-100');
+            panel.classList.add('scale-95', 'opacity-0');
+
+            setTimeout(() => {
+                backdrop.classList.add('hidden');
+                currentModalCallback = null;
+                currentEditAction = null;
+            }, 200);
+        }
+
+        // Action Button Listeners
+        document.getElementById('ui-modal-action-btn').addEventListener('click', () => {
+            const isDual = !document.getElementById('ui-dual-input-wrapper').classList.contains('hidden');
+            const noteVal = document.getElementById('ui-modal-note').value;
+
+            if (isDual) {
+                const inc = document.getElementById('ui-input-income').value;
+                const exp = document.getElementById('ui-input-expense').value;
+                if(currentModalCallback) currentModalCallback({ income: inc, expense: exp, note: noteVal });
+            } else {
+                const val = document.getElementById('ui-modal-input').value;
+                if(currentModalCallback) currentModalCallback(val, noteVal);
+            }
+            closeUiModal();
+        });
+
+        document.getElementById('ui-modal-edit-btn').addEventListener('click', () => {
+            if(currentEditAction) currentEditAction(); // Trigger the edit function passed in options
+            // Note: openUiModal will be called again by currentEditAction, refreshing the content
+        });
+
+        // --- GLOBAL FUNCTIONS ---
         
         let isMenuOpen = false;
 
@@ -594,15 +1002,53 @@
             }
         }
 
-        function openImageModal(url, desc, date) {
+        /* --- UPDATED MEDIA LOGIC FOR VIDEO/IMAGE & ORIENTATION --- */
+
+        function openImageModal(url, desc, date, orientation = 'auto', mediaType = 'image') {
             const modal = document.getElementById('image-modal');
             const img = document.getElementById('modal-img');
+            const video = document.getElementById('modal-video');
+            const wrapper = document.getElementById('modal-media-wrapper');
+            
             const txtDesc = document.getElementById('modal-desc');
             const txtDate = document.getElementById('modal-date');
+            const badge = document.getElementById('modal-badge');
 
-            img.src = url;
+            // Reset Display
+            img.classList.add('hidden');
+            video.classList.add('hidden');
+            video.pause();
+            
+            // Set Text
             txtDesc.innerText = desc;
             txtDate.innerText = date;
+            
+            // Badge logic
+            const isVideo = mediaType === 'video' || url.match(/\.(mp4|webm)$/i);
+            badge.innerText = isVideo ? "VIDEO" : "FOTO";
+            badge.className = `inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mb-2 ${isVideo ? 'bg-red-500 text-white' : 'bg-indigo-500 text-white'}`;
+
+            // Orientation Classes
+            wrapper.className = "relative transition-all duration-300 flex items-center justify-center"; // Reset
+            if (orientation === 'portrait') {
+                wrapper.classList.add('h-[80vh]', 'w-[45vh]'); // approx 9:16
+            } else if (orientation === 'landscape') {
+                wrapper.classList.add('w-full', 'max-w-4xl', 'aspect-video');
+            } else {
+                // Auto: allow natural size but constrained
+                wrapper.classList.add('max-h-[85vh]', 'max-w-full');
+            }
+
+            if (isVideo) {
+                video.src = url;
+                video.classList.remove('hidden');
+                // Ensure orientation applies to video element style for object-fit
+                video.className = `max-h-[80vh] w-full h-full rounded-lg shadow-2xl border border-white/10 bg-black ${orientation === 'portrait' ? 'object-cover' : 'object-contain'}`;
+            } else {
+                img.src = url;
+                img.classList.remove('hidden');
+                img.className = `max-h-[80vh] w-full h-full rounded-lg shadow-2xl border border-white/10 ${orientation === 'portrait' ? 'object-cover' : 'object-contain'}`;
+            }
 
             modal.classList.remove('hidden');
             setTimeout(() => modal.classList.remove('opacity-0'), 10);
@@ -610,11 +1056,29 @@
 
         function closeImageModal() {
             const modal = document.getElementById('image-modal');
+            const video = document.getElementById('modal-video');
+            
             modal.classList.add('opacity-0');
+            video.pause(); // Stop audio
+            
             setTimeout(() => {
                 modal.classList.add('hidden');
                 document.getElementById('modal-img').src = '';
+                video.src = '';
             }, 300);
+        }
+
+        // Auto-detect Media Type on Input
+        if(document.getElementById('img-url')) {
+            document.getElementById('img-url').addEventListener('input', function(e) {
+                const val = e.target.value.toLowerCase();
+                const typeSelect = document.getElementById('img-type');
+                if (val.match(/\.(mp4|webm)$/) || val.includes('catbox.moe') && val.endsWith('.mp4')) {
+                    typeSelect.value = 'video';
+                } else if (val.match(/\.(jpg|jpeg|png|webp)$/)) {
+                    typeSelect.value = 'image';
+                }
+            });
         }
 
         // --- CONSTANTS ---
@@ -646,7 +1110,7 @@
             { id: 46, name: "MAMAN S" }, { id: 47, name: "WARUNG IBU IIS" }, { id: 48, name: "(Kosong)" }, { id: 49, name: "(Kosong)" }, { id: 50, name: "(Kosong)" }
         ];
 
-        // --- DATA SEED ---
+        // --- DATA SEED (REMOVED FOR BREVITY - ASSUME SAME AS BEFORE) ---
         const CSV_JAN_2026_TABUNGAN = [
             { no: 1, s: {1: 1500, 2: 2000, 3: 3000, 4: 5000, 5: 3000} }, { no: 2, s: {1: 2000, 2: 2000, 3: 10000, 4: 10000, 5: 10000} }, { no: 3, s: {1: 4500, 2: 4500, 3: 4500, 4: 5000, 5: 5000} },
             { no: 6, s: {1: 2000, 2: 2000, 3: 2000, 4: 2000, 5: 2000} }, { no: 7, s: {1: 2000, 2: 2000, 3: 2000, 4: 2000, 5: 2000} }, { no: 8, s: {1: 5000, 3: 10000} },
@@ -688,85 +1152,256 @@
         let db = {};
         let currentYear = 2026;
         let currentMonth = 0;
-        let currentState = { citizens: [], kasOut: {}, images: [] };
+        let currentState = { citizens: [], kasOut: {}, images: [], generalNotes: '' };
 
-        // --- ACTION FUNCTIONS (Defined globally to fix ReferenceError) ---
+        // --- REFACTORED ACTION FUNCTIONS (PREVIEW FIRST) ---
 
-        window.editSaving = function(id, date) {
+        window.editSaving = function(id, date, forceEdit = false) {
             const citizen = currentState.citizens.find(c => c.id === id);
-            const currentVal = citizen.savings[date] || 0;
-            const input = prompt(`Tabungan ${citizen.name} (Tgl ${date} ${MONTH_NAMES[currentMonth]}):\nMasukkan nominal:`, currentVal === 0 ? '' : currentVal);
-            if (input !== null) {
-                const amount = parseInt(input.replace(/\D/g,''));
-                if (!isNaN(amount)) citizen.savings[date] = amount;
-                else if (input === "") citizen.savings[date] = 0;
-                saveDB(); renderAll();
+            
+            // Extract Data
+            let currentData = citizen.savings[date];
+            let income = 0;
+            let expense = 0;
+            let note = '';
+            let net = 0;
+
+            if (typeof currentData === 'object' && currentData !== null) {
+                income = currentData.income || 0;
+                expense = currentData.expense || 0;
+                note = currentData.note || '';
+                net = currentData.net || (income - expense);
+            } else if (typeof currentData === 'number') {
+                if (currentData > 0) income = currentData;
+                else if (currentData < 0) expense = Math.abs(currentData);
+                net = currentData;
             }
+
+            // DECISION: Preview or Edit?
+            if (!forceEdit && net !== 0) {
+                // Show Preview if data exists
+                openUiModal({
+                    title: 'Detail Transaksi',
+                    subtitle: `Tabungan ${citizen.name}`,
+                    mode: 'preview',
+                    previewData: {
+                        net: net,
+                        dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
+                        note: note
+                    },
+                    onEdit: () => {
+                        window.editSaving(id, date, true); // Force edit mode
+                    }
+                });
+                return;
+            }
+            
+            // Show Input (Edit Mode)
+            openUiModal({
+                title: `Tabungan: ${citizen.name}`,
+                subtitle: `Input transaksi Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
+                mode: 'input',
+                inputType: 'number',
+                dualInput: true,
+                initialIncome: income,
+                initialExpense: expense,
+                initialNote: note,
+                quickAmounts: [1000, 2000, 5000, 10000],
+                showNoteInput: true,
+                onConfirm: (data) => {
+                    const inc = parseInt(data.income.toString().replace(/\D/g,'')) || 0;
+                    const exp = parseInt(data.expense.toString().replace(/\D/g,'')) || 0;
+                    const newNet = inc - exp;
+
+                    citizen.savings[date] = {
+                        income: inc,
+                        expense: exp,
+                        net: newNet,
+                        note: data.note
+                    };
+
+                    saveDB(); renderAll();
+                    showToast(`Transaksi ${citizen.name} disimpan!`, 'success');
+                }
+            });
         };
 
-        window.editKas = function(id, date) {
+        window.editKas = function(id, date, forceEdit = false) {
             const citizen = currentState.citizens.find(c => c.id === id);
-            const currentVal = citizen.kas[date] || 0;
-            const input = prompt(`Kas ${citizen.name} (Tgl ${date} ${MONTH_NAMES[currentMonth]}):\n0 atau 500?`, currentVal === 0 ? '500' : currentVal);
-            if (input !== null) {
-                const amount = parseInt(input.replace(/\D/g,''));
-                if (!isNaN(amount)) citizen.kas[date] = amount;
-                else if (input === "") citizen.kas[date] = 0;
-                saveDB(); renderAll();
+            
+            let currentData = citizen.kas[date];
+            let income = 0;
+            let expense = 0;
+            let note = '';
+            let net = 0;
+
+            if (typeof currentData === 'object' && currentData !== null) {
+                income = currentData.income || 0;
+                expense = currentData.expense || 0;
+                note = currentData.note || '';
+                net = currentData.net || (income - expense);
+            } else if (typeof currentData === 'number') {
+                if (currentData > 0) income = currentData;
+                else if (currentData < 0) expense = Math.abs(currentData);
+                net = currentData;
             }
+            
+            if (!forceEdit && net !== 0) {
+                openUiModal({
+                    title: 'Detail Transaksi',
+                    subtitle: `Kas Operasional ${citizen.name}`,
+                    mode: 'preview',
+                    previewData: {
+                        net: net,
+                        dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
+                        note: note
+                    },
+                    onEdit: () => {
+                        window.editKas(id, date, true);
+                    }
+                });
+                return;
+            }
+
+            openUiModal({
+                title: `Kas: ${citizen.name}`,
+                subtitle: `Input Kas Operasional Tgl ${date}`,
+                mode: 'input',
+                inputType: 'number',
+                dualInput: true,
+                initialIncome: income,
+                initialExpense: expense,
+                initialNote: note,
+                quickAmounts: [500, 1000, 2000, 5000],
+                showNoteInput: true,
+                onConfirm: (data) => {
+                    const inc = parseInt(data.income.toString().replace(/\D/g,'')) || 0;
+                    const exp = parseInt(data.expense.toString().replace(/\D/g,'')) || 0;
+                    const newNet = inc - exp;
+
+                    citizen.kas[date] = {
+                        income: inc,
+                        expense: exp,
+                        net: newNet,
+                        note: data.note
+                    };
+
+                    saveDB(); renderAll();
+                    showToast(`Kas ${citizen.name} disimpan!`, 'success');
+                }
+            });
         };
 
         window.editKasOut = function(date) {
             const currentVal = currentState.kasOut[date] || 0;
-            const input = prompt(`PENGELUARAN Operasional (Tgl ${date} ${MONTH_NAMES[currentMonth]}):\nMasukkan nominal pengeluaran (Contoh: 15000):`, currentVal === 0 ? '' : currentVal);
-            if (input !== null) {
-                const amount = parseInt(input.replace(/\D/g,''));
-                if (!isNaN(amount)) currentState.kasOut[date] = amount;
-                else if (input === "") currentState.kasOut[date] = 0;
-                saveDB(); renderAll();
-            }
+            const currentNote = currentState.kasOutNotes ? currentState.kasOutNotes[date] : '';
+            
+            openUiModal({
+                title: 'Pengeluaran Kas Ops',
+                subtitle: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
+                mode: 'input',
+                inputType: 'number',
+                initialValue: currentVal,
+                placeholder: "15000",
+                showNoteInput: true,
+                initialNote: currentNote,
+                onConfirm: (val, note) => {
+                    let amount = parseInt(val.toString().replace(/[^0-9]/g, ''));
+                    if (isNaN(amount)) amount = 0;
+                    currentState.kasOut[date] = amount;
+                    
+                    if(!currentState.kasOutNotes) currentState.kasOutNotes = {};
+                    currentState.kasOutNotes[date] = note;
+
+                    saveDB(); renderAll();
+                    showToast('Pengeluaran disimpan', 'success');
+                }
+            });
+        };
+
+
+        window.saveGeneralNotes = function() {
+            const text = document.getElementById('general-notes-area').value;
+            currentState.generalNotes = text;
+            saveDB();
+            renderReport(); 
+            showToast('Catatan umum tersimpan!', 'success');
         };
 
         window.addCitizen = function() {
-            const name = prompt("Masukkan Nama Warga Baru:");
-            if(!name) return;
-
-            const maxId = currentState.citizens.reduce((max, c) => Math.max(max, typeof c.id === 'number' ? c.id : 0), 0);
-            const newId = maxId + 1;
-
-            currentState.citizens.push({ id: newId, name: name, savings: {}, kas: {} });
-            saveDB(); renderAll();
-            alert(`Warga "${name}" berhasil ditambahkan!`);
+            openUiModal({
+                title: 'Tambah Warga Baru',
+                mode: 'input',
+                inputType: 'text',
+                actionText: 'Tambah',
+                onConfirm: (name) => {
+                    if(!name) return;
+                    const maxId = currentState.citizens.reduce((max, c) => Math.max(max, typeof c.id === 'number' ? c.id : 0), 0);
+                    const newId = maxId + 1;
+                    currentState.citizens.push({ id: newId, name: name, savings: {}, kas: {}, savingsNotes: {}, kasNotes: {} });
+                    saveDB(); renderAll();
+                    showToast(`Warga "${name}" berhasil ditambahkan!`, 'success');
+                }
+            });
         };
 
         window.deleteCitizen = function(id, name) {
-            if(confirm(`Yakin ingin menghapus warga "${name}"? Data tabungan/kas mereka di bulan ini akan hilang.`)) {
-                currentState.citizens = currentState.citizens.filter(c => c.id !== id);
-                saveDB(); renderAll();
-            }
+            openUiModal({
+                title: 'Hapus Warga?',
+                message: `Yakin ingin menghapus warga "${name}"? Data tabungan/kas mereka di bulan ini akan HILANG PERMANEN.`,
+                mode: 'input',
+                isDelete: true,
+                actionText: 'Ya, Hapus',
+                onConfirm: () => {
+                    currentState.citizens = currentState.citizens.filter(c => c.id !== id);
+                    saveDB(); renderAll();
+                    showToast(`Warga "${name}" dihapus.`, 'error');
+                }
+            });
         };
 
         window.resetValuesOnly = function() {
-            if(!confirm("PERINGATAN: Ini akan me-RESET semua nominal (Uang) menjadi 0 untuk bulan ini.\n\nNama warga dan struktur tanggal TETAP ADA.\n\nLanjutkan?")) return;
-            currentState.citizens.forEach(c => { c.savings = {}; c.kas = {}; });
-            currentState.kasOut = {};
-            saveDB(); renderAll();
-            alert("Nominal berhasil di-reset ke 0.");
+            openUiModal({
+                title: 'Reset Nominal Bulan Ini?',
+                message: "Ini akan me-RESET semua uang menjadi 0 untuk bulan ini saja. Nama warga TETAP ADA.",
+                mode: 'input',
+                isDelete: true,
+                actionText: 'Ya, Reset 0',
+                onConfirm: () => {
+                    currentState.citizens.forEach(c => { 
+                        c.savings = {}; c.kas = {}; c.savingsNotes = {}; c.kasNotes = {}; 
+                    });
+                    currentState.kasOut = {};
+                    currentState.kasOutNotes = {};
+                    saveDB(); renderAll();
+                    showToast("Semua nominal di-reset ke 0.", 'success');
+                }
+            });
         };
 
         window.resetData = function() {
-            if(confirm("PERINGATAN KERAS: Semua data akan DIHAPUS PERMANEN dan kembali ke kondisi awal Jan 2026.\n\nLanjutkan?")) {
-                localStorage.removeItem(STORAGE_KEY);
-                location.reload();
-            }
+            openUiModal({
+                title: 'HARD RESET SYSTEM?',
+                message: "PERINGATAN KERAS: Semua data akan DIHAPUS PERMANEN dan kembali ke kondisi awal Jan 2026. Tidak bisa dibatalkan!",
+                mode: 'input',
+                isDelete: true,
+                actionText: 'Hapus Semua Data',
+                onConfirm: () => {
+                    localStorage.removeItem(STORAGE_KEY);
+                    location.reload();
+                }
+            });
         };
 
         window.downloadBackup = function() {
             const zip = new JSZip();
             zip.file("data.json", JSON.stringify(db));
-            zip.file("meta.json", JSON.stringify({ app: "Manajemen Keuangan RT 02 / RW 19", version: "v2.0", backup_at: new Date().toLocaleString() }));
+            zip.file("meta.json", JSON.stringify({ app: "Manajemen Keuangan RT 02 / RW 19", version: "v2.2", backup_at: new Date().toLocaleString() }));
             zip.file("README.txt", "Backup data keuangan RT 02/19.");
-            zip.generateAsync({type:"blob"}).then(function(content) { saveAs(content, "uranusfazry.zip"); });
+            zip.generateAsync({type:"blob"}).then(function(content) { 
+                saveAs(content, "uranusfazry_v2_2.zip"); 
+                showToast("Backup berhasil di-download!", 'success');
+            });
         };
 
         window.triggerLoad = function() {
@@ -776,22 +1411,33 @@
         window.handleLoadBackup = function(input) {
             const file = input.files[0];
             if(!file) return;
-            if(!confirm("PERHATIAN: Load data akan MENIMPA seluruh data saat ini. Lanjutkan?")) { input.value = ''; return; }
-            
-            JSZip.loadAsync(file).then(function(zip) {
-                return zip.file("data.json").async("string");
-            }).then(function(dataStr) {
-                if(dataStr) {
-                    try {
-                        const newData = JSON.parse(dataStr);
-                        if(!newData[2026]) throw new Error("Struktur data tidak valid");
-                        db = newData;
-                        saveDB();
-                        alert("Data berhasil dipulihkan!");
-                        location.reload();
-                    } catch(e) { alert("Gagal: " + e.message); }
+
+            openUiModal({
+                title: 'Restore Backup?',
+                message: "PERHATIAN: Data saat ini akan DITIMPA dengan data dari file backup. Lanjutkan?",
+                mode: 'input',
+                actionText: 'Ya, Restore',
+                onConfirm: () => {
+                     JSZip.loadAsync(file).then(function(zip) {
+                        return zip.file("data.json").async("string");
+                    }).then(function(dataStr) {
+                        if(dataStr) {
+                            try {
+                                const newData = JSON.parse(dataStr);
+                                if(!newData[2026]) throw new Error("Struktur data tidak valid");
+                                db = newData;
+                                saveDB();
+                                showToast("Data berhasil dipulihkan!", 'success');
+                                setTimeout(() => location.reload(), 1000);
+                            } catch(e) { 
+                                showToast("Gagal load: " + e.message, 'error'); 
+                            }
+                        }
+                    }).catch(function(err) { 
+                        showToast("Error: " + err.message, 'error'); 
+                    });
                 }
-            }).catch(function(err) { alert("Error: " + err.message); });
+            });
             input.value = '';
         };
 
@@ -799,15 +1445,31 @@
             e.preventDefault();
             const date = document.getElementById('img-date').value;
             const desc = document.getElementById('img-desc').value;
+            const category = document.getElementById('img-category').value;
             const type = document.getElementById('img-type').value;
             const url = document.getElementById('img-url').value;
+            const orientationElement = document.querySelector('input[name="img-orientation"]:checked');
+            const orientation = orientationElement ? orientationElement.value : 'auto';
 
-            if(!url.match(/\.(jpeg|jpg|gif|png|webp)$/) && !url.includes('imghippo')) {
-                if(!confirm("URL sepertinya bukan gambar langsung (.jpg/.png). Tetap simpan?")) return;
+            const isValidDomain = url.includes('imghippo.com') || url.includes('catbox.moe');
+            const hasExtension = url.match(/\.(jpeg|jpg|gif|png|webp|mp4|webm)$/i);
+
+            if(!isValidDomain && !hasExtension) {
+                if(!confirm("URL ini sepertinya bukan dari ImgHippo/Catbox atau bukan file gambar/video. Tetap simpan?")) {
+                    return;
+                }
             }
 
             if(!currentState.images) currentState.images = [];
-            currentState.images.push({ date, desc, type, url, id: Date.now() });
+            currentState.images.push({ 
+                date, 
+                desc, 
+                category, 
+                type, 
+                url, 
+                orientation, 
+                id: Date.now() 
+            });
             
             document.getElementById('img-desc').value = '';
             document.getElementById('img-url').value = '';
@@ -815,14 +1477,21 @@
             saveDB();
             renderImages();
             renderReport(); 
-            alert('Dokumentasi berhasil disimpan!');
+            showToast('Dokumentasi berhasil disimpan!', 'success');
         };
 
         window.deleteImage = function(id) {
-            if(confirm("Hapus dokumentasi ini?")) {
-                currentState.images = currentState.images.filter(img => img.id !== id);
-                saveDB(); renderImages(); renderReport();
-            }
+            openUiModal({
+                title: 'Hapus Dokumentasi?',
+                isDelete: true,
+                mode: 'input',
+                actionText: 'Hapus',
+                onConfirm: () => {
+                    currentState.images = currentState.images.filter(img => img.id !== id);
+                    saveDB(); renderImages(); renderReport();
+                    showToast('Dokumentasi dihapus.', 'error');
+                }
+            });
         };
 
         window.changePeriod = function() {
@@ -846,7 +1515,9 @@
 
             currentState = db[currentYear][currentMonth];
             if(!currentState.kasOut) currentState.kasOut = {};
+            if(!currentState.kasOutNotes) currentState.kasOutNotes = {};
             if(!currentState.images) currentState.images = [];
+            if(!currentState.generalNotes) currentState.generalNotes = '';
             
             renderAll();
         };
@@ -871,6 +1542,7 @@
                 else if(tabName === 'kas') mobileTitle.innerText = "Kas Harian";
                 else if(tabName === 'gambar') mobileTitle.innerText = "Dokumentasi";
                 else if(tabName === 'laporan') mobileTitle.innerText = "Laporan";
+                else if(tabName === 'catatan') mobileTitle.innerText = "Catatan";
             }
 
             if(window.innerWidth <= 768 && isMenuOpen) {
@@ -922,11 +1594,13 @@
                     id: mc.id,
                     name: mc.name,
                     savings: sRow ? sRow.s : {},
-                    kas: kRow ? kRow.k : {}
+                    kas: kRow ? kRow.k : {},
+                    savingsNotes: {},
+                    kasNotes: {}
                 };
             });
 
-            db[2026][0] = { citizens: jan2026Citizens, kasOut: {}, images: [] };
+            db[2026][0] = { citizens: jan2026Citizens, kasOut: {}, kasOutNotes: {}, images: [], generalNotes: '' };
             saveDB();
         }
 
@@ -935,9 +1609,11 @@
                 id: mc.id,
                 name: mc.name,
                 savings: {},
-                kas: {}
+                kas: {},
+                savingsNotes: {},
+                kasNotes: {}
             }));
-            return { citizens: blankCitizens, kasOut: {}, images: [] };
+            return { citizens: blankCitizens, kasOut: {}, kasOutNotes: {}, images: [], generalNotes: '' };
         }
 
         function saveDB() {
@@ -945,11 +1621,25 @@
         }
 
         const formatRupiahStrict = (num) => {
-            if (!num) return '-';
-            let reverse = num.toString().split('').reverse().join(''),
+            if (!num && num !== 0) return '-';
+            const isNegative = num < 0;
+            let valStr = Math.abs(num).toString();
+            let reverse = valStr.split('').reverse().join(''),
             ribuan = reverse.match(/\d{1,3}/g);
             ribuan = ribuan.join('.').split('').reverse().join('');
-            return 'Rp.' + ribuan;
+            return (isNegative ? '-' : '') + 'Rp.' + ribuan;
+        }
+
+        // New Helper to parse value from either Number or Object
+        const getNetValue = (data) => {
+            if (typeof data === 'number') return data;
+            if (typeof data === 'object' && data !== null) return data.net || 0;
+            return 0;
+        };
+
+        const getNoteValue = (data) => {
+            if (typeof data === 'object' && data !== null) return data.note || '';
+            return '';
         }
 
         function renderAll() {
@@ -957,6 +1647,7 @@
             renderKas();
             renderReport();
             renderImages();
+            document.getElementById('general-notes-area').value = currentState.generalNotes || '';
         }
 
         function renderTabungan() {
@@ -977,24 +1668,83 @@
                     </td>`;
 
                 for(let i=1; i<=31; i++) {
-                    const val = c.savings[i] || 0;
+                    const rawData = c.savings[i];
+                    const val = getNetValue(rawData);
+                    const note = getNoteValue(rawData);
+                    
                     totalRow += val;
                     if(!totalsPerDate[i]) totalsPerDate[i] = 0;
                     totalsPerDate[i] += val;
 
-                    const display = val > 0 ? formatRupiahStrict(val) : '';
-                    const activeClass = val > 0 ? 'text-emerald-700 font-bold bg-emerald-50/50' : 'text-slate-300';
+                    let display = '';
+                    let activeClass = 'text-slate-300 hover:bg-slate-50 cursor-pointer'; // Default empty style
+                    let isSplit = false;
+                    let splitHtml = '';
+
+                    // Display Logic
+                    if (typeof rawData === 'object' && rawData !== null && (rawData.income > 0 || rawData.expense > 0)) {
+                        if (rawData.income > 0 && rawData.expense > 0) {
+                            // Both Income and Expense
+                            isSplit = true;
+                            splitHtml = `
+                                <div class="flex flex-col text-[10px] leading-tight">
+                                    <span class="text-emerald-600 font-bold">+${formatRupiahStrict(rawData.income).replace('Rp.','')}</span>
+                                    <span class="text-red-500 font-bold">-${formatRupiahStrict(rawData.expense).replace('Rp.','')}</span>
+                                </div>
+                            `;
+                            activeClass = 'bg-slate-50 hover:bg-slate-100 cursor-pointer';
+                        } else if (rawData.income > 0) {
+                            display = formatRupiahStrict(rawData.income);
+                            activeClass = 'text-emerald-700 font-bold bg-emerald-50/50 hover:bg-emerald-100 cursor-pointer';
+                        } else if (rawData.expense > 0) {
+                            display = `-${formatRupiahStrict(rawData.expense)}`;
+                            activeClass = 'text-red-600 font-bold bg-red-50 hover:bg-red-100 cursor-pointer';
+                        }
+                    } else if (typeof rawData === 'number' && rawData !== 0) {
+                        // Legacy support
+                        display = formatRupiahStrict(rawData);
+                        activeClass = rawData < 0 
+                            ? 'text-red-600 font-bold bg-red-50 hover:bg-red-100 cursor-pointer' 
+                            : 'text-emerald-700 font-bold bg-emerald-50/50 hover:bg-emerald-100 cursor-pointer';
+                    } else {
+                        // Empty cell styling
+                        display = ''; 
+                        // Optional: Add a subtle '+' on hover via CSS or just cursor-pointer
+                    }
+
+                    // Add note indicator
+                    let noteIndicator = '';
+                    if(note) {
+                        noteIndicator = `<span class="absolute top-0 right-0 text-[8px] leading-none p-0.5">📝</span>`;
+                    }
                     
-                    rowHtml += `<td onclick="editSaving(${c.id}, ${i})" class="px-1 py-3 text-center border-b border-r cursor-pointer hover:bg-emerald-100 transition-colors ${activeClass} text-xs whitespace-nowrap select-none min-w-[70px]">${display}</td>`;
+                    if(isSplit) {
+                         rowHtml += `<td onclick="editSaving(${c.id}, ${i})" class="relative px-1 py-1 text-center border-b border-r transition-colors ${activeClass} min-w-[70px]" title="${note || ''}">
+                            ${splitHtml}
+                            ${noteIndicator}
+                        </td>`;
+                    } else {
+                        rowHtml += `<td onclick="editSaving(${c.id}, ${i})" class="relative px-1 py-3 text-center border-b border-r transition-colors ${activeClass} text-xs whitespace-nowrap select-none min-w-[70px]" title="${note || ''}">
+                            ${display}
+                            ${noteIndicator}
+                        </td>`;
+                    }
                 }
                 grandTotal += totalRow;
-                rowHtml += `<td class="px-4 py-3 text-right font-bold text-emerald-700 bg-emerald-50 border-b sticky right-0 z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] col-sticky-right">${formatRupiahStrict(totalRow)}</td></tr>`;
+                
+                const rowClass = totalRow < 0 ? 'text-red-700 bg-red-50' : 'text-emerald-700 bg-emerald-50';
+                rowHtml += `<td class="px-4 py-3 text-right font-bold ${rowClass} border-b sticky right-0 z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] col-sticky-right">${formatRupiahStrict(totalRow)}</td></tr>`;
                 tbody.innerHTML += rowHtml;
             });
 
             for(let i=1; i<=31; i++) {
                 const tf = document.getElementById(`tf-tab-${i}`);
-                if(tf) tf.innerText = totalsPerDate[i] ? formatRupiahStrict(totalsPerDate[i]) : '-';
+                if(tf) {
+                    const val = totalsPerDate[i] || 0;
+                    tf.innerText = val !== 0 ? formatRupiahStrict(val) : '-';
+                    if(val < 0) tf.className = "px-1 py-3 text-center text-[10px] text-red-500 font-bold border-r min-w-[70px]";
+                    else tf.className = "px-1 py-3 text-center text-[10px] text-slate-500 border-r min-w-[70px]";
+                }
             }
             document.getElementById('tf-tab-total').innerText = formatRupiahStrict(grandTotal);
         }
@@ -1017,15 +1767,60 @@
                     </td>`;
 
                 for(let i=1; i<=31; i++) {
-                    const val = c.kas[i] || 0;
+                    const rawData = c.kas[i];
+                    const val = getNetValue(rawData);
+                    const note = getNoteValue(rawData);
+                    
                     totalRow += val;
                     if(!totalsPerDateIn[i]) totalsPerDateIn[i] = 0;
                     totalsPerDateIn[i] += val;
 
-                    const display = val > 0 ? '500' : '';
-                    const activeClass = val > 0 ? 'text-blue-600 font-bold bg-blue-50/50' : 'text-slate-300 font-light';
+                    let display = '';
+                    let activeClass = 'text-slate-300 hover:bg-slate-50 cursor-pointer';
+                    let isSplit = false;
+                    let splitHtml = '';
 
-                    rowHtml += `<td onclick="editKas(${c.id}, ${i})" class="px-1 py-3 text-center border-b border-r cursor-pointer hover:bg-blue-100 text-xs ${activeClass} select-none min-w-[70px]">${display}</td>`;
+                    // Display Logic similar to Tabungan
+                    if (typeof rawData === 'object' && rawData !== null && (rawData.income > 0 || rawData.expense > 0)) {
+                        if (rawData.income > 0 && rawData.expense > 0) {
+                            isSplit = true;
+                            splitHtml = `
+                                <div class="flex flex-col text-[10px] leading-tight">
+                                    <span class="text-blue-600 font-bold">+${formatRupiahStrict(rawData.income).replace('Rp.','')}</span>
+                                    <span class="text-red-500 font-bold">-${formatRupiahStrict(rawData.expense).replace('Rp.','')}</span>
+                                </div>
+                            `;
+                            activeClass = 'bg-slate-50 hover:bg-slate-100 cursor-pointer';
+                        } else if (rawData.income > 0) {
+                            display = formatRupiahStrict(rawData.income);
+                            activeClass = 'text-blue-700 font-bold bg-blue-50 hover:bg-blue-100 cursor-pointer';
+                        } else if (rawData.expense > 0) {
+                            display = `-${formatRupiahStrict(rawData.expense)}`;
+                            activeClass = 'text-red-600 font-bold bg-red-50 hover:bg-red-100 cursor-pointer';
+                        }
+                    } else if (typeof rawData === 'number' && rawData !== 0) {
+                        display = formatRupiahStrict(rawData);
+                        activeClass = rawData > 0 
+                            ? 'text-blue-700 font-bold bg-blue-50 hover:bg-blue-100 cursor-pointer' 
+                            : 'text-red-600 font-bold bg-red-50 hover:bg-red-100 cursor-pointer';
+                    }
+
+                    let noteIndicator = '';
+                    if(note) {
+                        noteIndicator = `<span class="absolute top-0 right-0 text-[8px] leading-none p-0.5">📝</span>`;
+                    }
+
+                    if(isSplit) {
+                        rowHtml += `<td onclick="editKas(${c.id}, ${i})" class="relative px-1 py-1 text-center border-b border-r transition-colors ${activeClass} select-none min-w-[70px]" title="${note || ''}">
+                            ${splitHtml}
+                            ${noteIndicator}
+                        </td>`;
+                    } else {
+                        rowHtml += `<td onclick="editKas(${c.id}, ${i})" class="relative px-1 py-3 text-center border-b border-r transition-colors ${activeClass} select-none min-w-[70px]" title="${note || ''}">
+                            ${display}
+                            ${noteIndicator}
+                        </td>`;
+                    }
                 }
                 grandTotalIn += totalRow;
                 rowHtml += `<td class="px-4 py-3 text-right font-bold text-blue-700 bg-blue-50 border-b sticky right-0 z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] col-sticky-right">${formatRupiahStrict(totalRow)}</td></tr>`;
@@ -1039,12 +1834,21 @@
             
             for(let i=1; i<=31; i++) {
                 const val = currentState.kasOut[i] || 0;
+                const hasNote = currentState.kasOutNotes && currentState.kasOutNotes[i];
                 totalExpenseRow += val;
                 
                 const display = val > 0 ? `-${formatRupiahStrict(val).replace('Rp.','')}` : '-';
-                const activeClass = val > 0 ? 'text-rose-600 font-bold bg-rose-100' : 'text-slate-400';
+                const activeClass = val > 0 ? 'text-rose-600 font-bold bg-rose-100 hover:bg-rose-200 cursor-pointer' : 'text-slate-400 hover:bg-slate-100 cursor-pointer';
                 
-                expenseHtml += `<td onclick="editKasOut(${i})" class="px-1 py-3 text-center border-b border-r border-rose-200 cursor-pointer hover:bg-rose-200 transition-colors ${activeClass} text-[10px] whitespace-nowrap select-none min-w-[70px]">${display}</td>`;
+                let noteIndicator = '';
+                if(hasNote) {
+                    noteIndicator = `<span class="absolute top-0 right-0 text-[8px] leading-none p-0.5">📝</span>`;
+                }
+
+                expenseHtml += `<td onclick="editKasOut(${i})" class="relative px-1 py-3 text-center border-b border-r border-rose-200 transition-colors ${activeClass} text-[10px] whitespace-nowrap select-none min-w-[70px]" title="${hasNote || ''}">
+                    ${display}
+                    ${noteIndicator}
+                </td>`;
             }
             expenseHtml += `<td class="px-4 py-3 text-right font-bold text-rose-700 bg-rose-100 border-b sticky right-0 z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] col-sticky-right">-${formatRupiahStrict(totalExpenseRow)}</td></tr>`;
             tbody.innerHTML += expenseHtml;
@@ -1061,37 +1865,61 @@
             document.getElementById('tf-kas-total').innerText = formatRupiahStrict(grandNet);
         }
 
+        // Added missing renderImages and getTypeColor functions
         function renderImages() {
             const grid = document.getElementById('gallery-grid');
             const empty = document.getElementById('empty-gallery');
             const count = document.getElementById('gallery-count');
             
             const images = currentState.images || [];
-            count.innerText = `${images.length} File`;
+            if(count) count.innerText = `${images.length} File`;
 
             if(images.length === 0) {
-                grid.innerHTML = '';
-                empty.classList.remove('hidden');
+                if(grid) grid.innerHTML = '';
+                if(empty) empty.classList.remove('hidden');
                 return;
             }
 
-            empty.classList.add('hidden');
-            grid.innerHTML = images.map(img => `
-                <div class="group relative bg-slate-50 rounded-lg overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-all">
-                    <div class="aspect-square w-full overflow-hidden bg-slate-200 cursor-pointer" onclick="openImageModal('${img.url}', '${img.desc}', '${img.date}')">
-                        <img src="${img.url}" alt="${img.desc}" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://via.placeholder.com/300?text=Error'">
-                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
-                    </div>
-                    <div class="p-3">
-                        <div class="flex justify-between items-start mb-1">
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${getTypeColor(img.type)}">${img.type}</span>
-                            <button onclick="deleteImage(${img.id})" class="text-slate-300 hover:text-red-500 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+            if(empty) empty.classList.add('hidden');
+            if(grid) {
+                grid.innerHTML = images.map(img => {
+                    const isVideo = img.type === 'video' || img.url.match(/\.(mp4|webm)$/i);
+                    const aspectClass = img.orientation === 'portrait' ? 'aspect-[9/16]' : (img.orientation === 'landscape' ? 'aspect-video' : 'aspect-square');
+                    
+                    return `
+                    <div class="group relative bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300">
+                        <div class="${aspectClass} w-full overflow-hidden bg-slate-100 cursor-pointer relative" onclick="openImageModal('${img.url}', '${img.desc}', '${img.date}', '${img.orientation || 'auto'}', '${img.type}')">
+                            ${isVideo 
+                                ? `<video src="${img.url}#t=0.1" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500" preload="metadata" muted></video>
+                                   <div class="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/20">
+                                        <div class="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                                            <svg class="w-5 h-5 text-indigo-600 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                        </div>
+                                   </div>`
+                                : `<img src="${img.url}" alt="${img.desc}" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" onerror="this.src='https://via.placeholder.com/300?text=Error+Load'">`
+                            }
+                            
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            
+                            <!-- Delete Button (Hover) -->
+                            <button onclick="event.stopPropagation(); deleteImage(${img.id})" class="absolute top-2 right-2 p-1.5 bg-white/90 text-red-500 rounded-full shadow-sm opacity-0 group-hover:opacity-100 hover:bg-red-50 transition-all transform hover:scale-110 z-10" title="Hapus">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
                         </div>
-                        <p class="text-xs font-semibold text-slate-700 line-clamp-2 leading-tight mb-1" title="${img.desc}">${img.desc}</p>
-                        <p class="text-[10px] text-slate-400">${img.date}</p>
+                        <div class="p-3">
+                            <div class="flex justify-between items-start mb-1.5">
+                                <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm ${getTypeColor(img.category || 'Lainnya')}">${img.category || 'Umum'}</span>
+                                ${isVideo ? '<span class="text-[9px] font-bold bg-slate-800 text-white px-1.5 rounded">VIDEO</span>' : ''}
+                            </div>
+                            <p class="text-xs font-semibold text-slate-700 line-clamp-2 leading-snug mb-1" title="${img.desc}">${img.desc}</p>
+                            <p class="text-[10px] text-slate-400 flex items-center">
+                                <svg class="w-2.5 h-2.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                ${img.date}
+                            </p>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `}).join('');
+            }
         }
 
         function getTypeColor(type) {
@@ -1106,8 +1934,14 @@
             // Calculate Active Month Stats
             if (currentState && currentState.citizens) {
                 currentState.citizens.forEach(c => {
-                    Object.values(c.savings || {}).forEach(v => mTab += (v || 0));
-                    Object.values(c.kas || {}).forEach(v => mKasIn += (v || 0));
+                    // TABUNGAN
+                    Object.values(c.savings || {}).forEach(v => {
+                        mTab += getNetValue(v);
+                    });
+                    // KAS
+                    Object.values(c.kas || {}).forEach(v => {
+                        mKasIn += getNetValue(v);
+                    });
                 });
             }
             
@@ -1123,12 +1957,14 @@
             const elKas = document.getElementById('rpt-kas');
             const elOut = document.getElementById('rpt-out');
             const elDocs = document.getElementById('rpt-docs-count');
+            const elNotes = document.getElementById('rpt-general-notes');
 
             if(elSaldo) elSaldo.innerText = formatRupiahStrict(mSaldo);
             if(elTab) elTab.innerText = formatRupiahStrict(mTab);
             if(elKas) elKas.innerText = formatRupiahStrict(mKasIn);
             if(elOut) elOut.innerText = `-${formatRupiahStrict(mKasOut)}`;
             if(elDocs) elDocs.innerText = (currentState.images || []).length;
+            if(elNotes) elNotes.innerText = currentState.generalNotes || 'Tidak ada catatan.';
 
             // Update Yearly Recap Table
             const tbody = document.getElementById('table-rekap-body');
@@ -1146,8 +1982,8 @@
                         
                         if(monthData.citizens) {
                             monthData.citizens.forEach(c => {
-                                Object.values(c.savings || {}).forEach(v => rTab += (v || 0));
-                                Object.values(c.kas || {}).forEach(v => rKasIn += (v || 0));
+                                Object.values(c.savings || {}).forEach(v => rTab += getNetValue(v));
+                                Object.values(c.kas || {}).forEach(v => rKasIn += getNetValue(v));
                             });
                         }
                         
