@@ -292,6 +292,85 @@
     <!-- Toast Container -->
     <div id="toast-container" class="fixed top-4 right-4 z-toast flex flex-col gap-2 pointer-events-none"></div>
 
+    <!-- NEW MODAL: SELECT ADD CITIZEN TYPE -->
+    <div id="modal-citizen-type" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-modal hidden flex items-center justify-center p-4 transition-opacity duration-200 opacity-0">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 transform scale-95 opacity-0 transition-all" id="modal-citizen-type-panel">
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl text-indigo-600">👥</div>
+                <h3 class="text-lg font-bold text-slate-800">Tambah Warga</h3>
+                <p class="text-xs text-slate-500">Pilih jenis data warga yang ingin ditambahkan</p>
+            </div>
+            
+            <div class="space-y-3">
+                <button onclick="openAddCitizenInput('tabungan')" class="w-full flex items-center p-3 rounded-xl border border-emerald-100 bg-emerald-50 hover:bg-emerald-100 transition-all group">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-200 text-emerald-700 flex items-center justify-center mr-3 text-lg">💰</div>
+                    <div class="text-left">
+                        <p class="font-bold text-emerald-800 text-sm">Warga Tabungan</p>
+                        <p class="text-[10px] text-emerald-600">Hanya muncul di tabel Tabungan</p>
+                    </div>
+                </button>
+
+                <button onclick="openAddCitizenInput('kas')" class="w-full flex items-center p-3 rounded-xl border border-blue-100 bg-blue-50 hover:bg-blue-100 transition-all group">
+                    <div class="w-10 h-10 rounded-lg bg-blue-200 text-blue-700 flex items-center justify-center mr-3 text-lg">💎</div>
+                    <div class="text-left">
+                        <p class="font-bold text-blue-800 text-sm">Warga Kas</p>
+                        <p class="text-[10px] text-blue-600">Hanya muncul di tabel Kas</p>
+                    </div>
+                </button>
+            </div>
+
+            <div class="mt-6">
+                <button onclick="closeCitizenTypeModal()" class="w-full py-2 text-sm font-medium text-slate-500 hover:text-slate-700">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW MODAL: INPUT WEEKLY BENDAHARA -->
+    <div id="modal-bendahara-input" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-modal hidden flex items-center justify-center p-4 transition-opacity duration-200 opacity-0">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform scale-95 opacity-0 transition-all" id="modal-bendahara-panel">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                <h3 class="text-lg font-bold text-slate-800">Setor ke Bendahara</h3>
+                <button onclick="closeBendaharaModal()" class="text-slate-400 hover:text-red-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+            
+            <form onsubmit="submitWeeklyBendahara(event)" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Minggu Ke-</label>
+                        <select id="bnd-week" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" required>
+                            <option value="1">Minggu 1</option>
+                            <option value="2">Minggu 2</option>
+                            <option value="3">Minggu 3</option>
+                            <option value="4">Minggu 4</option>
+                            <option value="5">Minggu 5</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tanggal</label>
+                        <input type="date" id="bnd-date" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nominal Setor (Manual)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-sm">Rp</span>
+                        <input type="tel" id="bnd-amount" class="w-full pl-10 p-3 bg-indigo-50 border border-indigo-200 rounded-lg text-lg font-bold text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="0" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Keterangan</label>
+                    <textarea id="bnd-note" rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm" placeholder="Catatan tambahan..."></textarea>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-lg shadow-indigo-200 transition-all">Simpan Laporan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Generic Input/Confirm Modal -->
     <div id="ui-modal-backdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-modal hidden transition-opacity duration-200 opacity-0 flex items-center justify-center p-4">
         <div id="ui-modal-panel" class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all scale-95 opacity-0 overflow-hidden flex flex-col max-h-[90vh]">
@@ -475,6 +554,11 @@
                     Catatan Umum
                 </button>
 
+                <button onclick="switchTab('bendahara')" id="btn-bendahara" class="tab-btn w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all group border border-transparent">
+                    <span class="w-8 h-8 rounded-md bg-cyan-100 text-cyan-600 flex items-center justify-center mr-3 group-hover:scale-105 transition-transform flex-shrink-0 text-lg shadow-sm">🏛️</span>
+                    Log Setor Bendahara
+                </button>
+
                 <button onclick="switchTab('laporan')" id="btn-laporan" class="tab-btn w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all group border border-transparent">
                     <span class="w-8 h-8 rounded-md bg-amber-100 text-amber-600 flex items-center justify-center mr-3 group-hover:scale-105 transition-transform flex-shrink-0 text-lg shadow-sm">📊</span>
                     Laporan Keuangan
@@ -488,8 +572,14 @@
                 <p class="px-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Sistem & Data</p>
                 
                 <!-- ADMIN ONLY BUTTONS -->
-                <button onclick="addCitizen()" class="admin-only w-full flex items-center px-3 py-2 rounded-lg text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-100 transition-colors">
+                <!-- MODIFIED: Calls Open Modal Choice instead of AddDirect -->
+                <button onclick="openCitizenTypeModal()" class="admin-only w-full flex items-center px-3 py-2 rounded-lg text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-100 transition-colors">
                     <span class="mr-2 text-sm">➕</span> Tambah Warga
+                </button>
+
+                <!-- NEW: Setor Bendahara -->
+                <button onclick="openWeeklyBendaharaModal()" class="admin-only w-full flex items-center px-3 py-2 rounded-lg text-xs font-medium text-cyan-700 bg-cyan-50 hover:bg-cyan-100 border border-cyan-100 transition-colors mt-2">
+                    <span class="mr-2 text-sm">🏛️</span> Setor ke Bendahara
                 </button>
 
                 <!-- MODIFIED: Split Reset Buttons -->
@@ -655,6 +745,54 @@
                                 </tr>
                             </tfoot>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- === NEW VIEW: BENDAHARA HISTORY === -->
+            <div id="view-bendahara" class="view-section fade-in hidden">
+                <div class="bg-white rounded-xl shadow-soft border border-slate-200 overflow-hidden">
+                    <div class="px-4 py-3 md:px-5 md:py-4 border-b border-slate-100 bg-gradient-to-r from-cyan-50/50 to-transparent flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <div class="p-1.5 md:p-2 bg-cyan-100 rounded-lg text-cyan-600">
+                                <span class="text-xl">🏛️</span>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-sm md:text-base text-slate-800">Log Setor ke Bendahara</h3>
+                                <p class="text-[10px] md:text-xs text-slate-500">Histori setoran mingguan (Log Only)</p>
+                            </div>
+                        </div>
+                        <button onclick="openWeeklyBendaharaModal()" class="admin-only px-3 py-1.5 bg-cyan-600 text-white text-xs font-bold rounded-lg hover:bg-cyan-700 transition">
+                            + Input Baru
+                        </button>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold">
+                                <tr>
+                                    <th class="px-4 py-3 border-b">Minggu Ke</th>
+                                    <th class="px-4 py-3 border-b">Tanggal</th>
+                                    <th class="px-4 py-3 border-b">Keterangan</th>
+                                    <th class="px-4 py-3 border-b text-right">Nominal</th>
+                                    <th class="px-4 py-3 border-b text-center admin-only">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-bendahara-body" class="divide-y divide-slate-100">
+                                <!-- JS Populated -->
+                            </tbody>
+                            <tfoot class="bg-cyan-50 font-bold text-cyan-900">
+                                <tr>
+                                    <td colspan="3" class="px-4 py-3 text-right">TOTAL SETORAN TERDATA:</td>
+                                    <td id="bnd-total-display" class="px-4 py-3 text-right text-lg">Rp 0</td>
+                                    <td class="admin-only"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <div id="empty-bendahara" class="hidden py-12 text-center">
+                        <p class="text-slate-400 text-sm">Belum ada data setoran ke bendahara bulan ini.</p>
                     </div>
                 </div>
             </div>
@@ -1150,6 +1288,151 @@
         if(currentEditAction) currentEditAction(); // Trigger the edit function passed in options
     });
 
+    // --- NEW: CITIZEN TYPE MODAL LOGIC (FITUR 1) ---
+    function openCitizenTypeModal() {
+        const backdrop = document.getElementById('modal-citizen-type');
+        const panel = document.getElementById('modal-citizen-type-panel');
+        backdrop.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            backdrop.classList.remove('opacity-0');
+            panel.classList.remove('scale-95', 'opacity-0');
+            panel.classList.add('scale-100', 'opacity-100');
+        });
+    }
+
+    function closeCitizenTypeModal() {
+        const backdrop = document.getElementById('modal-citizen-type');
+        const panel = document.getElementById('modal-citizen-type-panel');
+        backdrop.classList.add('opacity-0');
+        panel.classList.remove('scale-100', 'opacity-100');
+        panel.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => backdrop.classList.add('hidden'), 200);
+    }
+
+    function openAddCitizenInput(type) {
+        closeCitizenTypeModal();
+        setTimeout(() => {
+            if (type === 'tabungan') addCitizenTabungan();
+            else if (type === 'kas') addCitizenKas();
+        }, 200);
+    }
+
+    function addCitizenTabungan() {
+        openUiModal({
+            title: 'Tambah Warga (Tabungan)',
+            subtitle: 'Warga ini hanya akan muncul di tabel Tabungan',
+            mode: 'input',
+            inputType: 'text',
+            actionText: 'Tambah',
+            onConfirm: (name) => {
+                if(!name) return;
+                const maxId = currentState.citizens.reduce((max, c) => Math.max(max, typeof c.id === 'number' ? c.id : 0), 0);
+                const newId = maxId + 1;
+                
+                // FEATURE 1: Add Citizen with Savings only
+                currentState.citizens.push({ 
+                    id: newId, 
+                    name: name, 
+                    savings: {}, 
+                    kas: {}, // Empty to hide from Kas table
+                    savingsNotes: {}, 
+                    kasNotes: {} 
+                });
+                saveDB(); renderAll();
+                showToast(`Warga Tabungan "${name}" berhasil ditambahkan!`, 'success');
+            }
+        });
+    }
+
+    function addCitizenKas() {
+        openUiModal({
+            title: 'Tambah Warga (Kas)',
+            subtitle: 'Warga ini hanya akan muncul di tabel Kas',
+            mode: 'input',
+            inputType: 'text',
+            actionText: 'Tambah',
+            onConfirm: (name) => {
+                if(!name) return;
+                const maxId = currentState.citizens.reduce((max, c) => Math.max(max, typeof c.id === 'number' ? c.id : 0), 0);
+                const newId = maxId + 1;
+                
+                // FEATURE 1: Add Citizen with Kas only
+                currentState.citizens.push({ 
+                    id: newId, 
+                    name: name, 
+                    savings: {}, // Empty to hide from Savings table
+                    kas: {}, 
+                    savingsNotes: {}, 
+                    kasNotes: {} 
+                });
+                saveDB(); renderAll();
+                showToast(`Warga Kas "${name}" berhasil ditambahkan!`, 'success');
+            }
+        });
+    }
+
+    // --- NEW: WEEKLY BENDAHARA LOGIC (FITUR 2) ---
+    function openWeeklyBendaharaModal() {
+        const backdrop = document.getElementById('modal-bendahara-input');
+        const panel = document.getElementById('modal-bendahara-panel');
+        
+        // Reset form
+        const today = new Date();
+        const dateInput = document.getElementById('bnd-date');
+        dateInput.valueAsDate = today;
+        
+        document.getElementById('bnd-amount').value = '';
+        document.getElementById('bnd-note').value = '';
+        document.getElementById('bnd-week').value = '1';
+
+        backdrop.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            backdrop.classList.remove('opacity-0');
+            panel.classList.remove('scale-95', 'opacity-0');
+            panel.classList.add('scale-100', 'opacity-100');
+        });
+    }
+
+    function closeBendaharaModal() {
+        const backdrop = document.getElementById('modal-bendahara-input');
+        const panel = document.getElementById('modal-bendahara-panel');
+        backdrop.classList.add('opacity-0');
+        panel.classList.remove('scale-100', 'opacity-100');
+        panel.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => backdrop.classList.add('hidden'), 200);
+    }
+
+    function submitWeeklyBendahara(e) {
+        e.preventDefault();
+        const week = document.getElementById('bnd-week').value;
+        const date = document.getElementById('bnd-date').value;
+        const amountStr = document.getElementById('bnd-amount').value;
+        const note = document.getElementById('bnd-note').value;
+        
+        const amount = parseInt(amountStr.replace(/\D/g,'')) || 0;
+
+        if (amount <= 0) {
+            showToast('Nominal harus lebih dari 0', 'error');
+            return;
+        }
+
+        // Feature 2: Distinct Data Structure
+        if (!currentState.weeklyBendahara) currentState.weeklyBendahara = [];
+
+        currentState.weeklyBendahara.push({
+            id: Date.now(),
+            week: parseInt(week),
+            date: date,
+            amount: amount,
+            note: note
+        });
+
+        saveDB();
+        renderBendahara(); // Will be defined in next part
+        closeBendaharaModal();
+        showToast('Setoran ke Bendahara tercatat!', 'success');
+    }
+
     // --- GLOBAL FUNCTIONS ---
     
     let isMenuOpen = false;
@@ -1455,7 +1738,7 @@
     let db = {};
     let currentYear = 2026;
     let currentMonth = 0;
-    let currentState = { citizens: [], kasOut: {}, images: [], generalNotes: '' };
+    let currentState = { citizens: [], kasOut: {}, images: [], generalNotes: '', weeklyBendahara: [] };
     
     // --- HELPER FUNCTIONS ---
 
@@ -1513,7 +1796,8 @@
             citizens: jan2026Citizens, 
             kasOut: {}, kasOutNotes: {}, 
             tabOut: {}, tabOutNotes: {}, 
-            images: [], generalNotes: '' 
+            images: [], generalNotes: '',
+            weeklyBendahara: [] // NEW Feature
         };
         saveDB();
     }
@@ -1531,7 +1815,8 @@
             citizens: blankCitizens, 
             kasOut: {}, kasOutNotes: {}, 
             tabOut: {}, tabOutNotes: {},
-            images: [], generalNotes: '' 
+            images: [], generalNotes: '',
+            weeklyBendahara: []
         };
     }
 
@@ -1560,11 +1845,208 @@
         return '';
     }
 
+    function getSafeValue(data, type) {
+        if (typeof data === 'number') {
+            if (type === 'income') return data > 0 ? data : 0;
+            if (type === 'expense') return data < 0 ? Math.abs(data) : 0;
+        }
+        if (typeof data === 'object' && data !== null) {
+            return data[type] || 0;
+        }
+        return 0;
+    }
+
+    function calculateReportSummary() {
+        let totalSavingsIncome = 0;
+        let totalSavingsExpense = 0;
+        let totalKasIncome = 0;
+        let totalKasExpense = 0; 
+        let totalKasOutOps = 0;
+        let totalTabOutOps = 0;
+
+        if (currentState && currentState.citizens) {
+            currentState.citizens.forEach(c => {
+                // Tabungan
+                Object.values(c.savings || {}).forEach(v => {
+                    totalSavingsIncome += getSafeValue(v, 'income');
+                    totalSavingsExpense += getSafeValue(v, 'expense');
+                });
+                // Kas
+                Object.values(c.kas || {}).forEach(v => {
+                    totalKasIncome += getSafeValue(v, 'income');
+                    totalKasExpense += getSafeValue(v, 'expense');
+                });
+            });
+        }
+
+        if (currentState && currentState.kasOut) {
+            Object.values(currentState.kasOut).forEach(v => totalKasOutOps += (v || 0));
+        }
+        
+        if (currentState && currentState.tabOut) {
+            Object.values(currentState.tabOut).forEach(v => totalTabOutOps += (v || 0));
+        }
+
+        const totalIncome = totalSavingsIncome + totalKasIncome;
+        const totalExpense = totalSavingsExpense + totalKasExpense + totalKasOutOps + totalTabOutOps;
+        const finalBalance = totalIncome - totalExpense;
+
+        return {
+            savingsIncome: totalSavingsIncome,
+            savingsExpense: totalSavingsExpense,
+            kasIncome: totalKasIncome,
+            kasExpense: totalKasExpense,
+            opsExpense: totalKasOutOps + totalTabOutOps,
+            totalIncome,
+            totalExpense,
+            finalBalance
+        };
+    }
+function renderReport() {
+        const summary = calculateReportSummary();
+
+        const elSaldo = document.getElementById('rpt-saldo');
+        const elTab = document.getElementById('rpt-tabungan');
+        const elKas = document.getElementById('rpt-kas');
+        const elOut = document.getElementById('rpt-out');
+        const elDocs = document.getElementById('rpt-docs-count');
+        const elNotes = document.getElementById('rpt-general-notes');
+
+        if(elSaldo) elSaldo.innerText = formatRupiahStrict(summary.finalBalance);
+        if(elTab) elTab.innerText = formatRupiahStrict(summary.savingsIncome);
+        if(elKas) elKas.innerText = formatRupiahStrict(summary.kasIncome);
+        if(elOut) elOut.innerText = `-${formatRupiahStrict(summary.totalExpense)}`;
+        
+        if(elDocs) elDocs.innerText = (currentState.images || []).length;
+        if(elNotes) elNotes.innerText = currentState.generalNotes || 'Tidak ada catatan.';
+
+        // Update Yearly Recap Table
+        const tbody = document.getElementById('table-rekap-body');
+        if (tbody) {
+            tbody.innerHTML = '';
+            let yTab = 0, yKasIn = 0, yKasOut = 0;
+
+            for(let m=0; m<12; m++) {
+                const monthData = db[currentYear] ? db[currentYear][m] : null;
+                let rowHtml = '';
+                
+                if (monthData) {
+                    let rTab = 0, rKasIn = 0, rKasOut = 0;
+                    
+                    if(monthData.citizens) {
+                        monthData.citizens.forEach(c => {
+                            Object.values(c.savings || {}).forEach(v => rTab += getNetValue(v));
+                            Object.values(c.kas || {}).forEach(v => rKasIn += getNetValue(v));
+                        });
+                    }
+                    
+                    let mKasOut = 0;
+                    if(monthData.kasOut) Object.values(monthData.kasOut).forEach(v => mKasOut += (v || 0));
+                    
+                    let mTabOut = 0;
+                    if(monthData.tabOut) Object.values(monthData.tabOut).forEach(v => mTabOut += (v || 0));
+                    
+                    rKasOut = mKasOut + mTabOut; // Combine them as "Keluar" column in Recap
+
+                    const rSaldo = rTab + rKasIn - rKasOut;
+                    yTab += rTab; yKasIn += rKasIn; yKasOut += rKasOut;
+
+                    const isCurrent = m === currentMonth;
+                    const bgClass = isCurrent ? 'bg-indigo-50 border-l-4 border-indigo-500' : 'bg-white';
+                    const labelClass = isCurrent ? 'font-bold text-indigo-700' : 'text-slate-700 font-medium';
+
+                    rowHtml = `<tr class="${bgClass} hover:bg-slate-50 transition-colors">
+                        <td class="px-3 py-3 md:px-4 md:py-4 ${labelClass}">${MONTH_NAMES[m]}</td>
+                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-emerald-600 font-medium">${formatRupiahStrict(rTab)}</td>
+                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-blue-600 font-medium">${formatRupiahStrict(rKasIn)}</td>
+                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-rose-500">${rKasOut > 0 ? '-' + formatRupiahStrict(rKasOut) : '-'}</td>
+                        <td class="px-3 py-3 md:px-4 md:py-4 text-right font-bold text-slate-800">${formatRupiahStrict(rSaldo)}</td>
+                    </tr>`;
+                } else {
+                    rowHtml = `<tr class="bg-white opacity-40">
+                        <td class="px-3 py-3 md:px-4 md:py-4 text-slate-400 italic">${MONTH_NAMES[m]}</td>
+                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-xs">-</td>
+                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-xs">-</td>
+                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-xs">-</td>
+                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-xs">-</td>
+                    </tr>`;
+                }
+                tbody.innerHTML += rowHtml;
+            }
+
+            const ySaldo = yTab + yKasIn - yKasOut;
+            const tfoot = document.getElementById('table-rekap-footer');
+            if(tfoot) {
+                tfoot.innerHTML = `
+                    <td class="px-3 py-3 md:px-4 md:py-4 uppercase tracking-wider">TOTAL ${currentYear}</td>
+                    <td class="px-3 py-3 md:px-4 md:py-4 text-right text-emerald-300">${formatRupiahStrict(yTab)}</td>
+                    <td class="px-3 py-3 md:px-4 md:py-4 text-right text-blue-300">${formatRupiahStrict(yKasIn)}</td>
+                    <td class="px-3 py-3 md:px-4 md:py-4 text-right text-rose-300">-${formatRupiahStrict(yKasOut)}</td>
+                    <td class="px-3 py-3 md:px-4 md:py-4 text-right text-amber-400 font-extrabold text-sm md:text-lg bg-slate-700/50">${formatRupiahStrict(ySaldo)}</td>
+                `;
+            }
+        }
+    }
+
+    // --- NEW: RENDER BENDAHARA ---
+    function renderBendahara() {
+        const tbody = document.getElementById('table-bendahara-body');
+        const empty = document.getElementById('empty-bendahara');
+        const totalDisplay = document.getElementById('bnd-total-display');
+        
+        tbody.innerHTML = '';
+        const logs = currentState.weeklyBendahara || [];
+        
+        if (logs.length === 0) {
+            empty.classList.remove('hidden');
+            totalDisplay.innerText = "Rp 0";
+            return;
+        }
+        
+        empty.classList.add('hidden');
+        let total = 0;
+
+        logs.sort((a, b) => b.id - a.id).forEach(log => {
+            total += log.amount;
+            tbody.innerHTML += `
+                <tr class="bg-white hover:bg-slate-50 transition">
+                    <td class="px-4 py-3 font-medium text-slate-700">Minggu ${log.week}</td>
+                    <td class="px-4 py-3 text-slate-500 text-xs">${log.date}</td>
+                    <td class="px-4 py-3 text-slate-600 text-sm italic">${log.note || '-'}</td>
+                    <td class="px-4 py-3 text-right font-bold text-cyan-700">${formatRupiahStrict(log.amount)}</td>
+                    <td class="px-4 py-3 text-center admin-only">
+                        <button onclick="deleteBendaharaLog(${log.id})" class="text-red-400 hover:text-red-600">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        totalDisplay.innerText = formatRupiahStrict(total);
+    }
+
+    function deleteBendaharaLog(id) {
+        if(currentRole !== 'admin') return;
+        
+        openUiModal({
+            title: 'Hapus Log?',
+            message: 'Data setoran ini akan dihapus permanen.',
+            mode: 'input',
+            isDelete: true,
+            actionText: 'Hapus',
+            onConfirm: () => {
+                currentState.weeklyBendahara = currentState.weeklyBendahara.filter(l => l.id !== id);
+                saveDB(); renderBendahara();
+                showToast('Log dihapus', 'success');
+            }
+        });
+    }
+
     function renderAll() {
         renderTabungan();
         renderKas();
         renderReport();
         renderImages();
+        renderBendahara(); // NEW
         
         // Handle General Notes Readonly State
         const notesArea = document.getElementById('general-notes-area');
@@ -1914,151 +2396,6 @@
         if(type === 'Tabungan') return 'bg-emerald-100 text-emerald-700';
         return 'bg-slate-100 text-slate-600';
     }
-// === LOGIKA LAPORAN BARU ===
-    function getSafeValue(data, type) {
-        if (typeof data === 'number') {
-            if (type === 'income') return data > 0 ? data : 0;
-            if (type === 'expense') return data < 0 ? Math.abs(data) : 0;
-        }
-        if (typeof data === 'object' && data !== null) {
-            return data[type] || 0;
-        }
-        return 0;
-    }
-
-    function calculateReportSummary() {
-        let totalSavingsIncome = 0;
-        let totalSavingsExpense = 0;
-        let totalKasIncome = 0;
-        let totalKasExpense = 0; 
-        let totalKasOutOps = 0;
-        let totalTabOutOps = 0;
-
-        if (currentState && currentState.citizens) {
-            currentState.citizens.forEach(c => {
-                // Tabungan
-                Object.values(c.savings || {}).forEach(v => {
-                    totalSavingsIncome += getSafeValue(v, 'income');
-                    totalSavingsExpense += getSafeValue(v, 'expense');
-                });
-                // Kas
-                Object.values(c.kas || {}).forEach(v => {
-                    totalKasIncome += getSafeValue(v, 'income');
-                    totalKasExpense += getSafeValue(v, 'expense');
-                });
-            });
-        }
-
-        if (currentState && currentState.kasOut) {
-            Object.values(currentState.kasOut).forEach(v => totalKasOutOps += (v || 0));
-        }
-        
-        if (currentState && currentState.tabOut) {
-            Object.values(currentState.tabOut).forEach(v => totalTabOutOps += (v || 0));
-        }
-
-        const totalIncome = totalSavingsIncome + totalKasIncome;
-        const totalExpense = totalSavingsExpense + totalKasExpense + totalKasOutOps + totalTabOutOps;
-        const finalBalance = totalIncome - totalExpense;
-
-        return {
-            savingsIncome: totalSavingsIncome,
-            savingsExpense: totalSavingsExpense,
-            kasIncome: totalKasIncome,
-            kasExpense: totalKasExpense,
-            opsExpense: totalKasOutOps + totalTabOutOps,
-            totalIncome,
-            totalExpense,
-            finalBalance
-        };
-    }
-
-    function renderReport() {
-        const summary = calculateReportSummary();
-
-        const elSaldo = document.getElementById('rpt-saldo');
-        const elTab = document.getElementById('rpt-tabungan');
-        const elKas = document.getElementById('rpt-kas');
-        const elOut = document.getElementById('rpt-out');
-        const elDocs = document.getElementById('rpt-docs-count');
-        const elNotes = document.getElementById('rpt-general-notes');
-
-        if(elSaldo) elSaldo.innerText = formatRupiahStrict(summary.finalBalance);
-        if(elTab) elTab.innerText = formatRupiahStrict(summary.savingsIncome);
-        if(elKas) elKas.innerText = formatRupiahStrict(summary.kasIncome);
-        if(elOut) elOut.innerText = `-${formatRupiahStrict(summary.totalExpense)}`;
-        
-        if(elDocs) elDocs.innerText = (currentState.images || []).length;
-        if(elNotes) elNotes.innerText = currentState.generalNotes || 'Tidak ada catatan.';
-
-        // Update Yearly Recap Table
-        const tbody = document.getElementById('table-rekap-body');
-        if (tbody) {
-            tbody.innerHTML = '';
-            let yTab = 0, yKasIn = 0, yKasOut = 0;
-
-            for(let m=0; m<12; m++) {
-                const monthData = db[currentYear] ? db[currentYear][m] : null;
-                let rowHtml = '';
-                
-                if (monthData) {
-                    let rTab = 0, rKasIn = 0, rKasOut = 0;
-                    
-                    if(monthData.citizens) {
-                        monthData.citizens.forEach(c => {
-                            Object.values(c.savings || {}).forEach(v => rTab += getNetValue(v));
-                            Object.values(c.kas || {}).forEach(v => rKasIn += getNetValue(v));
-                        });
-                    }
-                    
-                    // Add Tabungan Out & Kas Out to Total Out for Recap
-                    let mKasOut = 0;
-                    if(monthData.kasOut) Object.values(monthData.kasOut).forEach(v => mKasOut += (v || 0));
-                    
-                    let mTabOut = 0;
-                    if(monthData.tabOut) Object.values(monthData.tabOut).forEach(v => mTabOut += (v || 0));
-                    
-                    rKasOut = mKasOut + mTabOut; // Combine them as "Keluar" column in Recap
-
-                    const rSaldo = rTab + rKasIn - rKasOut;
-                    yTab += rTab; yKasIn += rKasIn; yKasOut += rKasOut;
-
-                    const isCurrent = m === currentMonth;
-                    const bgClass = isCurrent ? 'bg-indigo-50 border-l-4 border-indigo-500' : 'bg-white';
-                    const labelClass = isCurrent ? 'font-bold text-indigo-700' : 'text-slate-700 font-medium';
-
-                    rowHtml = `<tr class="${bgClass} hover:bg-slate-50 transition-colors">
-                        <td class="px-3 py-3 md:px-4 md:py-4 ${labelClass}">${MONTH_NAMES[m]}</td>
-                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-emerald-600 font-medium">${formatRupiahStrict(rTab)}</td>
-                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-blue-600 font-medium">${formatRupiahStrict(rKasIn)}</td>
-                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-rose-500">${rKasOut > 0 ? '-' + formatRupiahStrict(rKasOut) : '-'}</td>
-                        <td class="px-3 py-3 md:px-4 md:py-4 text-right font-bold text-slate-800">${formatRupiahStrict(rSaldo)}</td>
-                    </tr>`;
-                } else {
-                    rowHtml = `<tr class="bg-white opacity-40">
-                        <td class="px-3 py-3 md:px-4 md:py-4 text-slate-400 italic">${MONTH_NAMES[m]}</td>
-                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-xs">-</td>
-                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-xs">-</td>
-                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-xs">-</td>
-                        <td class="px-3 py-3 md:px-4 md:py-4 text-right text-xs">-</td>
-                    </tr>`;
-                }
-                tbody.innerHTML += rowHtml;
-            }
-
-            const ySaldo = yTab + yKasIn - yKasOut;
-            const tfoot = document.getElementById('table-rekap-footer');
-            if(tfoot) {
-                tfoot.innerHTML = `
-                    <td class="px-3 py-3 md:px-4 md:py-4 uppercase tracking-wider">TOTAL ${currentYear}</td>
-                    <td class="px-3 py-3 md:px-4 md:py-4 text-right text-emerald-300">${formatRupiahStrict(yTab)}</td>
-                    <td class="px-3 py-3 md:px-4 md:py-4 text-right text-blue-300">${formatRupiahStrict(yKasIn)}</td>
-                    <td class="px-3 py-3 md:px-4 md:py-4 text-right text-rose-300">-${formatRupiahStrict(yKasOut)}</td>
-                    <td class="px-3 py-3 md:px-4 md:py-4 text-right text-amber-400 font-extrabold text-sm md:text-lg bg-slate-700/50">${formatRupiahStrict(ySaldo)}</td>
-                `;
-            }
-        }
-    }
 
     // --- INTERACTION FUNCTIONS ---
 
@@ -2356,21 +2693,8 @@
     };
 
     window.addCitizen = function() {
-        if(currentRole !== 'admin') return;
-        openUiModal({
-            title: 'Tambah Warga Baru',
-            mode: 'input',
-            inputType: 'text',
-            actionText: 'Tambah',
-            onConfirm: (name) => {
-                if(!name) return;
-                const maxId = currentState.citizens.reduce((max, c) => Math.max(max, typeof c.id === 'number' ? c.id : 0), 0);
-                const newId = maxId + 1;
-                currentState.citizens.push({ id: newId, name: name, savings: {}, kas: {}, savingsNotes: {}, kasNotes: {} });
-                saveDB(); renderAll();
-                showToast(`Warga "${name}" berhasil ditambahkan!`, 'success');
-            }
-        });
+        // Deprecated directly calling this, now uses modal. Keeping for safety if needed.
+        openCitizenTypeModal();
     };
 
     // --- REFACTORED DELETE FUNCTIONS ---
@@ -2540,6 +2864,7 @@
         if(!currentState.tabOutNotes) currentState.tabOutNotes = {};
         if(!currentState.images) currentState.images = [];
         if(!currentState.generalNotes) currentState.generalNotes = '';
+        if(!currentState.weeklyBendahara) currentState.weeklyBendahara = [];
         
         renderAll();
     };
@@ -2565,6 +2890,7 @@
             else if(tabName === 'gambar') mobileTitle.innerText = "Dokumentasi";
             else if(tabName === 'laporan') mobileTitle.innerText = "Laporan";
             else if(tabName === 'catatan') mobileTitle.innerText = "Catatan";
+            else if(tabName === 'bendahara') mobileTitle.innerText = "Setor Bendahara";
         }
 
         if(window.innerWidth <= 768 && isMenuOpen) {
