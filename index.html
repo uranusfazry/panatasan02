@@ -492,14 +492,15 @@
                     <span class="mr-2 text-sm">➕</span> Tambah Warga
                 </button>
 
-                 <div class="grid grid-cols-2 gap-2 admin-only">
-    <button onclick="resetTabunganOnly()" class="flex items-center justify-center px-2 py-2 rounded-lg text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 transition-colors">
-        <span class="mr-1">♻️</span> Reset Tabungan
-    </button>
-    <button onclick="resetKasOnly()" class="flex items-center justify-center px-2 py-2 rounded-lg text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-100 transition-colors">
-        <span class="mr-1">♻️</span> Reset Kas
-    </button>
-</div>
+                <!-- MODIFIED: Split Reset Buttons -->
+                <div class="grid grid-cols-2 gap-2 mt-2 admin-only">
+                    <button onclick="resetTabunganOnly()" class="flex items-center justify-center px-2 py-2 rounded-lg text-[10px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 transition-colors" title="Hanya hapus data tabungan bulan ini">
+                        🔄 Reset Tabungan
+                    </button>
+                    <button onclick="resetKasOnly()" class="flex items-center justify-center px-2 py-2 rounded-lg text-[10px] font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-100 transition-colors" title="Hanya hapus data kas bulan ini">
+                        🔄 Reset Kas
+                    </button>
+                </div>
 
                 <div class="grid grid-cols-2 gap-2 mt-2">
                     <button onclick="downloadBackup()" class="admin-only flex items-center justify-center px-3 py-2 rounded-lg text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 transition-colors">
@@ -1458,7 +1459,8 @@
     let currentYear = 2026;
     let currentMonth = 0;
     let currentState = { citizens: [], kasOut: {}, images: [], generalNotes: '' };
-// --- REFACTORED ACTION FUNCTIONS (PREVIEW FIRST) ---
+    
+    // --- REFACTORED ACTION FUNCTIONS (PREVIEW FIRST) ---
     
     window.editSaving = function(id, date, forceEdit = false) {
         const citizen = currentState.citizens.find(c => c.id === id);
@@ -1699,6 +1701,60 @@
         });
     };
 
+    // --- NEW: SPLIT RESET FUNCTIONS (ONLY RESET TARGET DATA) ---
+
+    window.resetTabunganOnly = function() {
+        if(currentRole !== 'admin') return;
+
+        openUiModal({
+            title: 'Reset Tabungan Saja?',
+            message: "Hanya menghapus data TABUNGAN (warga & pengeluaran) bulan ini. Data KAS tidak akan hilang.",
+            mode: 'input',
+            isDelete: true, 
+            actionText: 'Reset Tabungan',
+            onConfirm: () => {
+                // 1. Reset Warga Tabungan
+                currentState.citizens.forEach(c => { 
+                    c.savings = {}; 
+                    c.savingsNotes = {}; 
+                });
+                
+                // 2. Reset Tabungan Out
+                currentState.tabOut = {};
+                currentState.tabOutNotes = {};
+
+                saveDB(); renderAll();
+                showToast("Data TABUNGAN telah di-reset.", 'success');
+            }
+        });
+    };
+
+    window.resetKasOnly = function() {
+        if(currentRole !== 'admin') return;
+
+        openUiModal({
+            title: 'Reset Kas Saja?',
+            message: "Hanya menghapus data KAS (warga & pengeluaran) bulan ini. Data TABUNGAN tidak akan hilang.",
+            mode: 'input',
+            isDelete: true, 
+            actionText: 'Reset Kas',
+            onConfirm: () => {
+                // 1. Reset Warga Kas
+                currentState.citizens.forEach(c => { 
+                    c.kas = {}; 
+                    c.kasNotes = {}; 
+                });
+                
+                // 2. Reset Kas Out
+                currentState.kasOut = {};
+                currentState.kasOutNotes = {};
+
+                saveDB(); renderAll();
+                showToast("Data KAS telah di-reset.", 'success');
+            }
+        });
+    };
+
     window.saveGeneralNotes = function() {
         if(currentRole !== 'admin') return;
 
@@ -1727,8 +1783,7 @@
             }
         });
     };
-
-    window.deleteCitizen = function(id, name) {
+window.deleteCitizen = function(id, name) {
         if(currentRole !== 'admin') return;
 
         openUiModal({
@@ -1745,54 +1800,25 @@
         });
     };
 
-    // --- FUNGSI BARU: RESET SPESIFIK ---
-    
-    // 1. Reset Hanya Tabungan
-    window.resetTabunganOnly = function() {
+    window.resetValuesOnly = function() {
         if(currentRole !== 'admin') return;
 
         openUiModal({
-            title: 'Reset Data TABUNGAN?',
-            message: "Hanya data TABUNGAN bulan ini yang akan dihapus (jadi 0). Data Kas TIDAK akan hilang.",
+            title: 'Reset Nominal Bulan Ini?',
+            message: "Ini akan me-RESET semua uang menjadi 0 untuk bulan ini saja (Tabungan & Kas). Nama warga TETAP ADA.",
             mode: 'input',
             isDelete: true, 
-            actionText: 'Hapus Tabungan',
+            actionText: 'Ya, Reset 0',
             onConfirm: () => {
-                // Hapus data tabungan warga & pengeluaran tabungan (ops)
                 currentState.citizens.forEach(c => { 
-                    c.savings = {}; 
-                    c.savingsNotes = {}; 
-                });
-                currentState.tabOut = {}; 
-                currentState.tabOutNotes = {};
-                
-                saveDB(); renderAll();
-                showToast("Data Tabungan bulan ini berhasil di-reset.", 'success');
-            }
-        });
-    };
-
-    // 2. Reset Hanya Kas
-    window.resetKasOnly = function() {
-        if(currentRole !== 'admin') return;
-
-        openUiModal({
-            title: 'Reset Data KAS?',
-            message: "Hanya data KAS bulan ini yang akan dihapus (jadi 0). Data Tabungan TIDAK akan hilang.",
-            mode: 'input',
-            isDelete: true, 
-            actionText: 'Hapus Kas',
-            onConfirm: () => {
-                // Hapus data kas warga & pengeluaran kas (ops)
-                currentState.citizens.forEach(c => { 
-                    c.kas = {}; 
-                    c.kasNotes = {}; 
+                    c.savings = {}; c.kas = {}; c.savingsNotes = {}; c.kasNotes = {}; 
                 });
                 currentState.kasOut = {};
                 currentState.kasOutNotes = {};
-                
+                currentState.tabOut = {}; 
+                currentState.tabOutNotes = {};
                 saveDB(); renderAll();
-                showToast("Data Kas bulan ini berhasil di-reset.", 'success');
+                showToast("Semua nominal di-reset ke 0.", 'success');
             }
         });
     };
