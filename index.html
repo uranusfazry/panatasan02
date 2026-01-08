@@ -1460,564 +1460,6 @@
     let currentMonth = 0;
     let currentState = { citizens: [], kasOut: {}, images: [], generalNotes: '' };
     
-    // --- REFACTORED ACTION FUNCTIONS (PREVIEW FIRST) ---
-    
-    window.editSaving = function(id, date, forceEdit = false) {
-        const citizen = currentState.citizens.find(c => c.id === id);
-        
-        // Extract Data
-        let currentData = citizen.savings[date];
-        let income = 0;
-        let expense = 0;
-        let note = '';
-        let net = 0;
-
-        if (typeof currentData === 'object' && currentData !== null) {
-            income = currentData.income || 0;
-            expense = currentData.expense || 0;
-            note = currentData.note || '';
-            net = currentData.net || (income - expense);
-        } else if (typeof currentData === 'number') {
-            if (currentData > 0) income = currentData;
-            else if (currentData < 0) expense = Math.abs(currentData);
-            net = currentData;
-        }
-
-        // --- ROLE CHECK: WARGA ---
-        if (currentRole !== 'admin') {
-            if (net === 0) return;
-
-            openUiModal({
-                title: 'Detail Transaksi',
-                subtitle: `Tabungan ${citizen.name} (Read Only)`,
-                mode: 'preview',
-                previewData: {
-                    net: net,
-                    dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
-                    note: note
-                },
-                onEdit: null 
-            });
-            return;
-        }
-
-        // --- ROLE CHECK: ADMIN (Normal Flow) ---
-        if (!forceEdit && net !== 0) {
-            openUiModal({
-                title: 'Detail Transaksi',
-                subtitle: `Tabungan ${citizen.name}`,
-                mode: 'preview',
-                previewData: {
-                    net: net,
-                    dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
-                    note: note
-                },
-                onEdit: () => {
-                    window.editSaving(id, date, true); 
-                }
-            });
-            return;
-        }
-        
-        // Show Input (Edit Mode)
-        openUiModal({
-            title: `Tabungan: ${citizen.name}`,
-            subtitle: `Input transaksi Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
-            mode: 'input',
-            inputType: 'number',
-            dualInput: true,
-            initialIncome: income,
-            initialExpense: expense,
-            initialNote: note,
-            quickAmounts: [1000, 2000, 5000, 10000],
-            showNoteInput: true,
-            onConfirm: (data) => {
-                const inc = parseInt(data.income.toString().replace(/\D/g,'')) || 0;
-                const exp = parseInt(data.expense.toString().replace(/\D/g,'')) || 0;
-                const newNet = inc - exp;
-
-                citizen.savings[date] = {
-                    income: inc,
-                    expense: exp,
-                    net: newNet,
-                    note: data.note
-                };
-
-                saveDB(); renderAll();
-                showToast(`Transaksi ${citizen.name} disimpan!`, 'success');
-            }
-        });
-    };
-
-    window.editKas = function(id, date, forceEdit = false) {
-        const citizen = currentState.citizens.find(c => c.id === id);
-        
-        let currentData = citizen.kas[date];
-        let income = 0;
-        let expense = 0;
-        let note = '';
-        let net = 0;
-
-        if (typeof currentData === 'object' && currentData !== null) {
-            income = currentData.income || 0;
-            expense = currentData.expense || 0;
-            note = currentData.note || '';
-            net = currentData.net || (income - expense);
-        } else if (typeof currentData === 'number') {
-            if (currentData > 0) income = currentData;
-            else if (currentData < 0) expense = Math.abs(currentData);
-            net = currentData;
-        }
-        
-        if (currentRole !== 'admin') {
-            if (net === 0) return; 
-            
-            openUiModal({
-                title: 'Detail Transaksi',
-                subtitle: `Kas Operasional ${citizen.name} (Read Only)`,
-                mode: 'preview',
-                previewData: {
-                    net: net,
-                    dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
-                    note: note
-                },
-                onEdit: null
-            });
-            return;
-        }
-
-        if (!forceEdit && net !== 0) {
-            openUiModal({
-                title: 'Detail Transaksi',
-                subtitle: `Kas Operasional ${citizen.name}`,
-                mode: 'preview',
-                previewData: {
-                    net: net,
-                    dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
-                    note: note
-                },
-                onEdit: () => {
-                    window.editKas(id, date, true);
-                }
-            });
-            return;
-        }
-
-        openUiModal({
-            title: `Kas: ${citizen.name}`,
-            subtitle: `Input Kas Operasional Tgl ${date}`,
-            mode: 'input',
-            inputType: 'number',
-            dualInput: true,
-            initialIncome: income,
-            initialExpense: expense,
-            initialNote: note,
-            quickAmounts: [500, 1000, 2000, 5000],
-            showNoteInput: true,
-            onConfirm: (data) => {
-                const inc = parseInt(data.income.toString().replace(/\D/g,'')) || 0;
-                const exp = parseInt(data.expense.toString().replace(/\D/g,'')) || 0;
-                const newNet = inc - exp;
-
-                citizen.kas[date] = {
-                    income: inc,
-                    expense: exp,
-                    net: newNet,
-                    note: data.note
-                };
-
-                saveDB(); renderAll();
-                showToast(`Kas ${citizen.name} disimpan!`, 'success');
-            }
-        });
-    };
-
-    // --- FITUR BARU: PENGELUARAN TABUNGAN (OPS) ---
-    window.editTabOut = function(date) {
-        // ADMIN ONLY
-        if(currentRole !== 'admin') {
-            showToast('Hanya Admin yang bisa edit pengeluaran!', 'error');
-            return;
-        }
-
-        const currentVal = currentState.tabOut ? (currentState.tabOut[date] || 0) : 0;
-        const currentNote = currentState.tabOutNotes ? currentState.tabOutNotes[date] : '';
-        
-        openUiModal({
-            title: 'Pengeluaran Tabungan (OPS)',
-            subtitle: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
-            mode: 'input',
-            inputType: 'number',
-            initialValue: currentVal,
-            placeholder: "15000",
-            showNoteInput: true,
-            initialNote: currentNote,
-            onConfirm: (val, note) => {
-                let amount = parseInt(val.toString().replace(/[^0-9]/g, ''));
-                if (isNaN(amount)) amount = 0;
-                
-                if(!currentState.tabOut) currentState.tabOut = {};
-                currentState.tabOut[date] = amount;
-                
-                if(!currentState.tabOutNotes) currentState.tabOutNotes = {};
-                currentState.tabOutNotes[date] = note;
-
-                saveDB(); renderAll();
-                showToast('Pengeluaran Tabungan disimpan', 'success');
-            }
-        });
-    };
-
-    window.editKasOut = function(date) {
-        // ADMIN ONLY
-        if(currentRole !== 'admin') {
-            showToast('Hanya Admin yang bisa edit pengeluaran!', 'error');
-            return;
-        }
-
-        const currentVal = currentState.kasOut[date] || 0;
-        const currentNote = currentState.kasOutNotes ? currentState.kasOutNotes[date] : '';
-        
-        openUiModal({
-            title: 'Pengeluaran Kas Ops',
-            subtitle: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
-            mode: 'input',
-            inputType: 'number',
-            initialValue: currentVal,
-            placeholder: "15000",
-            showNoteInput: true,
-            initialNote: currentNote,
-            onConfirm: (val, note) => {
-                let amount = parseInt(val.toString().replace(/[^0-9]/g, ''));
-                if (isNaN(amount)) amount = 0;
-                currentState.kasOut[date] = amount;
-                
-                if(!currentState.kasOutNotes) currentState.kasOutNotes = {};
-                currentState.kasOutNotes[date] = note;
-
-                saveDB(); renderAll();
-                showToast('Pengeluaran Kas disimpan', 'success');
-            }
-        });
-    };
-
-    // --- NEW: SPLIT RESET FUNCTIONS (ONLY RESET TARGET DATA) ---
-
-    window.resetTabunganOnly = function() {
-        if(currentRole !== 'admin') return;
-
-        openUiModal({
-            title: 'Reset Tabungan Saja?',
-            message: "Hanya menghapus data TABUNGAN (warga & pengeluaran) bulan ini. Data KAS tidak akan hilang.",
-            mode: 'input',
-            isDelete: true, 
-            actionText: 'Reset Tabungan',
-            onConfirm: () => {
-                // 1. Reset Warga Tabungan
-                currentState.citizens.forEach(c => { 
-                    c.savings = {}; 
-                    c.savingsNotes = {}; 
-                });
-                
-                // 2. Reset Tabungan Out
-                currentState.tabOut = {};
-                currentState.tabOutNotes = {};
-
-                saveDB(); renderAll();
-                showToast("Data TABUNGAN telah di-reset.", 'success');
-            }
-        });
-    };
-
-    window.resetKasOnly = function() {
-        if(currentRole !== 'admin') return;
-
-        openUiModal({
-            title: 'Reset Kas Saja?',
-            message: "Hanya menghapus data KAS (warga & pengeluaran) bulan ini. Data TABUNGAN tidak akan hilang.",
-            mode: 'input',
-            isDelete: true, 
-            actionText: 'Reset Kas',
-            onConfirm: () => {
-                // 1. Reset Warga Kas
-                currentState.citizens.forEach(c => { 
-                    c.kas = {}; 
-                    c.kasNotes = {}; 
-                });
-                
-                // 2. Reset Kas Out
-                currentState.kasOut = {};
-                currentState.kasOutNotes = {};
-
-                saveDB(); renderAll();
-                showToast("Data KAS telah di-reset.", 'success');
-            }
-        });
-    };
-
-    window.saveGeneralNotes = function() {
-        if(currentRole !== 'admin') return;
-
-        const text = document.getElementById('general-notes-area').value;
-        currentState.generalNotes = text;
-        saveDB();
-        renderReport(); 
-        showToast('Catatan umum tersimpan!', 'success');
-    };
-
-    window.addCitizen = function() {
-        if(currentRole !== 'admin') return;
-
-        openUiModal({
-            title: 'Tambah Warga Baru',
-            mode: 'input',
-            inputType: 'text',
-            actionText: 'Tambah',
-            onConfirm: (name) => {
-                if(!name) return;
-                const maxId = currentState.citizens.reduce((max, c) => Math.max(max, typeof c.id === 'number' ? c.id : 0), 0);
-                const newId = maxId + 1;
-                currentState.citizens.push({ id: newId, name: name, savings: {}, kas: {}, savingsNotes: {}, kasNotes: {} });
-                saveDB(); renderAll();
-                showToast(`Warga "${name}" berhasil ditambahkan!`, 'success');
-            }
-        });
-    };
-// --- REFACTORED: LOGIC PENGHAPUSAN TERPISAH (TABUNGAN vs KAS) ---
-
-    // 1. Fungsi Hapus Khusus Tabungan
-    window.deleteCitizenTabungan = function(id, name) {
-        if(currentRole !== 'admin') return;
-
-        openUiModal({
-            title: 'Hapus Tabungan?',
-            message: `Hapus data TABUNGAN untuk warga "${name}"? Data KAS tidak akan terhapus.`,
-            mode: 'input',
-            isDelete: true,
-            actionText: 'Hapus Tabungan',
-            onConfirm: () => {
-                const citizen = currentState.citizens.find(c => c.id === id);
-                if (citizen) {
-                    // Reset hanya data savings
-                    citizen.savings = {};
-                    citizen.savingsNotes = {};
-                    
-                    // Cek apakah data kas juga kosong? Jika ya, hapus warga total
-                    checkAndRemoveCitizen(citizen);
-                    
-                    saveDB(); 
-                    renderAll();
-                    showToast(`Data Tabungan "${name}" dibersihkan.`, 'success');
-                }
-            }
-        });
-    };
-
-    // 2. Fungsi Hapus Khusus Kas
-    window.deleteCitizenKas = function(id, name) {
-        if(currentRole !== 'admin') return;
-
-        openUiModal({
-            title: 'Hapus Kas?',
-            message: `Hapus data KAS untuk warga "${name}"? Data TABUNGAN tidak akan terhapus.`,
-            mode: 'input',
-            isDelete: true,
-            actionText: 'Hapus Kas',
-            onConfirm: () => {
-                const citizen = currentState.citizens.find(c => c.id === id);
-                if (citizen) {
-                    // Reset hanya data kas
-                    citizen.kas = {};
-                    citizen.kasNotes = {};
-                    
-                    // Cek apakah data tabungan juga kosong? Jika ya, hapus warga total
-                    checkAndRemoveCitizen(citizen);
-
-                    saveDB(); 
-                    renderAll();
-                    showToast(`Data Kas "${name}" dibersihkan.`, 'success');
-                }
-            }
-        });
-    };
-
-    // 3. Helper: Cek & Hapus Warga Total jika Kosong Melompong
-    function checkAndRemoveCitizen(citizen) {
-        const isSavingsEmpty = Object.keys(citizen.savings || {}).length === 0;
-        const isKasEmpty = Object.keys(citizen.kas || {}).length === 0;
-
-        if (isSavingsEmpty && isKasEmpty) {
-            // Hapus dari array utama jika kedua data kosong
-            currentState.citizens = currentState.citizens.filter(c => c.id !== citizen.id);
-            showToast(`Warga "${citizen.name}" dihapus total (Data kosong).`, 'error');
-        }
-    }
-
-    // 4. Legacy Wrapper (Jaga-jaga jika dipanggil dari tempat lain)
-    window.deleteCitizen = function(id, name) {
-        // Default ke logika lama tabungan jika tidak spesifik (Safety fallback)
-        deleteCitizenTabungan(id, name);
-    };
-
-    window.resetValuesOnly = function() {
-        if(currentRole !== 'admin') return;
-
-        openUiModal({
-            title: 'Reset Nominal Bulan Ini?',
-            message: "Ini akan me-RESET semua uang menjadi 0 untuk bulan ini saja (Tabungan & Kas). Nama warga TETAP ADA.",
-            mode: 'input',
-            isDelete: true, 
-            actionText: 'Ya, Reset 0',
-            onConfirm: () => {
-                currentState.citizens.forEach(c => { 
-                    c.savings = {}; c.kas = {}; c.savingsNotes = {}; c.kasNotes = {}; 
-                });
-                currentState.kasOut = {};
-                currentState.kasOutNotes = {};
-                currentState.tabOut = {}; 
-                currentState.tabOutNotes = {};
-                saveDB(); renderAll();
-                showToast("Semua nominal di-reset ke 0.", 'success');
-            }
-        });
-    };
-
-    window.resetData = function() {
-        if(currentRole !== 'admin') return;
-
-        openUiModal({
-            title: 'HARD RESET SYSTEM?',
-            message: "PERINGATAN KERAS: Semua data akan DIHAPUS PERMANEN dan kembali ke kondisi awal Jan 2026. Tidak bisa dibatalkan!",
-            mode: 'input',
-            isDelete: true,
-            actionText: 'Hapus Semua Data',
-            onConfirm: () => {
-                localStorage.removeItem(STORAGE_KEY);
-                location.reload();
-            }
-        });
-    };
-
-    window.handleImageSubmit = function(e) {
-        e.preventDefault();
-        
-        if(currentRole !== 'admin') {
-            showToast('Hanya Admin yang bisa upload!', 'error');
-            return;
-        }
-
-        const date = document.getElementById('img-date').value;
-        const desc = document.getElementById('img-desc').value;
-        const category = document.getElementById('img-category').value;
-        const type = document.getElementById('img-type').value;
-        const url = document.getElementById('img-url').value;
-        const orientationElement = document.querySelector('input[name="img-orientation"]:checked');
-        const orientation = orientationElement ? orientationElement.value : 'auto';
-
-        const isValidDomain = url.includes('imghippo.com') || url.includes('catbox.moe');
-        const hasExtension = url.match(/\.(jpeg|jpg|gif|png|webp|mp4|webm)$/i);
-
-        if(!isValidDomain && !hasExtension) {
-            if(!confirm("URL ini sepertinya bukan dari ImgHippo/Catbox atau bukan file gambar/video. Tetap simpan?")) {
-                return;
-            }
-        }
-
-        if(!currentState.images) currentState.images = [];
-        currentState.images.push({ 
-            date, 
-            desc, 
-            category, 
-            type, 
-            url, 
-            orientation, 
-            id: Date.now() 
-        });
-        
-        document.getElementById('img-desc').value = '';
-        document.getElementById('img-url').value = '';
-        
-        saveDB();
-        renderImages();
-        renderReport(); 
-        showToast('Dokumentasi berhasil disimpan!', 'success');
-    };
-
-    window.deleteImage = function(id) {
-        if(currentRole !== 'admin') return;
-
-        openUiModal({
-            title: 'Hapus Dokumentasi?',
-            isDelete: true,
-            mode: 'input',
-            actionText: 'Hapus',
-            onConfirm: () => {
-                currentState.images = currentState.images.filter(img => img.id !== id);
-                saveDB(); renderImages(); renderReport();
-                showToast('Dokumentasi dihapus.', 'error');
-            }
-        });
-    };
-
-    window.changePeriod = function() {
-        const yearVal = parseInt(document.getElementById('sel-year').value);
-        const monthVal = parseInt(document.getElementById('sel-month').value);
-        currentYear = yearVal;
-        currentMonth = monthVal;
-
-        const badgeText = `${MONTH_NAMES[currentMonth].toUpperCase().substring(0,3)} ${currentYear}`;
-        document.getElementById('header-period-badge').innerText = badgeText;
-        document.getElementById('mobile-period-badge').innerText = badgeText;
-        document.getElementById('rpt-month-label').innerText = MONTH_NAMES[currentMonth];
-        document.getElementById('rpt-year-val').innerText = currentYear;
-        document.getElementById('rpt-print-period').innerText = `Periode: ${MONTH_NAMES[currentMonth]} ${currentYear}`;
-
-        if (!db[currentYear]) db[currentYear] = {};
-        if (!db[currentYear][currentMonth]) {
-            db[currentYear][currentMonth] = createBlankPeriod();
-            saveDB();
-        }
-
-        currentState = db[currentYear][currentMonth];
-        if(!currentState.kasOut) currentState.kasOut = {};
-        if(!currentState.kasOutNotes) currentState.kasOutNotes = {};
-        if(!currentState.tabOut) currentState.tabOut = {}; // Ensure tabOut exists
-        if(!currentState.tabOutNotes) currentState.tabOutNotes = {};
-        if(!currentState.images) currentState.images = [];
-        if(!currentState.generalNotes) currentState.generalNotes = '';
-        
-        // Re-render UI based on state and ROLE
-        renderAll();
-    };
-
-    window.switchTab = function(tabName) {
-        document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-        document.getElementById(`view-${tabName}`).classList.remove('hidden');
-        
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('bg-indigo-50', 'text-indigo-700', 'border-indigo-100', 'shadow-sm');
-            btn.classList.add('text-slate-500', 'border-transparent');
-        });
-        const btn = document.getElementById(`btn-${tabName}`);
-        if(btn) {
-            btn.classList.add('bg-indigo-50', 'text-indigo-700', 'border-indigo-100', 'shadow-sm');
-            btn.classList.remove('text-slate-500', 'border-transparent');
-        }
-
-        const mobileTitle = document.getElementById('mobile-page-title');
-        if(mobileTitle) {
-            if(tabName === 'tabungan') mobileTitle.innerText = "Tabungan";
-            else if(tabName === 'kas') mobileTitle.innerText = "Kas Harian";
-            else if(tabName === 'gambar') mobileTitle.innerText = "Dokumentasi";
-            else if(tabName === 'laporan') mobileTitle.innerText = "Laporan";
-            else if(tabName === 'catatan') mobileTitle.innerText = "Catatan";
-        }
-
-        if(window.innerWidth <= 768 && isMenuOpen) {
-            toggleMenu();
-        }
-    };
-
     // --- HELPER FUNCTIONS ---
 
     function init() {
@@ -2150,7 +1592,7 @@
 
         currentState.citizens.forEach((c, index) => {
             let totalRow = 0;
-            // MODIFIED: Use deleteCitizenTabungan specifically
+            // FIXED: Modified delete button to use deleteCitizenTabungan
             let rowHtml = `<tr class="bg-white hover:bg-slate-50 transition-colors group">
                 <td class="px-3 py-3 text-center font-medium text-slate-500 border-b border-r col-sticky-1 bg-white group-hover:bg-slate-50">${index + 1}</td>
                 <td class="px-4 py-3 font-medium text-slate-800 border-b col-sticky-2 whitespace-nowrap bg-white group-hover:bg-slate-50 text-left flex justify-between items-center group">
@@ -2286,7 +1728,7 @@
 
         currentState.citizens.forEach((c, index) => {
             let totalRow = 0;
-            // MODIFIED: Use deleteCitizenKas specifically
+            // FIXED: Modified delete button to use deleteCitizenKas
             let rowHtml = `<tr class="bg-white hover:bg-slate-50 transition-colors group">
                 <td class="px-3 py-3 text-center font-medium text-slate-500 border-b border-r col-sticky-1 bg-white group-hover:bg-slate-50">${index + 1}</td>
                 <td class="px-4 py-3 font-medium text-slate-800 border-b col-sticky-2 whitespace-nowrap bg-white group-hover:bg-slate-50 text-left flex justify-between items-center group">
@@ -2611,15 +2053,526 @@
             }
         }
     }
+// --- INTERACTION FUNCTIONS ---
 
-    // --- PDF GENERATION LOGIC (PROFESSIONAL F4) ---
+    window.editSaving = function(id, date, forceEdit = false) {
+        const citizen = currentState.citizens.find(c => c.id === id);
+        
+        // Extract Data
+        let currentData = citizen.savings[date];
+        let income = 0;
+        let expense = 0;
+        let note = '';
+        let net = 0;
+
+        if (typeof currentData === 'object' && currentData !== null) {
+            income = currentData.income || 0;
+            expense = currentData.expense || 0;
+            note = currentData.note || '';
+            net = currentData.net || (income - expense);
+        } else if (typeof currentData === 'number') {
+            if (currentData > 0) income = currentData;
+            else if (currentData < 0) expense = Math.abs(currentData);
+            net = currentData;
+        }
+
+        // --- ROLE CHECK: WARGA ---
+        if (currentRole !== 'admin') {
+            if (net === 0) return;
+
+            openUiModal({
+                title: 'Detail Transaksi',
+                subtitle: `Tabungan ${citizen.name} (Read Only)`,
+                mode: 'preview',
+                previewData: {
+                    net: net,
+                    dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
+                    note: note
+                },
+                onEdit: null 
+            });
+            return;
+        }
+
+        // --- ROLE CHECK: ADMIN (Normal Flow) ---
+        if (!forceEdit && net !== 0) {
+            openUiModal({
+                title: 'Detail Transaksi',
+                subtitle: `Tabungan ${citizen.name}`,
+                mode: 'preview',
+                previewData: {
+                    net: net,
+                    dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
+                    note: note
+                },
+                onEdit: () => {
+                    window.editSaving(id, date, true); 
+                }
+            });
+            return;
+        }
+        
+        // Show Input (Edit Mode)
+        openUiModal({
+            title: `Tabungan: ${citizen.name}`,
+            subtitle: `Input transaksi Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
+            mode: 'input',
+            inputType: 'number',
+            dualInput: true,
+            initialIncome: income,
+            initialExpense: expense,
+            initialNote: note,
+            quickAmounts: [1000, 2000, 5000, 10000],
+            showNoteInput: true,
+            onConfirm: (data) => {
+                const inc = parseInt(data.income.toString().replace(/\D/g,'')) || 0;
+                const exp = parseInt(data.expense.toString().replace(/\D/g,'')) || 0;
+                const newNet = inc - exp;
+
+                citizen.savings[date] = {
+                    income: inc,
+                    expense: exp,
+                    net: newNet,
+                    note: data.note
+                };
+
+                saveDB(); renderAll();
+                showToast(`Transaksi ${citizen.name} disimpan!`, 'success');
+            }
+        });
+    };
+
+    window.editKas = function(id, date, forceEdit = false) {
+        const citizen = currentState.citizens.find(c => c.id === id);
+        
+        let currentData = citizen.kas[date];
+        let income = 0;
+        let expense = 0;
+        let note = '';
+        let net = 0;
+
+        if (typeof currentData === 'object' && currentData !== null) {
+            income = currentData.income || 0;
+            expense = currentData.expense || 0;
+            note = currentData.note || '';
+            net = currentData.net || (income - expense);
+        } else if (typeof currentData === 'number') {
+            if (currentData > 0) income = currentData;
+            else if (currentData < 0) expense = Math.abs(currentData);
+            net = currentData;
+        }
+        
+        if (currentRole !== 'admin') {
+            if (net === 0) return; 
+            
+            openUiModal({
+                title: 'Detail Transaksi',
+                subtitle: `Kas Operasional ${citizen.name} (Read Only)`,
+                mode: 'preview',
+                previewData: {
+                    net: net,
+                    dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
+                    note: note
+                },
+                onEdit: null
+            });
+            return;
+        }
+
+        if (!forceEdit && net !== 0) {
+            openUiModal({
+                title: 'Detail Transaksi',
+                subtitle: `Kas Operasional ${citizen.name}`,
+                mode: 'preview',
+                previewData: {
+                    net: net,
+                    dateLabel: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
+                    note: note
+                },
+                onEdit: () => {
+                    window.editKas(id, date, true);
+                }
+            });
+            return;
+        }
+
+        openUiModal({
+            title: `Kas: ${citizen.name}`,
+            subtitle: `Input Kas Operasional Tgl ${date}`,
+            mode: 'input',
+            inputType: 'number',
+            dualInput: true,
+            initialIncome: income,
+            initialExpense: expense,
+            initialNote: note,
+            quickAmounts: [500, 1000, 2000, 5000],
+            showNoteInput: true,
+            onConfirm: (data) => {
+                const inc = parseInt(data.income.toString().replace(/\D/g,'')) || 0;
+                const exp = parseInt(data.expense.toString().replace(/\D/g,'')) || 0;
+                const newNet = inc - exp;
+
+                citizen.kas[date] = {
+                    income: inc,
+                    expense: exp,
+                    net: newNet,
+                    note: data.note
+                };
+
+                saveDB(); renderAll();
+                showToast(`Kas ${citizen.name} disimpan!`, 'success');
+            }
+        });
+    };
+
+    window.editTabOut = function(date) {
+        if(currentRole !== 'admin') {
+            showToast('Hanya Admin yang bisa edit pengeluaran!', 'error');
+            return;
+        }
+
+        const currentVal = currentState.tabOut ? (currentState.tabOut[date] || 0) : 0;
+        const currentNote = currentState.tabOutNotes ? currentState.tabOutNotes[date] : '';
+        
+        openUiModal({
+            title: 'Pengeluaran Tabungan (OPS)',
+            subtitle: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
+            mode: 'input',
+            inputType: 'number',
+            initialValue: currentVal,
+            placeholder: "15000",
+            showNoteInput: true,
+            initialNote: currentNote,
+            onConfirm: (val, note) => {
+                let amount = parseInt(val.toString().replace(/[^0-9]/g, ''));
+                if (isNaN(amount)) amount = 0;
+                
+                if(!currentState.tabOut) currentState.tabOut = {};
+                currentState.tabOut[date] = amount;
+                
+                if(!currentState.tabOutNotes) currentState.tabOutNotes = {};
+                currentState.tabOutNotes[date] = note;
+
+                saveDB(); renderAll();
+                showToast('Pengeluaran Tabungan disimpan', 'success');
+            }
+        });
+    };
+
+    window.editKasOut = function(date) {
+        if(currentRole !== 'admin') {
+            showToast('Hanya Admin yang bisa edit pengeluaran!', 'error');
+            return;
+        }
+
+        const currentVal = currentState.kasOut[date] || 0;
+        const currentNote = currentState.kasOutNotes ? currentState.kasOutNotes[date] : '';
+        
+        openUiModal({
+            title: 'Pengeluaran Kas Ops',
+            subtitle: `Tgl ${date} ${MONTH_NAMES[currentMonth]}`,
+            mode: 'input',
+            inputType: 'number',
+            initialValue: currentVal,
+            placeholder: "15000",
+            showNoteInput: true,
+            initialNote: currentNote,
+            onConfirm: (val, note) => {
+                let amount = parseInt(val.toString().replace(/[^0-9]/g, ''));
+                if (isNaN(amount)) amount = 0;
+                currentState.kasOut[date] = amount;
+                
+                if(!currentState.kasOutNotes) currentState.kasOutNotes = {};
+                currentState.kasOutNotes[date] = note;
+
+                saveDB(); renderAll();
+                showToast('Pengeluaran Kas disimpan', 'success');
+            }
+        });
+    };
+
+    // --- NEW: SPLIT RESET & DELETE FUNCTIONS ---
+
+    window.resetTabunganOnly = function() {
+        if(currentRole !== 'admin') return;
+
+        openUiModal({
+            title: 'Reset Tabungan Saja?',
+            message: "Hanya menghapus data TABUNGAN (warga & pengeluaran) bulan ini. Data KAS tidak akan hilang.",
+            mode: 'input',
+            isDelete: true, 
+            actionText: 'Reset Tabungan',
+            onConfirm: () => {
+                currentState.citizens.forEach(c => { 
+                    c.savings = {}; 
+                    c.savingsNotes = {}; 
+                });
+                currentState.tabOut = {};
+                currentState.tabOutNotes = {};
+
+                saveDB(); renderAll();
+                showToast("Data TABUNGAN telah di-reset.", 'success');
+            }
+        });
+    };
+
+    window.resetKasOnly = function() {
+        if(currentRole !== 'admin') return;
+
+        openUiModal({
+            title: 'Reset Kas Saja?',
+            message: "Hanya menghapus data KAS (warga & pengeluaran) bulan ini. Data TABUNGAN tidak akan hilang.",
+            mode: 'input',
+            isDelete: true, 
+            actionText: 'Reset Kas',
+            onConfirm: () => {
+                currentState.citizens.forEach(c => { 
+                    c.kas = {}; 
+                    c.kasNotes = {}; 
+                });
+                currentState.kasOut = {};
+                currentState.kasOutNotes = {};
+
+                saveDB(); renderAll();
+                showToast("Data KAS telah di-reset.", 'success');
+            }
+        });
+    };
+
+    window.saveGeneralNotes = function() {
+        if(currentRole !== 'admin') return;
+        const text = document.getElementById('general-notes-area').value;
+        currentState.generalNotes = text;
+        saveDB();
+        renderReport(); 
+        showToast('Catatan umum tersimpan!', 'success');
+    };
+
+    window.addCitizen = function() {
+        if(currentRole !== 'admin') return;
+        openUiModal({
+            title: 'Tambah Warga Baru',
+            mode: 'input',
+            inputType: 'text',
+            actionText: 'Tambah',
+            onConfirm: (name) => {
+                if(!name) return;
+                const maxId = currentState.citizens.reduce((max, c) => Math.max(max, typeof c.id === 'number' ? c.id : 0), 0);
+                const newId = maxId + 1;
+                currentState.citizens.push({ id: newId, name: name, savings: {}, kas: {}, savingsNotes: {}, kasNotes: {} });
+                saveDB(); renderAll();
+                showToast(`Warga "${name}" berhasil ditambahkan!`, 'success');
+            }
+        });
+    };
+
+    // --- REFACTORED DELETE FUNCTIONS ---
+
+    // 1. Delete Tabungan Only
+    window.deleteCitizenTabungan = function(id, name) {
+        if(currentRole !== 'admin') return;
+
+        openUiModal({
+            title: 'Hapus Data TABUNGAN?',
+            message: `Hapus data TABUNGAN untuk warga "${name}"? Data KAS tidak akan terhapus.`,
+            mode: 'input',
+            isDelete: true,
+            actionText: 'Hapus Tabungan',
+            onConfirm: () => {
+                const c = currentState.citizens.find(x => x.id === id);
+                if(c) {
+                    c.savings = {};
+                    c.savingsNotes = {};
+                    saveDB(); renderAll();
+                    showToast(`Data tabungan ${name} dihapus.`);
+                    
+                    // Check if we should offer total delete
+                    checkCleanupCitizen(c);
+                }
+            }
+        });
+    };
+
+    // 2. Delete Kas Only
+    window.deleteCitizenKas = function(id, name) {
+        if(currentRole !== 'admin') return;
+
+        openUiModal({
+            title: 'Hapus Data KAS?',
+            message: `Hapus data KAS untuk warga "${name}"? Data TABUNGAN tidak akan terhapus.`,
+            mode: 'input',
+            isDelete: true,
+            actionText: 'Hapus Kas',
+            onConfirm: () => {
+                const c = currentState.citizens.find(x => x.id === id);
+                if(c) {
+                    c.kas = {};
+                    c.kasNotes = {};
+                    saveDB(); renderAll();
+                    showToast(`Data kas ${name} dihapus.`);
+                    
+                    // Check if we should offer total delete
+                    checkCleanupCitizen(c);
+                }
+            }
+        });
+    };
+
+    // Helper: Check if citizen is completely empty and offer permanent delete
+    function checkCleanupCitizen(c) {
+        const isSavEmpty = Object.keys(c.savings).length === 0;
+        const isKasEmpty = Object.keys(c.kas).length === 0;
+        
+        if(isSavEmpty && isKasEmpty) {
+            setTimeout(() => {
+                 openUiModal({
+                    title: 'Hapus Warga Permanen?',
+                    message: `Data Tabungan & Kas "${c.name}" sudah kosong. Hapus warga ini dari daftar?`,
+                    mode: 'input',
+                    isDelete: true,
+                    actionText: 'Hapus Permanen',
+                    onConfirm: () => {
+                        currentState.citizens = currentState.citizens.filter(x => x.id !== c.id);
+                        saveDB(); renderAll();
+                        showToast(`Warga ${c.name} dihapus permanen.`);
+                    }
+                });
+            }, 600); // Slight delay to allow previous modal to close
+        }
+    }
+
+    window.resetData = function() {
+        if(currentRole !== 'admin') return;
+        openUiModal({
+            title: 'HARD RESET SYSTEM?',
+            message: "PERINGATAN KERAS: Semua data akan DIHAPUS PERMANEN dan kembali ke kondisi awal Jan 2026. Tidak bisa dibatalkan!",
+            mode: 'input',
+            isDelete: true,
+            actionText: 'Hapus Semua Data',
+            onConfirm: () => {
+                localStorage.removeItem(STORAGE_KEY);
+                location.reload();
+            }
+        });
+    };
+
+    window.handleImageSubmit = function(e) {
+        e.preventDefault();
+        if(currentRole !== 'admin') {
+            showToast('Hanya Admin yang bisa upload!', 'error');
+            return;
+        }
+
+        const date = document.getElementById('img-date').value;
+        const desc = document.getElementById('img-desc').value;
+        const category = document.getElementById('img-category').value;
+        const type = document.getElementById('img-type').value;
+        const url = document.getElementById('img-url').value;
+        const orientationElement = document.querySelector('input[name="img-orientation"]:checked');
+        const orientation = orientationElement ? orientationElement.value : 'auto';
+
+        const isValidDomain = url.includes('imghippo.com') || url.includes('catbox.moe');
+        const hasExtension = url.match(/\.(jpeg|jpg|gif|png|webp|mp4|webm)$/i);
+
+        if(!isValidDomain && !hasExtension) {
+            if(!confirm("URL ini sepertinya bukan dari ImgHippo/Catbox atau bukan file gambar/video. Tetap simpan?")) return;
+        }
+
+        if(!currentState.images) currentState.images = [];
+        currentState.images.push({ 
+            date, desc, category, type, url, orientation, 
+            id: Date.now() 
+        });
+        
+        document.getElementById('img-desc').value = '';
+        document.getElementById('img-url').value = '';
+        
+        saveDB(); renderImages(); renderReport(); 
+        showToast('Dokumentasi berhasil disimpan!', 'success');
+    };
+
+    window.deleteImage = function(id) {
+        if(currentRole !== 'admin') return;
+        openUiModal({
+            title: 'Hapus Dokumentasi?',
+            isDelete: true,
+            mode: 'input',
+            actionText: 'Hapus',
+            onConfirm: () => {
+                currentState.images = currentState.images.filter(img => img.id !== id);
+                saveDB(); renderImages(); renderReport();
+                showToast('Dokumentasi dihapus.', 'error');
+            }
+        });
+    };
+
+    window.changePeriod = function() {
+        const yearVal = parseInt(document.getElementById('sel-year').value);
+        const monthVal = parseInt(document.getElementById('sel-month').value);
+        currentYear = yearVal;
+        currentMonth = monthVal;
+
+        const badgeText = `${MONTH_NAMES[currentMonth].toUpperCase().substring(0,3)} ${currentYear}`;
+        document.getElementById('header-period-badge').innerText = badgeText;
+        document.getElementById('mobile-period-badge').innerText = badgeText;
+        document.getElementById('rpt-month-label').innerText = MONTH_NAMES[currentMonth];
+        document.getElementById('rpt-year-val').innerText = currentYear;
+        document.getElementById('rpt-print-period').innerText = `Periode: ${MONTH_NAMES[currentMonth]} ${currentYear}`;
+
+        if (!db[currentYear]) db[currentYear] = {};
+        if (!db[currentYear][currentMonth]) {
+            db[currentYear][currentMonth] = createBlankPeriod();
+            saveDB();
+        }
+
+        currentState = db[currentYear][currentMonth];
+        // Ensure structure integrity
+        if(!currentState.kasOut) currentState.kasOut = {};
+        if(!currentState.kasOutNotes) currentState.kasOutNotes = {};
+        if(!currentState.tabOut) currentState.tabOut = {}; 
+        if(!currentState.tabOutNotes) currentState.tabOutNotes = {};
+        if(!currentState.images) currentState.images = [];
+        if(!currentState.generalNotes) currentState.generalNotes = '';
+        
+        renderAll();
+    };
+
+    window.switchTab = function(tabName) {
+        document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+        document.getElementById(`view-${tabName}`).classList.remove('hidden');
+        
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('bg-indigo-50', 'text-indigo-700', 'border-indigo-100', 'shadow-sm');
+            btn.classList.add('text-slate-500', 'border-transparent');
+        });
+        const btn = document.getElementById(`btn-${tabName}`);
+        if(btn) {
+            btn.classList.add('bg-indigo-50', 'text-indigo-700', 'border-indigo-100', 'shadow-sm');
+            btn.classList.remove('text-slate-500', 'border-transparent');
+        }
+
+        const mobileTitle = document.getElementById('mobile-page-title');
+        if(mobileTitle) {
+            if(tabName === 'tabungan') mobileTitle.innerText = "Tabungan";
+            else if(tabName === 'kas') mobileTitle.innerText = "Kas Harian";
+            else if(tabName === 'gambar') mobileTitle.innerText = "Dokumentasi";
+            else if(tabName === 'laporan') mobileTitle.innerText = "Laporan";
+            else if(tabName === 'catatan') mobileTitle.innerText = "Catatan";
+        }
+
+        if(window.innerWidth <= 768 && isMenuOpen) {
+            toggleMenu();
+        }
+    };
+
+    // --- PDF GENERATION LOGIC ---
     window.downloadPDF = function() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', [215, 330]);
         const currentMonthName = MONTH_NAMES[currentMonth];
         const periodStr = `${currentMonthName} ${currentYear}`;
         
-        // --- PAGE 1: COVER (Portrait) ---
+        // PAGE 1: COVER
         doc.setLineWidth(0.5);
         doc.line(20, 20, 195, 20);
         doc.setLineWidth(0.2);
@@ -2647,7 +2600,7 @@
         doc.text("Sistem Manajemen Keuangan Digital RT 02 / RW 19", 107.5, 310, { align: "center" });
         doc.setTextColor(0);
 
-        // --- PAGE 2: RINGKASAN (Landscape F4: 330x215) ---
+        // PAGE 2: SUMMARY
         doc.addPage([330, 215], 'l'); 
         doc.setFontSize(16);
         doc.setFont("helvetica", "bold");
@@ -2663,7 +2616,7 @@
         const mTotalOut = summary.totalExpense;
         const mSaldo = summary.finalBalance;
 
-        // Draw Cards
+        // Cards
         doc.setFillColor(79, 70, 229); // Indigo
         doc.rect(14, 35, 70, 40, 'F');
         doc.setTextColor(255);
@@ -2705,10 +2658,7 @@
         doc.setFont("helvetica", "italic");
         doc.text("Keterangan Rumus: Saldo Bersih = (Tabungan Masuk + Kas Masuk) - (Tarik Tabungan + Tarik Kas + Ops)", 14, 85);
 
-        doc.setFontSize(8);
-        doc.text("Halaman 2", 310, 205, { align: "right" });
-
-        // --- PAGE 3 & 4: TABUNGAN HARIAN (Split) ---
+        // PAGE 3 & 4: TABUNGAN
         const tabunganHead = [['No', 'Nama', ...Array.from({length:31}, (_, i)=>i+1), 'Total']];
         let totalTabunganKeseluruhan = 0;
 
@@ -2748,8 +2698,6 @@
                 }
             }
         });
-        doc.text("Tabungan Harian - Halaman 1 dari 2", 165, 205, { align: "center" });
-        doc.text("Halaman 3", 310, 205, { align: "right" });
 
         doc.addPage([330, 215], 'l');
         doc.setFontSize(14);
@@ -2778,10 +2726,8 @@
                 }
             }
         });
-        doc.text("Tabungan Harian - Halaman 2 dari 2", 165, 205, { align: "center" });
-        doc.text("Halaman 4", 310, 205, { align: "right" });
 
-        // --- PAGE 5: KAS OPERASIONAL (MASUK) (Landscape) ---
+        // PAGE 5: KAS
         doc.addPage([330, 215], 'l');
         doc.setFontSize(14);
         doc.text("KAS OPERASIONAL - PEMASUKAN WARGA", 14, 15);
@@ -2825,9 +2771,8 @@
                 }
             }
         });
-        doc.text("Halaman 5", 310, 205, { align: "right" });
 
-        // --- PAGE 7: CATATAN TRANSAKSI (Portrait F4: 215x330) ---
+        // PAGE 7: NOTES
         doc.addPage([215, 330], 'p');
         doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
@@ -2851,17 +2796,13 @@
         for(let i=1; i<=31; i++) {
             let dayNotes = [];
             
-            // Check Kas Out
             if(currentState.kasOutNotes && currentState.kasOutNotes[i]) {
                 dayNotes.push(`• Pengeluaran KAS: ${currentState.kasOutNotes[i]} (Rp ${currentState.kasOut[i]?.toLocaleString('id-ID')})`);
             }
-            
-            // Check Tabungan Out
             if(currentState.tabOutNotes && currentState.tabOutNotes[i]) {
                 dayNotes.push(`• Pengeluaran TABUNGAN: ${currentState.tabOutNotes[i]} (Rp ${currentState.tabOut[i]?.toLocaleString('id-ID')})`);
             }
 
-            // Check Citizens Notes
             currentState.citizens.forEach(c => {
                 if(c.savings[i] && typeof c.savings[i] === 'object' && c.savings[i].note) {
                     dayNotes.push(`• Tabungan ${c.name}: ${c.savings[i].note}`);
@@ -2893,9 +2834,8 @@
         }
         
         doc.setTextColor(0);
-        doc.text("Halaman 6", 195, 310, { align: "right" });
 
-        // --- PAGE 8: REKAPITULASI (Landscape) ---
+        // PAGE 8: RECAP
         doc.addPage([330, 215], 'l');
         doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
@@ -2946,11 +2886,7 @@
             }
         });
         
-        doc.setFontSize(10);
-        doc.text("Rekap Tahunan Keuangan RT", 165, 205, { align: "center" });
-        doc.text("Halaman 7", 310, 205, { align: "right" });
-
-        // --- PAGE 9: PENGESAHAN (Portrait) ---
+        // PAGE 9: SIGNATURE
         doc.addPage([215, 330], 'p');
         doc.setFontSize(12);
         doc.setFont("helvetica", "bold");
@@ -2977,8 +2913,6 @@
         doc.line(145, 140, 185, 140); 
         doc.text("( ........................ )", 165, 145, { align: 'center' });
         
-        doc.text("Halaman 8", 195, 310, { align: "right" });
-
         // Save
         const filename = `Laporan_Resmi_RT02_RW19_${currentMonthName}_${currentYear}.pdf`;
         doc.save(filename);
