@@ -1189,7 +1189,6 @@
         // Handle LOAD BUTTON State (Allowed for both)
         const btnLoad = document.getElementById('btn-load-database');
         if(btnLoad) {
-            // Reset to default active state first
             btnLoad.classList.remove('btn-disabled-warga');
             btnLoad.title = "Load Database Backup (.zip)";
             btnLoad.removeAttribute('disabled');
@@ -1207,8 +1206,6 @@
             btnIcon.innerText = "🔐";
             badge.innerText = "MODE: WARGA (Read Only)";
             badge.className = "mb-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200";
-            
-            // NOTE: Load button is NO LONGER disabled here based on requirements
         }
     }
 
@@ -1590,9 +1587,14 @@
         let totalsPerDate = {};
         let grandTotal = 0;
 
-        currentState.citizens.forEach((c, index) => {
+        // --- FILTER LOGIC FIXED ---
+        // Hanya render citizen yang memiliki data tabungan (keys > 0)
+        const activeCitizens = currentState.citizens.filter(c => {
+            return c.savings && Object.keys(c.savings).length > 0;
+        });
+
+        activeCitizens.forEach((c, index) => {
             let totalRow = 0;
-            // FIXED: Modified delete button to use deleteCitizenTabungan
             let rowHtml = `<tr class="bg-white hover:bg-slate-50 transition-colors group">
                 <td class="px-3 py-3 text-center font-medium text-slate-500 border-b border-r col-sticky-1 bg-white group-hover:bg-slate-50">${index + 1}</td>
                 <td class="px-4 py-3 font-medium text-slate-800 border-b col-sticky-2 whitespace-nowrap bg-white group-hover:bg-slate-50 text-left flex justify-between items-center group">
@@ -1726,9 +1728,14 @@
         let totalsPerDateIn = {};
         let grandTotalIn = 0;
 
-        currentState.citizens.forEach((c, index) => {
+        // --- FILTER LOGIC FIXED ---
+        // Hanya render citizen yang memiliki data kas (keys > 0)
+        const activeCitizens = currentState.citizens.filter(c => {
+            return c.kas && Object.keys(c.kas).length > 0;
+        });
+
+        activeCitizens.forEach((c, index) => {
             let totalRow = 0;
-            // FIXED: Modified delete button to use deleteCitizenKas
             let rowHtml = `<tr class="bg-white hover:bg-slate-50 transition-colors group">
                 <td class="px-3 py-3 text-center font-medium text-slate-500 border-b border-r col-sticky-1 bg-white group-hover:bg-slate-50">${index + 1}</td>
                 <td class="px-4 py-3 font-medium text-slate-800 border-b col-sticky-2 whitespace-nowrap bg-white group-hover:bg-slate-50 text-left flex justify-between items-center group">
@@ -1907,8 +1914,7 @@
         if(type === 'Tabungan') return 'bg-emerald-100 text-emerald-700';
         return 'bg-slate-100 text-slate-600';
     }
-
-    // === LOGIKA LAPORAN BARU ===
+// === LOGIKA LAPORAN BARU ===
     function getSafeValue(data, type) {
         if (typeof data === 'number') {
             if (type === 'income') return data > 0 ? data : 0;
@@ -2053,7 +2059,8 @@
             }
         }
     }
-// --- INTERACTION FUNCTIONS ---
+
+    // --- INTERACTION FUNCTIONS ---
 
     window.editSaving = function(id, date, forceEdit = false) {
         const citizen = currentState.citizens.find(c => c.id === id);
