@@ -1783,21 +1783,80 @@
             }
         });
     };
-window.deleteCitizen = function(id, name) {
+// --- REFACTORED: LOGIC PENGHAPUSAN TERPISAH (TABUNGAN vs KAS) ---
+
+    // 1. Fungsi Hapus Khusus Tabungan
+    window.deleteCitizenTabungan = function(id, name) {
         if(currentRole !== 'admin') return;
 
         openUiModal({
-            title: 'Hapus Warga?',
-            message: `Yakin ingin menghapus warga "${name}"? Data tabungan/kas mereka di bulan ini akan HILANG PERMANEN.`,
+            title: 'Hapus Tabungan?',
+            message: `Hapus data TABUNGAN untuk warga "${name}"? Data KAS tidak akan terhapus.`,
             mode: 'input',
             isDelete: true,
-            actionText: 'Ya, Hapus',
+            actionText: 'Hapus Tabungan',
             onConfirm: () => {
-                currentState.citizens = currentState.citizens.filter(c => c.id !== id);
-                saveDB(); renderAll();
-                showToast(`Warga "${name}" dihapus.`, 'error');
+                const citizen = currentState.citizens.find(c => c.id === id);
+                if (citizen) {
+                    // Reset hanya data savings
+                    citizen.savings = {};
+                    citizen.savingsNotes = {};
+                    
+                    // Cek apakah data kas juga kosong? Jika ya, hapus warga total
+                    checkAndRemoveCitizen(citizen);
+                    
+                    saveDB(); 
+                    renderAll();
+                    showToast(`Data Tabungan "${name}" dibersihkan.`, 'success');
+                }
             }
         });
+    };
+
+    // 2. Fungsi Hapus Khusus Kas
+    window.deleteCitizenKas = function(id, name) {
+        if(currentRole !== 'admin') return;
+
+        openUiModal({
+            title: 'Hapus Kas?',
+            message: `Hapus data KAS untuk warga "${name}"? Data TABUNGAN tidak akan terhapus.`,
+            mode: 'input',
+            isDelete: true,
+            actionText: 'Hapus Kas',
+            onConfirm: () => {
+                const citizen = currentState.citizens.find(c => c.id === id);
+                if (citizen) {
+                    // Reset hanya data kas
+                    citizen.kas = {};
+                    citizen.kasNotes = {};
+                    
+                    // Cek apakah data tabungan juga kosong? Jika ya, hapus warga total
+                    checkAndRemoveCitizen(citizen);
+
+                    saveDB(); 
+                    renderAll();
+                    showToast(`Data Kas "${name}" dibersihkan.`, 'success');
+                }
+            }
+        });
+    };
+
+    // 3. Helper: Cek & Hapus Warga Total jika Kosong Melompong
+    function checkAndRemoveCitizen(citizen) {
+        const isSavingsEmpty = Object.keys(citizen.savings || {}).length === 0;
+        const isKasEmpty = Object.keys(citizen.kas || {}).length === 0;
+
+        if (isSavingsEmpty && isKasEmpty) {
+            // Hapus dari array utama jika kedua data kosong
+            currentState.citizens = currentState.citizens.filter(c => c.id !== citizen.id);
+            showToast(`Warga "${citizen.name}" dihapus total (Data kosong).`, 'error');
+        }
+    }
+
+    // 4. Legacy Wrapper (Jaga-jaga jika dipanggil dari tempat lain)
+    window.deleteCitizen = function(id, name) {
+        // Default ke logika lama tabungan jika tidak spesifik (Safety fallback)
+        deleteCitizenTabungan(id, name);
     };
 
     window.resetValuesOnly = function() {
@@ -2091,11 +2150,12 @@ window.deleteCitizen = function(id, name) {
 
         currentState.citizens.forEach((c, index) => {
             let totalRow = 0;
+            // MODIFIED: Use deleteCitizenTabungan specifically
             let rowHtml = `<tr class="bg-white hover:bg-slate-50 transition-colors group">
                 <td class="px-3 py-3 text-center font-medium text-slate-500 border-b border-r col-sticky-1 bg-white group-hover:bg-slate-50">${index + 1}</td>
                 <td class="px-4 py-3 font-medium text-slate-800 border-b col-sticky-2 whitespace-nowrap bg-white group-hover:bg-slate-50 text-left flex justify-between items-center group">
                     <span>${c.name}</span>
-                    <button onclick="deleteCitizen(${c.id}, '${c.name}')" class="admin-only text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" title="Hapus Warga">
+                    <button onclick="deleteCitizenTabungan(${c.id}, '${c.name}')" class="admin-only text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" title="Hapus Data Tabungan Warga Ini">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </td>`;
@@ -2226,11 +2286,12 @@ window.deleteCitizen = function(id, name) {
 
         currentState.citizens.forEach((c, index) => {
             let totalRow = 0;
+            // MODIFIED: Use deleteCitizenKas specifically
             let rowHtml = `<tr class="bg-white hover:bg-slate-50 transition-colors group">
                 <td class="px-3 py-3 text-center font-medium text-slate-500 border-b border-r col-sticky-1 bg-white group-hover:bg-slate-50">${index + 1}</td>
                 <td class="px-4 py-3 font-medium text-slate-800 border-b col-sticky-2 whitespace-nowrap bg-white group-hover:bg-slate-50 text-left flex justify-between items-center group">
                     <span>${c.name}</span>
-                    <button onclick="deleteCitizen(${c.id}, '${c.name}')" class="admin-only text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" title="Hapus Warga">
+                    <button onclick="deleteCitizenKas(${c.id}, '${c.name}')" class="admin-only text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" title="Hapus Data Kas Warga Ini">
                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </td>`;
