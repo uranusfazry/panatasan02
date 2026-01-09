@@ -149,6 +149,18 @@
             pointer-events: none;
         }
 
+        /* --- NEW: RENAME CITIZEN BUTTON STYLE --- */
+        .rename-btn {
+            margin-left: 6px;
+            font-size: 12px;
+            opacity: 0.4;
+            cursor: pointer;
+        }
+        .rename-btn:hover {
+            opacity: 1;
+            color: #4f46e5;
+        }
+
         /* --- MOBILE FIXES IMPLEMENTATION --- */
         @media (max-width: 768px) {
             /* 1. Scroll & Container Logic */
@@ -1288,6 +1300,38 @@
         if(currentEditAction) currentEditAction(); // Trigger the edit function passed in options
     });
 
+    // --- NEW FEATURE: RENAME CITIZEN ---
+    window.renameCitizen = function(id) {
+        if (currentRole !== 'admin') return;
+
+        const citizen = currentState.citizens.find(c => c.id === id);
+        if (!citizen) return;
+
+        openUiModal({
+            title: 'Ganti Nama Warga',
+            subtitle: 'Perubahan berlaku ke semua periode',
+            mode: 'input',
+            inputType: 'text',
+            initialValue: citizen.name,
+            actionText: 'Simpan',
+            onConfirm: (newName) => {
+                if (!newName || !newName.trim()) return;
+
+                // Sync name change to ALL periods in database
+                for (const year in db) {
+                    for (const month in db[year]) {
+                        const c = db[year][month].citizens.find(x => x.id === id);
+                        if (c) c.name = newName.trim();
+                    }
+                }
+
+                saveDB();
+                renderAll();
+                showToast('Nama warga berhasil diperbarui', 'success');
+            }
+        });
+    };
+
     // --- NEW: CITIZEN TYPE MODAL LOGIC (FITUR 1) ---
     function openCitizenTypeModal() {
         const backdrop = document.getElementById('modal-citizen-type');
@@ -1875,53 +1919,6 @@
         saveDB();
     }
 
-    function createBlankPeriod() {
-        // Ambil list warga dari bulan sebelumnya (jika ada) atau master data
-        // Agar warga yang baru ditambahkan di bulan lalu tetap terbawa
-        // Namun, kita ambil master ID yang unik dari seluruh DB untuk memastikan konsistensi
-        
-        // Strategi: Ambil citizens dari bulan pertama tahun ini sebagai basis, 
-        // atau jika kosong, gunakan Master.
-        // Tapi cara paling aman sesuai instruksi "Future Proof" adalah melihat data warga yang ada di db global
-        // Namun untuk simplifikasi logic createBlankPeriod sesuai struktur lama:
-        
-        const blankCitizens = MASTER_CITIZENS.map(mc => ({
-            id: mc.id,
-            name: mc.name,
-            savings: {},
-            kas: {},
-            savingsNotes: {},
-            kasNotes: {}
-        }));
-        
-        // IMPORTANT: Jika ada warga tambahan (ID > 50 / Timestamp), kita harus masukan juga
-        // Kita cek di bulan 0 tahun 2026 (root data) untuk warga tambahan
-        if(db[2026] && db[2026][0] && db[2026][0].citizens) {
-             const existingIds = new Set(blankCitizens.map(c => c.id));
-             db[2026][0].citizens.forEach(c => {
-                 if(!existingIds.has(c.id)) {
-                     // Ini warga baru yang ditambahkan manual
-                     blankCitizens.push({
-                        id: c.id,
-                        name: c.name,
-                        savings: {},
-                        kas: {},
-                        savingsNotes: {},
-                        kasNotes: {}
-                      });
-                 }
-             });
-        }
-
-        return { 
-            citizens: blankCitizens, 
-            kasOut: {}, kasOutNotes: {}, 
-            tabOut: {}, tabOutNotes: {},
-            images: [], generalNotes: '',
-            weeklyBendahara: []
-        };
-    }
-
     function saveDB() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
     }
@@ -2180,10 +2177,14 @@
 
         activeCitizens.forEach((c, index) => {
             let totalRow = 0;
+            // --- MODIFIED ROW HTML WITH EDIT ICON ---
             let rowHtml = `<tr class="bg-white hover:bg-slate-50 transition-colors group">
                 <td class="px-3 py-3 text-center font-medium text-slate-500 border-b border-r col-sticky-1 bg-white group-hover:bg-slate-50">${index + 1}</td>
                 <td class="px-4 py-3 font-medium text-slate-800 border-b col-sticky-2 whitespace-nowrap bg-white group-hover:bg-slate-50 text-left flex justify-between items-center group">
-                    <span>${c.name}</span>
+                    <div class="flex items-center gap-1">
+                        <span>${c.name}</span>
+                        <button onclick="renameCitizen(${c.id})" class="admin-only rename-btn" title="Ubah Nama">✏️</button>
+                    </div>
                     <button onclick="deleteCitizenTabungan(${c.id}, '${c.name}')" class="admin-only text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" title="Hapus Data Tabungan Warga Ini">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
@@ -2306,8 +2307,7 @@
         }
         document.getElementById('tf-tab-total').innerText = formatRupiahStrict(grandNet);
     }
-
-    function renderKas() {
+function renderKas() {
         const tbody = document.getElementById('table-kas-body');
         tbody.innerHTML = '';
         let totalsPerDateIn = {};
@@ -2321,10 +2321,14 @@
 
         activeCitizens.forEach((c, index) => {
             let totalRow = 0;
+            // --- MODIFIED ROW HTML WITH EDIT ICON ---
             let rowHtml = `<tr class="bg-white hover:bg-slate-50 transition-colors group">
                 <td class="px-3 py-3 text-center font-medium text-slate-500 border-b border-r col-sticky-1 bg-white group-hover:bg-slate-50">${index + 1}</td>
                 <td class="px-4 py-3 font-medium text-slate-800 border-b col-sticky-2 whitespace-nowrap bg-white group-hover:bg-slate-50 text-left flex justify-between items-center group">
-                    <span>${c.name}</span>
+                    <div class="flex items-center gap-1">
+                        <span>${c.name}</span>
+                        <button onclick="renameCitizen(${c.id})" class="admin-only rename-btn" title="Ubah Nama">✏️</button>
+                    </div>
                     <button onclick="deleteCitizenKas(${c.id}, '${c.name}')" class="admin-only text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" title="Hapus Data Kas Warga Ini">
                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
