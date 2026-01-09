@@ -749,7 +749,7 @@
                 </div>
             </div>
 
-            <!-- === NEW VIEW: BENDAHARA HISTORY === -->
+            <!-- === VIEW: BENDAHARA HISTORY === -->
             <div id="view-bendahara" class="view-section fade-in hidden">
                 <div class="bg-white rounded-xl shadow-soft border border-slate-200 overflow-hidden">
                     <div class="px-4 py-3 md:px-5 md:py-4 border-b border-slate-100 bg-gradient-to-r from-cyan-50/50 to-transparent flex justify-between items-center">
@@ -1317,6 +1317,35 @@
         }, 200);
     }
 
+    // --- LOGIKA UTAMA: SINKRONISASI WARGA BARU KE SEMUA PERIODE ---
+    function syncCitizenToAllPeriods(newCitizen) {
+        // Loop semua tahun di database
+        for (const year in db) {
+            if (db.hasOwnProperty(year)) {
+                // Loop semua bulan dalam tahun tersebut
+                for (const month in db[year]) {
+                    const periodData = db[year][month];
+                    if (periodData && periodData.citizens) {
+                        // Cek apakah ID warga sudah ada di periode ini
+                        const exists = periodData.citizens.some(c => c.id === newCitizen.id);
+                        if (!exists) {
+                            // Jika belum, tambahkan (Copy object untuk hindari referensi silang)
+                            // Kita reset data keuangan (savings/kas) agar kosong di bulan lain
+                            const citizenClone = JSON.parse(JSON.stringify(newCitizen));
+                            // Pastikan struktur kosong untuk bulan lain
+                            citizenClone.savings = {};
+                            citizenClone.kas = {};
+                            citizenClone.savingsNotes = {};
+                            citizenClone.kasNotes = {};
+                            
+                            periodData.citizens.push(citizenClone);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     function addCitizenTabungan() {
         openUiModal({
             title: 'Tambah Warga (Tabungan)',
@@ -1326,19 +1355,24 @@
             actionText: 'Tambah',
             onConfirm: (name) => {
                 if(!name) return;
-                const maxId = currentState.citizens.reduce((max, c) => Math.max(max, typeof c.id === 'number' ? c.id : 0), 0);
-                const newId = maxId + 1;
                 
-                // FEATURE 1: Add Citizen with Savings only
-                currentState.citizens.push({ 
+                const newId = Date.now(); 
+                
+                const newCitizen = { 
                     id: newId, 
                     name: name, 
-                    savings: {}, 
-                    kas: {}, // Empty to hide from Kas table
+                    savings: { 1: 0 }, 
+                    kas: {}, 
                     savingsNotes: {}, 
                     kasNotes: {} 
-                });
-                saveDB(); renderAll();
+                };
+
+                currentState.citizens.push(newCitizen);
+                
+                syncCitizenToAllPeriods(newCitizen);
+
+                saveDB(); 
+                renderAll();
                 showToast(`Warga Tabungan "${name}" berhasil ditambahkan!`, 'success');
             }
         });
@@ -1353,22 +1387,62 @@
             actionText: 'Tambah',
             onConfirm: (name) => {
                 if(!name) return;
-                const maxId = currentState.citizens.reduce((max, c) => Math.max(max, typeof c.id === 'number' ? c.id : 0), 0);
-                const newId = maxId + 1;
                 
-                // FEATURE 1: Add Citizen with Kas only
-                currentState.citizens.push({ 
+                const newId = Date.now(); 
+                
+                const newCitizen = { 
                     id: newId, 
                     name: name, 
-                    savings: {}, // Empty to hide from Savings table
-                    kas: {}, 
+                    savings: {}, 
+                    kas: { 1: 0 }, 
                     savingsNotes: {}, 
                     kasNotes: {} 
-                });
-                saveDB(); renderAll();
+                };
+
+                currentState.citizens.push(newCitizen);
+                
+                syncCitizenToAllPeriods(newCitizen);
+
+                saveDB(); 
+                renderAll();
                 showToast(`Warga Kas "${name}" berhasil ditambahkan!`, 'success');
             }
         });
+    }
+
+    function createBlankPeriod() {
+        let sourceCitizens = [];
+        
+        let prevYear = currentYear;
+        let prevMonth = currentMonth - 1;
+        
+        if (prevMonth < 0) {
+            prevYear--;
+            prevMonth = 11;
+        }
+
+        if (db[prevYear] && db[prevYear][prevMonth] && db[prevYear][prevMonth].citizens) {
+            sourceCitizens = db[prevYear][prevMonth].citizens;
+        } else if (db[2026] && db[2026][0] && db[2026][0].citizens) {
+            sourceCitizens = db[2026][0].citizens;
+        }
+
+        const cleanCitizens = sourceCitizens.map(c => ({
+            id: c.id,
+            name: c.name,
+            savings: {},
+            kas: {},
+            savingsNotes: {},
+            kasNotes: {}
+        }));
+
+        return { 
+            citizens: cleanCitizens, 
+            kasOut: {}, kasOutNotes: {}, 
+            tabOut: {}, tabOutNotes: {},
+            images: [], generalNotes: '',
+            weeklyBendahara: []
+        };
     }
 
     // --- NEW: WEEKLY BENDAHARA LOGIC (FITUR 2) ---
@@ -1695,8 +1769,7 @@
         { id: 45, name: "ENCU /INA" },
         { id: 46, name: "MAMAN S" }, { id: 47, name: "WARUNG IBU IIS" }, { id: 48, name: "(Kosong)" }, { id: 49, name: "(Kosong)" }, { id: 50, name: "(Kosong)" }
     ];
-
-    // --- DATA SEED ---
+// --- DATA SEED ---
     const CSV_JAN_2026_TABUNGAN = [
         { no: 1, s: {1: 1500, 2: 2000, 3: 3000, 4: 5000, 5: 3000} }, { no: 2, s: {1: 2000, 2: 2000, 3: 10000, 4: 10000, 5: 10000} }, { no: 3, s: {1: 4500, 2: 4500, 3: 4500, 4: 5000, 5: 5000} },
         { no: 6, s: {1: 2000, 2: 2000, 3: 2000, 4: 2000, 5: 2000} }, { no: 7, s: {1: 2000, 2: 2000, 3: 2000, 4: 2000, 5: 2000} }, { no: 8, s: {1: 5000, 3: 10000} },
@@ -1739,7 +1812,7 @@
     let currentYear = 2026;
     let currentMonth = 0;
     let currentState = { citizens: [], kasOut: {}, images: [], generalNotes: '', weeklyBendahara: [] };
-    
+
     // --- HELPER FUNCTIONS ---
 
     function init() {
@@ -1803,6 +1876,15 @@
     }
 
     function createBlankPeriod() {
+        // Ambil list warga dari bulan sebelumnya (jika ada) atau master data
+        // Agar warga yang baru ditambahkan di bulan lalu tetap terbawa
+        // Namun, kita ambil master ID yang unik dari seluruh DB untuk memastikan konsistensi
+        
+        // Strategi: Ambil citizens dari bulan pertama tahun ini sebagai basis, 
+        // atau jika kosong, gunakan Master.
+        // Tapi cara paling aman sesuai instruksi "Future Proof" adalah melihat data warga yang ada di db global
+        // Namun untuk simplifikasi logic createBlankPeriod sesuai struktur lama:
+        
         const blankCitizens = MASTER_CITIZENS.map(mc => ({
             id: mc.id,
             name: mc.name,
@@ -1811,6 +1893,26 @@
             savingsNotes: {},
             kasNotes: {}
         }));
+        
+        // IMPORTANT: Jika ada warga tambahan (ID > 50 / Timestamp), kita harus masukan juga
+        // Kita cek di bulan 0 tahun 2026 (root data) untuk warga tambahan
+        if(db[2026] && db[2026][0] && db[2026][0].citizens) {
+             const existingIds = new Set(blankCitizens.map(c => c.id));
+             db[2026][0].citizens.forEach(c => {
+                 if(!existingIds.has(c.id)) {
+                     // Ini warga baru yang ditambahkan manual
+                     blankCitizens.push({
+                        id: c.id,
+                        name: c.name,
+                        savings: {},
+                        kas: {},
+                        savingsNotes: {},
+                        kasNotes: {}
+                      });
+                 }
+             });
+        }
+
         return { 
             citizens: blankCitizens, 
             kasOut: {}, kasOutNotes: {}, 
@@ -1902,7 +2004,8 @@
             finalBalance
         };
     }
-function renderReport() {
+
+    function renderReport() {
         const summary = calculateReportSummary();
 
         const elSaldo = document.getElementById('rpt-saldo');
