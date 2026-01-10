@@ -3358,77 +3358,108 @@
 
         const tabunganFooterData = ['', 'TOTAL TABUNGAN BULAN INI', ...Array(31).fill(''), totalTabunganKeseluruhan.toLocaleString('id-ID')];
 
-        doc.addPage([330, 215], 'l');
-        doc.setFontSize(14);
-        doc.setFont("helvetica", "bold");
-        doc.text("TABUNGAN HARIAN (1-25)", 14, 15);
-        
-        doc.autoTable({
-            head: tabunganHead,
-            body: tabunganBody.slice(0, 25),
-            startY: 20,
-            theme: 'grid',
-            styles: { fontSize: 6, cellPadding: 1, overflow: 'linebreak' },
-            headStyles: { fillColor: [16, 185, 129], textColor: 255, halign: 'center' },
-            columnStyles: { 
-                0: { cellWidth: 8 }, 
-                1: { cellWidth: 25 },
-                33: { cellWidth: 20, fontStyle: 'bold', halign: 'right', fillColor: [240, 253, 244] }
-            },
-            didParseCell: function(data) {
-                if (data.section === 'body' && data.column.index > 1 && data.column.index < 33) {
-                    data.cell.styles.halign = 'center';
-                }
-            }
-        });
+        // ================= AUTO BULAN & TAHUN =================
+const ACTIVE_MONTH_NAME = MONTH_NAMES[currentMonth].toUpperCase();
+const ACTIVE_YEAR = currentYear;
 
-        doc.addPage([330, 215], 'l');
-        doc.setFontSize(14);
-        doc.text("TABUNGAN HARIAN (26-Selesai)", 14, 15);
-        
-        doc.autoTable({
-            head: tabunganHead,
-            body: [...tabunganBody.slice(25), tabunganFooterData], 
-            startY: 20,
-            theme: 'grid',
-            styles: { fontSize: 6, cellPadding: 1 },
-            headStyles: { fillColor: [16, 185, 129], textColor: 255, halign: 'center' },
-            columnStyles: { 
-                0: { cellWidth: 8 }, 
-                1: { cellWidth: 25 },
-                33: { cellWidth: 20, fontStyle: 'bold', halign: 'right', fillColor: [240, 253, 244] }
-            },
-            didParseCell: function(data) {
-                if (data.section === 'body' && data.column.index > 1 && data.column.index < 33) {
-                    data.cell.styles.halign = 'center';
-                }
-                if (data.row.index === (tabunganBody.slice(25).length)) {
-                    data.cell.styles.fontStyle = 'bold';
-                    data.cell.styles.fillColor = [209, 250, 229]; 
-                    data.cell.styles.textColor = [6, 95, 70]; 
-                }
-            }
-        });
+// ================= TABUNGAN HARIAN (1–25) =================
+doc.addPage([330, 215], 'l');
+doc.setFontSize(14);
+doc.setFont("helvetica", "bold");
+doc.text(
+    `TABUNGAN HARIAN ${ACTIVE_MONTH_NAME} ${ACTIVE_YEAR} (1–25)`,
+    14,
+    15
+);
 
-        // PAGE 5: KAS
-        doc.addPage([330, 215], 'l');
-        doc.setFontSize(14);
-        doc.text("KAS HARIAN", 14, 15);
+doc.autoTable({
+    head: tabunganHead,
+    body: tabunganBody.slice(0, 25),
+    startY: 20,
+    theme: 'grid',
+    styles: { fontSize: 6, cellPadding: 1, overflow: 'linebreak' },
+    headStyles: { fillColor: [16, 185, 129], textColor: 255, halign: 'center' },
+    columnStyles: { 
+        0: { cellWidth: 8 }, 
+        1: { cellWidth: 25 },
+        33: { cellWidth: 20, fontStyle: 'bold', halign: 'right', fillColor: [240, 253, 244] }
+    },
+    didParseCell: function(data) {
+        if (
+            data.section === 'body' &&
+            data.column.index > 1 &&
+            data.column.index < 33
+        ) {
+            data.cell.styles.halign = 'center';
+        }
+    }
+});
 
-        const kasBody = currentState.citizens.map((c, i) => {
-            let rowTotal = 0;
-            const dates = Array.from({length:31}, (_, d) => {
-                const val = getNetValue(c.kas[d+1]) || 0;
-                rowTotal += val;
-                return val !== 0 ? val.toLocaleString('id-ID') : '';
-            });
-            return [i+1, c.name, ...dates, rowTotal.toLocaleString('id-ID')];
-        });
+// ================= TABUNGAN HARIAN (26–SELESAI) =================
+doc.addPage([330, 215], 'l');
+doc.setFontSize(14);
+doc.setFont("helvetica", "bold");
+doc.text(
+    `TABUNGAN HARIAN ${ACTIVE_MONTH_NAME} ${ACTIVE_YEAR} (26–SELESAI)`,
+    14,
+    15
+);
 
-        let grandTotalKas = 0;
-        currentState.citizens.forEach(c => {
-             Object.values(c.kas || {}).forEach(v => grandTotalKas += getNetValue(v));
-        });
+doc.autoTable({
+    head: tabunganHead,
+    body: [...tabunganBody.slice(25), tabunganFooterData],
+    startY: 20,
+    theme: 'grid',
+    styles: { fontSize: 6, cellPadding: 1 },
+    headStyles: { fillColor: [16, 185, 129], textColor: 255, halign: 'center' },
+    columnStyles: { 
+        0: { cellWidth: 8 }, 
+        1: { cellWidth: 25 },
+        33: { cellWidth: 20, fontStyle: 'bold', halign: 'right', fillColor: [240, 253, 244] }
+    },
+    didParseCell: function(data) {
+        if (
+            data.section === 'body' &&
+            data.column.index > 1 &&
+            data.column.index < 33
+        ) {
+            data.cell.styles.halign = 'center';
+        }
+        if (data.row.index === tabunganBody.slice(25).length) {
+            data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.fillColor = [209, 250, 229];
+            data.cell.styles.textColor = [6, 95, 70];
+        }
+    }
+});
+
+// ================= KAS HARIAN =================
+doc.addPage([330, 215], 'l');
+doc.setFontSize(14);
+doc.setFont("helvetica", "bold");
+doc.text(
+    `KAS HARIAN ${ACTIVE_MONTH_NAME} ${ACTIVE_YEAR}`,
+    14,
+    15
+);
+
+const kasBody = currentState.citizens.map((c, i) => {
+    let rowTotal = 0;
+    const dates = Array.from({ length: 31 }, (_, d) => {
+        const val = getNetValue(c.kas[d + 1]) || 0;
+        rowTotal += val;
+        return val !== 0 ? val.toLocaleString('id-ID') : '';
+    });
+    return [i + 1, c.name, ...dates, rowTotal.toLocaleString('id-ID')];
+});
+
+let grandTotalKas = 0;
+currentState.citizens.forEach(c => {
+    Object.values(c.kas || {}).forEach(v => {
+        grandTotalKas += getNetValue(v);
+    });
+});
+
         
         const totalRowData = ['', 'TOTAL KAS MASUK BULAN INI', ...Array(31).fill(''), grandTotalKas.toLocaleString('id-ID')];
 
