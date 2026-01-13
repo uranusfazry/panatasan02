@@ -1941,6 +1941,23 @@
     const STORAGE_KEY = 'rtDataV10';
 // --- MASTER DATA ---
     const MASTER_CITIZENS = [
+        { id: 1, name: "WAWAN R" }, { id: 2, name: "SAKRI" }, { id: 3, name: "YAYAT H" }, 
+        { id: 4, name: "EDENG K" }, { id: 5, name: "SATIA P" },
+        { id: 6, name: "SAHIDI" }, { id: 7, name: "ADE JENI" }, { id: 8, name: "DANIL/REKA" }, { id: 9, name: "DODI/ANOY" }, { id: 10, name: "KUNDANG" },
+        { id: 11, name: "IDA DIANA" }, { id: 12, name: "TISNA" },
+        { id: 13, name: "JONIH" }, { id: 14, name: "AMUNG" }, { id: 15, name: "ENCU S" },
+        { id: 16, name: "SANA" }, { id: 17, name: "NURDIN" }, { id: 18, name: "A.AZIS" }, { id: 19, name: "PERMANA" }, { id: 20, name: "UHO" },
+        { id: 21, name: "DEDE R DANIEL" }, { id: 22, name: "DINDIN" },
+        { id: 22.1, name: "ALDILA" }, 
+        { id: 23, name: "TUTI W" }, { id: 24, name: "ERO S" }, { id: 25, name: "ACO Y" },
+        { id: 26, name: "DEDI" }, { id: 27, name: "ROHANA" }, { id: 28, name: "YEYET" }, { id: 29, name: "DIAH" },
+        { id: 30, name: "MAMAH" },
+        { id: 31, name: "DODI DWI P" }, { id: 32, name: "TETI M" }, { id: 33, name: "KUSNADI" },
+        { id: 34, name: "YANA S" }, { id: 35, name: "ENOK S" }, { id: 36, name: "HERI P" },
+        { id: 37, name: "NANDANG" }, { id: 38, name: "ENDANG D" }, { id: 39, name: "IRAWAN" }, { id: 40, name: "KARTI" },
+        { id: 41, name: "ANAH" }, { id: 42, name: "EMONG S" }, { id: 43, name: "GUGUM Y" }, { id: 44, name: "KUSWANTO" },
+        { id: 45, name: "ENCU /INA" },
+        { id: 46, name: "MAMAN S" }, { id: 47, name: "WARUNG IBU IIS" }, { id: 48, name: "(Kosong)" }, { id: 49, name: "(Kosong)" }, { id: 50, name: "(Kosong)" }
     ];
 
     const CSV_JAN_2026_TABUNGAN = [
@@ -2349,7 +2366,7 @@
         let totalsPerDate = {};
         let grandTotal = 0;
 
-        // Filter active citizens
+        // Filter active citizens for UI
         const activeCitizens = currentState.citizens.filter(c => {
             return c.savings && Object.keys(c.savings).length > 0;
         });
@@ -2618,8 +2635,7 @@
         }
         document.getElementById('tf-kas-total').innerText = formatRupiahStrict(grandNet);
     }
-
-    function renderImages() {
+function renderImages() {
         const grid = document.getElementById('gallery-grid');
         const empty = document.getElementById('empty-gallery');
         const count = document.getElementById('gallery-count');
@@ -2645,9 +2661,9 @@
                         ${isVideo 
                             ? `<video src="${img.url}#t=0.1" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500" preload="metadata" muted></video>
                                <div class="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/20">
-                                           <div class="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-                                               <svg class="w-5 h-5 text-indigo-600 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                                           </div>
+                                            <div class="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                                                <svg class="w-5 h-5 text-indigo-600 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                            </div>
                                       </div>`
                             : `<img src="${img.url}" alt="${img.desc}" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" onerror="this.src='https://via.placeholder.com/300?text=Error+Load'">`
                         }
@@ -3453,10 +3469,16 @@
         });
 
 
-        // --- 3. TABUNGAN & KAS PAGES ---
+        // --- 3. TABUNGAN & KAS PAGES (DATA FILTERED) ---
+        
+        // --- Filter hanya warga aktif untuk PDF Tabungan ---
+        const activeTabunganCitizens = currentState.citizens.filter(c => 
+            c.savings && Object.keys(c.savings).length > 0
+        );
+
         const tabunganHead = [['No', 'Nama Warga', ...Array.from({length:31}, (_, i)=>i+1), 'Total']];
         
-        const tabunganBody = currentState.citizens.map((c, i) => {
+        const tabunganBody = activeTabunganCitizens.map((c, i) => {
             let rowTotal = 0;
             const dates = Array.from({length:31}, (_, d) => {
                 const val = getNetValue(c.savings[d+1]) || 0;
@@ -3516,13 +3538,19 @@
         });
 
         // --> KAS HARIAN
+        
+        // --- Filter hanya warga aktif untuk PDF Kas ---
+        const activeKasCitizens = currentState.citizens.filter(c => 
+            c.kas && Object.keys(c.kas).length > 0
+        );
+
         doc.addPage([330, 215], 'l');
         doc.setFontSize(14); doc.setFont("helvetica", "bold");
         doc.text(`LAPORAN KAS HARIAN`, 14, 20);
         doc.setFontSize(10); doc.setFont("helvetica", "normal");
         doc.text(`Periode: ${periodStr} | Total Pemasukan Kas: ${formatRupiahStrict(summary.kasIncome)}`, 14, 26);
 
-        const kasBody = currentState.citizens.map((c, i) => {
+        const kasBody = activeKasCitizens.map((c, i) => {
             let rowTotal = 0;
             const dates = Array.from({length:31}, (_, d) => {
                 const val = getNetValue(c.kas[d+1]) || 0;
